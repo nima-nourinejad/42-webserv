@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/22 17:53:31 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/22 18:24:08 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@ std::string	HttpHandler::handleRequest(const Request& req)
 			return handlePOST(req);
 		else if (req.getMethod() == "DELETE")
 			return handleDELETE(req);
+		else if (req.getMethod() == "CGI")
+			return handleCGI(req);
 
 		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
 	}
@@ -79,7 +81,10 @@ std::string	HttpHandler::handleGET(const Request &req)
 std::string HttpHandler::handlePOST(const Request& req)
 {
 	std::string body = req.getBody();
-    
+
+	if (body.empty())
+		return "HTTP/1.1 400 Bad Request\r\n\r\nEmpty body in POST request\n";
+
     std::ostringstream responseStream;
     responseStream << "HTTP/1.1 200 OK\r\n"
                    << "Content-Length: " << body.size() << "\r\n"
