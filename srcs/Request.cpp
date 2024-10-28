@@ -6,13 +6,13 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/22 17:49:11 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/28 13:25:28 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
 
-Request::Request() : _method(""), _path(""), _httpVersion(""), _body("") {}
+Request::Request() : _method(""), _path(""), _httpVersion(""), _headers(), _body("") {}
 
 Request::Request(const std::string &rawRequest)
 {
@@ -47,6 +47,7 @@ std::string	Request::getHttpVersion() const
 std::string	Request::getHeader(const std::string &key) const
 {
 	std::map<std::string, std::string>::const_iterator	it = _headers.find(key);
+	
 	if (it != _headers.end())
 		return it->second;
 	return "";
@@ -70,10 +71,12 @@ void	Request::parse(const std::string &rawRequest)
 
 	while (std::getline(stream, line) && line != "\r")
 	{
-		std::size_t colon = line.find(':');
-		if (colon != std::string::npos) {
-			std::string headerKey = line.substr(0, colon);
-			std::string headerValue = line.substr(colon + 2);  // Skip colon and space
+		std::size_t	colon = line.find(':');
+
+		if (colon != std::string::npos)
+		{
+			std::string	headerKey = line.substr(0, colon);
+			std::string	headerValue = line.substr(colon + 2);  // Skip colon and space
 			_headers[headerKey] = headerValue;
 		}
 	}
@@ -82,7 +85,8 @@ void	Request::parse(const std::string &rawRequest)
 	{
 		try
 		{
-			std::size_t contentLength = std::stoi(_headers["Content-Length"]);
+			std::size_t	contentLength = std::stoi(_headers["Content-Length"]);
+
 			_body.resize(contentLength);
 			stream.read(&_body[0], contentLength);
 			if (stream.gcount() != static_cast<std::streamsize>(contentLength))

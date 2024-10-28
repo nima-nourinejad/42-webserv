@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/22 17:49:53 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/28 12:54:55 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ class HttpHandler
 {
 
 	private:
-		CGIHandler _cgiHandler;
+		CGIHandler	_cgiHandler;
 		std::string	_rootDir;
 
 	public:

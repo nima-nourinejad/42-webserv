@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/22 17:50:18 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/28 12:59:33 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@
 #include "Request.hpp"
 #include "SystemCallError.hpp"
 #include <string>
-#include <unistd.h>   // for fork, execve, pipe, dup2
-#include <sys/wait.h> // for waitpid
-#include <fcntl.h>    // for open
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 #include <iostream>
 #include <sstream>
 

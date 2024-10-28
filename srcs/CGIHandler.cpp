@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/22 17:54:05 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/28 13:11:53 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,11 +21,12 @@ CGIHandler::~CGIHandler() {}
 std::string	CGIHandler::execute(const Request &req)
 {
 	try {
-		int pipefd[2];
+		int	pipefd[2];
+
 		if (pipe(pipefd) == -1)
 			handleError("pipe");
 
-		pid_t pid = fork();
+		pid_t	pid = fork();
 		if (pid == -1)
 			handleError("fork");
 
@@ -42,7 +43,7 @@ std::string	CGIHandler::execute(const Request &req)
 			char *argv[] = { const_cast<char *>(_cgiPath.c_str()), NULL };
 			
 			// Set up environment variables (for simplicity, only CONTENT_LENGTH)
-			std::string contentLength = "CONTENT_LENGTH=" + std::to_string(req.getBody().size());
+			std::string	contentLength = "CONTENT_LENGTH=" + std::to_string(req.getBody().size());
 			char *envp[] = { const_cast<char *>(contentLength.c_str()), NULL };
 
 			if (execve(_cgiPath.c_str(), argv, envp) == -1)
@@ -59,9 +60,10 @@ std::string	CGIHandler::execute(const Request &req)
 				handleError("waitpid");
 
 
-			char	buffer[1024];
+			char				buffer[1024];
 			std::ostringstream	output;
-			ssize_t	bytesRead;
+			ssize_t				bytesRead;
+
 			while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0)
 				output.write(buffer, bytesRead);
 
