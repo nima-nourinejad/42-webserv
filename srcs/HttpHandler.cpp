@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/22 18:24:08 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/28 12:51:33 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,14 +85,14 @@ std::string HttpHandler::handlePOST(const Request& req)
 	if (body.empty())
 		return "HTTP/1.1 400 Bad Request\r\n\r\nEmpty body in POST request\n";
 
-    std::ostringstream responseStream;
-    responseStream << "HTTP/1.1 200 OK\r\n"
-                   << "Content-Length: " << body.size() << "\r\n"
-                   << "Content-Type: text/plain\r\n"
-                   << "\r\n"
-                   << body;
+	std::ostringstream responseStream;
+	responseStream << "HTTP/1.1 200 OK\r\n"
+				<< "Content-Length: " << body.size() << "\r\n"
+				<< "Content-Type: text/plain\r\n"
+				<< "\r\n"
+				<< body;
 
-    return responseStream.str();
+	return responseStream.str();
 }
 
 std::string	HttpHandler::handleDELETE(const Request &req)
@@ -107,5 +107,5 @@ std::string	HttpHandler::handleDELETE(const Request &req)
 
 std::string HttpHandler::handleCGI(const Request &req)
 {
-    return _cgiHandler.execute(req);
+	return _cgiHandler.execute(req);
 }
