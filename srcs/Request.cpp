@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/28 13:25:28 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/28 14:07:34 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,7 @@ void	Request::parse(const std::string &rawRequest)
 		handleError("Failed to read request line");
 
 	std::istringstream	requestLine(line);
+
 	if (!(requestLine >> _method >> _path >> _httpVersion))
 		handleError("Invalid request format");
 

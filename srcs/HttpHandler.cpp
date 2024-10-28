@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/28 12:51:33 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/28 14:15:03 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ std::string	HttpHandler::handleGET(const Request &req)
 	std::string	filePath = _rootDir + req.getPath();
 	int fd = open(filePath.c_str(), O_RDONLY);
 
-	if (fd == -1)
+	if (fd == -1) //use strerror(errno) to get the error message
 		return "HTTP/1.1 404 Not Found\r\n\r\nFile not found\n";
 
 	try
@@ -60,6 +60,7 @@ std::string	HttpHandler::handleGET(const Request &req)
 			handleError("close file descriptor");
 
 		std::ostringstream	response;
+
 		response << "HTTP/1.1 200 OK\r\n"
 				<< "Content-Length: " << content.size() << "\r\n"
 				<< "Content-Type: text/plain\r\n"

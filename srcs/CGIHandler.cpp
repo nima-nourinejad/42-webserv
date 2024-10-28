@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/28 13:11:53 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/10/28 14:16:45 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ std::string	CGIHandler::execute(const Request &req)
 			handleError("pipe");
 
 		pid_t	pid = fork();
+
 		if (pid == -1)
 			handleError("fork");
 
@@ -71,6 +72,7 @@ std::string	CGIHandler::execute(const Request &req)
 				handleError("close read-end in parent");
 
 			std::ostringstream	response;
+
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
 			{
 				std::string	cgiOutput = output.str();
