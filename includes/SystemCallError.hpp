@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 17:11:19 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/22 17:25:02 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/04 17:28:12 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,8 @@
 
 class SystemCallError : public std::runtime_error
 {
-public:
-	SystemCallError(const std::string &msg);
+	public:
+		SystemCallError(const std::string &msg);
 };
 
 void	handleError(const std::string &context);

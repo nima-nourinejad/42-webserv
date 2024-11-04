@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/28 14:16:45 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/04 17:58:12 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,8 @@ CGIHandler::~CGIHandler() {}
 
 std::string	CGIHandler::execute(const Request &req)
 {
-	try {
+	try
+	{
 		int	pipefd[2];
 
 		if (pipe(pipefd) == -1)
@@ -31,7 +32,7 @@ std::string	CGIHandler::execute(const Request &req)
 		if (pid == -1)
 			handleError("fork");
 
-		if (pid == 0)
+		if (pid == 0) // child
 		{
 			if (close(pipefd[0]) == -1)
 				handleError("close read-end in child");
@@ -60,7 +61,6 @@ std::string	CGIHandler::execute(const Request &req)
 			if (waitpid(pid, &status, 0) == -1)
 				handleError("waitpid");
 
-
 			char				buffer[1024];
 			std::ostringstream	output;
 			ssize_t				bytesRead;
@@ -71,29 +71,47 @@ std::string	CGIHandler::execute(const Request &req)
 			if (close(pipefd[0]) == -1)
 				handleError("close read-end in parent");
 
-			std::ostringstream	response;
+			// std::ostringstream	response;
+			Response	response;
 
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
 			{
 				std::string	cgiOutput = output.str();
-				response << "HTTP/1.1 200 OK\r\n"
-						<< "Content-Length: " << cgiOutput.size() << "\r\n"
-						<< "Content-Type: text/plain\r\n"
-						<< "\r\n"
-						<< cgiOutput;
+				response.setStatusLine("HTTP/1.1 200 OK");
+				response.setBody(cgiOutput);
+				response.setHeader("Content-Length", std::to_string(cgiOutput.size()));
+				response.setHeader("Content-Type", "text/plain");
+				// response << "HTTP/1.1 200 OK\r\n"
+				// 		<< "Content-Length: " << cgiOutput.size() << "\r\n"
+				// 		<< "Content-Type: text/plain\r\n"
+				// 		<< "\r\n"
+				// 		<< cgiOutput;
 			}
 			else
-				response << "HTTP/1.1 500 Internal Server Error\r\n\r\nCGI script error\n";
+			{
+				response.setStatusLine("HTTP/1.1 500 Internal Server Error");
+				response.setBody("CGI script error\n");
+			}
+				// response << "HTTP/1.1 500 Internal Server Error\r\n\r\nCGI script error\n";
 
-			return response.str();
+			return response.toString();
 		}
 	}
 	catch (const SystemCallError& e)
 	{
-		std::ostringstream	response;
-		response << "HTTP/1.1 500 Internal Server Error\r\n\r\nError: " << e.what() << "\n";
-		return response.str();
+		// std::ostringstream	response;
+		Response	response;
+		
+		response.setStatusLine("HTTP/1.1 500 Internal Server Error");
+		response.setBody("Error: " + std::string(e.what()) + "\n");
+		// response << "HTTP/1.1 500 Internal Server Error\r\n\r\nError: " << e.what() << "\n";
+		return response.toString();
 	}
 
-	return "HTTP/1.1 500 Internal Server Error\r\n\r\nUnexpected error\n";
+	Response	unexpectedResponse;
+
+	unexpectedResponse.setStatusLine("HTTP/1.1 500 Internal Server Error");
+	unexpectedResponse.setBody("Unexpected error\n");
+	return unexpectedResponse.toString();
+	// return "HTTP/1.1 500 Internal Server Error\r\n\r\nUnexpected error\n";
 }

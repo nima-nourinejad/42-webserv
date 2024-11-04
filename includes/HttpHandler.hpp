@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/28 12:54:55 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/04 17:54:00 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,16 +14,18 @@
 #define HTTPHANDLER_HPP
 
 #include "Request.hpp"
+#include "Response.hpp"
 #include "SystemCallError.hpp"
 #include "CGIHandler.hpp"
 #include <string>
-#include <fstream>
+// #include <fstream>
 #include <sstream>
-#include <iostream>
+// #include <iostream>
+#include <fcntl.h>
+#include <unistd.h>
 
 class HttpHandler
 {
-
 	private:
 		CGIHandler	_cgiHandler;
 		std::string	_rootDir;

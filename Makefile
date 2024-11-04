@@ -6,7 +6,7 @@
 #    By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/22 16:45:01 by asohrabi          #+#    #+#              #
-#    Updated: 2024/10/22 18:02:10 by asohrabi         ###   ########.fr        #
+#    Updated: 2024/11/04 17:50:46 by asohrabi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,7 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++11 -Iincludes
 
 # Source and object files
 SRCS = srcs/CGIHandler.cpp srcs/HttpHandler.cpp srcs/main.cpp srcs/Request.cpp \
-		srcs/SystemCallError.cpp
+		srcs/SystemCallError.cpp srcs/Response.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

@@ -1,40 +1,39 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   CGIHandler.hpp                                     :+:      :+:    :+:   */
+/*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/04 17:54:05 by asohrabi         ###   ########.fr       */
+/*   Created: 2024/11/04 17:26:44 by asohrabi          #+#    #+#             */
+/*   Updated: 2024/11/04 17:48:17 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CGIHANDLER_HPP
-#define CGIHANDLER_HPP
+#ifndef RESPONSE_HPP
+#define RESPONSE_HPP
 
-#include "Request.hpp"
-#include "Response.hpp"
-#include "SystemCallError.hpp"
 #include <string>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-// #include <iostream>
+#include <map>
 #include <sstream>
 
-class CGIHandler
+class Response
 {
 	private:
-		std::string	_cgiPath;
+		std::string							_statusLine;
+		std::map<std::string, std::string>	_headers;
+		std::string							_body;
 
 	public:
-		CGIHandler();
-		CGIHandler(const std::string &cgiPath);
-		~CGIHandler();
+		Response();
+		Response(const std::string &statusLine);
+		~Response();
 
-		std::string	execute(const Request &req);
+		void								setStatusLine(const std::string &statusLine);
+		void								setHeader(const std::string &key, const std::string &value);
+		void								setBody(const std::string &body);
+
+		std::string							toString() const;
 };
-
 
 #endif
