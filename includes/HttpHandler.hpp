@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/04 17:54:00 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/05 11:31:40 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,7 @@
 #include "SystemCallError.hpp"
 #include "CGIHandler.hpp"
 #include <string>
-// #include <fstream>
 #include <sstream>
-// #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
 

@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/04 17:54:05 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/05 11:31:34 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
-// #include <iostream>
 #include <sstream>
 
 class CGIHandler

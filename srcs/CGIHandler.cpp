@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/04 17:58:12 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/05 11:32:10 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,6 @@ std::string	CGIHandler::execute(const Request &req)
 			if (close(pipefd[0]) == -1)
 				handleError("close read-end in parent");
 
-			// std::ostringstream	response;
 			Response	response;
 
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
@@ -81,30 +80,21 @@ std::string	CGIHandler::execute(const Request &req)
 				response.setBody(cgiOutput);
 				response.setHeader("Content-Length", std::to_string(cgiOutput.size()));
 				response.setHeader("Content-Type", "text/plain");
-				// response << "HTTP/1.1 200 OK\r\n"
-				// 		<< "Content-Length: " << cgiOutput.size() << "\r\n"
-				// 		<< "Content-Type: text/plain\r\n"
-				// 		<< "\r\n"
-				// 		<< cgiOutput;
 			}
 			else
 			{
 				response.setStatusLine("HTTP/1.1 500 Internal Server Error");
 				response.setBody("CGI script error\n");
 			}
-				// response << "HTTP/1.1 500 Internal Server Error\r\n\r\nCGI script error\n";
-
 			return response.toString();
 		}
 	}
 	catch (const SystemCallError& e)
 	{
-		// std::ostringstream	response;
 		Response	response;
 		
 		response.setStatusLine("HTTP/1.1 500 Internal Server Error");
 		response.setBody("Error: " + std::string(e.what()) + "\n");
-		// response << "HTTP/1.1 500 Internal Server Error\r\n\r\nError: " << e.what() << "\n";
 		return response.toString();
 	}
 

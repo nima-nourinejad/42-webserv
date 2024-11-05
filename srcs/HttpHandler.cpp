@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/04 17:46:48 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/05 11:33:00 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ std::string	HttpHandler::handleGET(const Request &req)
 
 	int fd = open(filePath.c_str(), O_RDONLY);
 
-	if (fd == -1) //use strerror(errno) to get the error message
+	if (fd == -1)
 	{
 		if (errno == EACCES)
 		{
@@ -82,14 +82,6 @@ std::string	HttpHandler::handleGET(const Request &req)
 		response.setStatusLine("HTTP/1.1 200 OK");
 		response.setBody(content);
 		response.setHeader("Content-Type", "text/plain");
-		// std::ostringstream	response;
-
-		// response << "HTTP/1.1 200 OK\r\n"
-		// 		<< "Content-Length: " << content.size() << "\r\n"
-		// 		<< "Content-Type: text/plain\r\n"
-		// 		<< "\r\n"
-		// 		<< content;
-
 		return response.toString();
 	}
 	catch (const SystemCallError &e)
@@ -111,20 +103,11 @@ std::string	HttpHandler::handlePOST(const Request& req)
 		response.setBody("Empty body in POST request\n");
 		return response.toString();
 	}
-		// return "HTTP/1.1 400 Bad Request\r\n\r\nEmpty body in POST request\n";
 
 	response.setStatusLine("HTTP/1.1 200 OK");
 	response.setBody(body);
 	response.setHeader("Content-Length", std::to_string(body.size()));
 	response.setHeader("Content-Type", "text/plain");
-	
-	// std::ostringstream responseStream;
-	// responseStream << "HTTP/1.1 200 OK\r\n"
-	// 			<< "Content-Length: " << body.size() << "\r\n"
-	// 			<< "Content-Type: text/plain\r\n"
-	// 			<< "\r\n"
-	// 			<< body;
-
 	return response.toString();
 }
 
@@ -137,19 +120,16 @@ std::string	HttpHandler::handleDELETE(const Request &req)
 	{
 		response.setStatusLine("HTTP/1.1 200 OK");
 		response.setBody("File deleted successfully\n");
-		// return "HTTP/1.1 200 OK\r\n\r\nFile deleted successfully\n";
 	}
 	else if (errno == EACCES)
 	{
 		response.setStatusLine("HTTP/1.1 403 Forbidden");
 		response.setBody("Permission denied\n");
-		// return "HTTP/1.1 403 Forbidden\r\n\r\nPermission denied\n";
 	}
 	else if (errno == ENOENT)
 	{
 		response.setStatusLine("HTTP/1.1 404 Not Found");
 		response.setBody("File not found\n");
-		// return "HTTP/1.1 404 Not Found\r\n\r\nFile not found\n";
 	}
 	return response.toString();
 }
