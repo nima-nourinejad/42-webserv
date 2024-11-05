@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/05 11:31:40 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/05 13:06:36 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include "SystemCallError.hpp"
 #include "CGIHandler.hpp"
 #include <string>
+#include <fstream>
 #include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
@@ -38,6 +39,9 @@ class HttpHandler
 		std::string	handlePOST(const Request &req);
 		std::string	handleDELETE(const Request &req);
 		std::string	handleCGI(const Request &req);
+
+		std::string	extractFilename(const std::string &disposition);
+		void		saveFile(const std::string &filename, const std::string &fileData);
 };
 
 #endif

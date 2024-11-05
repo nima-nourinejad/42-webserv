@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:44 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/04 17:48:17 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/05 12:51:39 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class Response
 		void								setStatusLine(const std::string &statusLine);
 		void								setHeader(const std::string &key, const std::string &value);
 		void								setBody(const std::string &body);
+		std::string							getBody() const;
 
 		std::string							toString() const;
 };

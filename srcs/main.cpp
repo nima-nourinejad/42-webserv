@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:43:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/28 13:35:08 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/05 13:22:54 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,21 @@ int main()
 		"\r\n"
 		"test";
 
+	std::string	boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW";
+	std::string	rawFileUploadRequest =
+		"POST /upload HTTP/1.1\r\n"
+		"Host: localhost\r\n"
+		"Content-Type: multipart/form-data; boundary=" + boundary + "\r\n"
+		"Content-Length: 214\r\n"
+		"\r\n"
+		"--" + boundary + "\r\n"
+		"Content-Disposition: form-data; name=\"file\"; filename=\"test.txt\"\r\n"
+		"Content-Type: text/plain\r\n"
+		"\r\n"
+		"Hello, this is a test file content.\r\n"
+		"--" + boundary + "--\r\n";
+
+
 	try
 	{
 		// Handle GET request
@@ -53,6 +68,12 @@ int main()
 		std::string	cgiResponse = cgiHandler.execute(postRequest);
 
 		std::cout << "CGI Response:\n" << cgiResponse << std::endl;
+
+		// Handle file upload request
+		Request		fileUploadRequest(rawFileUploadRequest);
+		std::string	fileUploadResponse = httpHandler.handleRequest(fileUploadRequest);
+
+		std::cout << "File Upload HTTP Response:\n" << fileUploadResponse << std::endl;
 	}
 	catch (const std::exception &e)
 	{
