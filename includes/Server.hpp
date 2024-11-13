@@ -9,11 +9,12 @@
 
 #include "Configration.hpp"
 #include "ClientConnection.hpp"
+#include "Response.hpp"
 
 class Server
 {
 
-      private:
+    private:
 
 	/// Constants
 	static constexpr int MAX_CONNECTIONS = 5;
@@ -22,15 +23,16 @@ class Server
 	static constexpr int MAX_RETRY = 5;
 
 	/// Private Attributes
-	int _socket_fd;
-	int _fd_epoll;
-	struct sockaddr_in _address;
-	Configration _config;
-	int _num_clients;
-	ClientConnection _clients[MAX_CONNECTIONS];
-	struct epoll_event _events[MAX_CONNECTIONS + 1];
-	struct epoll_event _ready[MAX_CONNECTIONS + 1];
-	int _retry;
+	int					_socket_fd;
+	int					_fd_epoll;
+	struct sockaddr_in	_address;
+	Configration		_config;
+	int					_num_clients;
+	ClientConnection	_clients[MAX_CONNECTIONS];
+	struct epoll_event	_events[MAX_CONNECTIONS + 1];
+	struct epoll_event	_ready[MAX_CONNECTIONS + 1];
+	int					_retry;
+	Response			_response;
 
 	/// ClientConnection Methods
 	void occupyClientSlot (int availbleSlot, int fd);
@@ -70,7 +72,7 @@ class Server
 	void acceptClient ();
 	void startListeningSocket ();
 	
-      public:
+    public:
 	/// Main Methods
 	Server (int port, std::string const & host, size_t maxBodySize);
 	void handleEvents ();

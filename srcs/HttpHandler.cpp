@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/05 13:23:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/13 16:29:45 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,7 @@ std::string	HttpHandler::handleGET(const Request &req)
 		}
 		response.setStatusLine("HTTP/1.1 200 OK");
 		response.setBody(content);
-		response.setHeader("Content-Type", "text/plain");
+		response.setHeader("Content-Type", "text/html");
 		return response.toString();
 	}
 	catch (const SystemCallError &e)
@@ -91,25 +91,6 @@ std::string	HttpHandler::handleGET(const Request &req)
 		throw;
 	}
 }
-
-// std::string	HttpHandler::handlePOST(const Request& req)
-// {
-// 	std::string body = req.getBody();
-// 	Response	response;
-
-// 	if (body.empty())
-// 	{
-// 		response.setStatusLine("HTTP/1.1 400 Bad Request");
-// 		response.setBody("Empty body in POST request\n");
-// 		return response.toString();
-// 	}
-
-// 	response.setStatusLine("HTTP/1.1 200 OK");
-// 	response.setBody(body);
-// 	response.setHeader("Content-Length", std::to_string(body.size()));
-// 	response.setHeader("Content-Type", "text/plain");
-// 	return response.toString();
-// }
 
 std::string	HttpHandler::handlePOST(const Request &req)
 {

@@ -6,7 +6,7 @@
 #    By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/22 16:45:01 by asohrabi          #+#    #+#              #
-#    Updated: 2024/11/13 15:56:57 by asohrabi         ###   ########.fr        #
+#    Updated: 2024/11/13 16:02:50 by asohrabi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,11 +14,10 @@
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++11 -Iincludes
 
-# Source and object files
-SRCS = $(wildcard *.cpp)
-
 SRCS_DIR = srcs
 OBJs_DIR = objs
+
+SRCS = $(wildcard $(SRCS_DIR)/*.cpp)
 OBJS = $(SRCS:$(SRCS_DIR)/%.cpp=$(OBJs_DIR)/%.o)
 
 # Target executable

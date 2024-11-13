@@ -3,7 +3,7 @@
 
 int main ()
 {
-	Server server(9001, "127.0.0.3", 1);
+	Server server(9001, "127.0.0.3", 1000);
 
 	try
 	{

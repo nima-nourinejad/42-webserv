@@ -10,6 +10,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "Request.hpp"
+#include "Response.hpp"
+#include "HttpHandler.hpp"
+#include "CGIHandler.hpp"
 
 
 #include "SocketException.hpp"

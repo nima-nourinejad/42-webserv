@@ -345,46 +345,62 @@ void ClientConnection::createResponseParts ()
 	std::cout << "Creating response for client " << index + 1 << std::endl;
 	std::string method = requestmethod (request);
 	std::string uri = requestURI (request);
-	std::string path = findPath (method, uri);
-	std::string body = readFile (path);
-
-	std::string statusLine = createStatusLine (method, uri);
-
-	std::string contentType = "Content-Type: text/html\r\n";
-	std::string connection;
-	if (keepAlive)
-		connection = "Connection: keep-alive\r\n";
-	else
-		connection = "Connection: close\r\n";
-
-	std::string header;
-	if (body.size () > maxBodySize)
+	if (uri == "/index.html")
 	{
-		std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
-		header = statusLine + contentType + transferEncoding + connection;
-		responseParts.push_back (header + "\r\n");
-		size_t chunkSize;
-		std::string chunk;
-		std::stringstream sstream;
-		while (body.size () > 0)
-		{
-			chunkSize = std::min (body.size (), maxBodySize);
-			chunk = body.substr (0, chunkSize);
-			sstream.str ("");
-			sstream << std::hex << chunkSize << "\r\n";
-			sstream << chunk << "\r\n";
-			responseParts.push_back (sstream.str ());
-			body = body.substr (chunkSize);
-		}
-		responseParts.push_back ("0\r\n\r\n");
+		std::string	rawGetRequest =
+		"GET /index.html HTTP/1.1\r\n"
+		"Host: localhost\r\n"
+		"\r\n";
+		Request		getRequest(rawGetRequest);
+		std::string	rootDir = "./www";
+		HttpHandler	httpHandler(rootDir);
+		std::string	getResponse = httpHandler.handleRequest(getRequest);
+		responseParts.push_back(getResponse);
 	}
 	else
 	{
-		std::string contentLength = "Content-Length: " + std::to_string (body.size ()) + "\r\n";
-		header = statusLine + contentType + contentLength + connection;
-		responseParts.push_back (header + "\r\n" + body);
+		std::string path = findPath (method, uri);
+		std::string body = readFile (path);
+
+		std::string statusLine = createStatusLine (method, uri);
+
+		std::string contentType = "Content-Type: text/html\r\n";
+		std::string connection;
+		if (keepAlive)
+			connection = "Connection: keep-alive\r\n";
+		else
+			connection = "Connection: close\r\n";
+
+		std::string header;
+		if (body.size () > maxBodySize)
+		{
+			std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
+			header = statusLine + contentType + transferEncoding + connection;
+			responseParts.push_back (header + "\r\n");
+			size_t chunkSize;
+			std::string chunk;
+			std::stringstream sstream;
+			while (body.size () > 0)
+			{
+				chunkSize = std::min (body.size (), maxBodySize);
+				chunk = body.substr (0, chunkSize);
+				sstream.str ("");
+				sstream << std::hex << chunkSize << "\r\n";
+				sstream << chunk << "\r\n";
+				responseParts.push_back (sstream.str ());
+				body = body.substr (chunkSize);
+			}
+			responseParts.push_back ("0\r\n\r\n");
+		}
+		else
+		{
+			std::string contentLength = "Content-Length: " + std::to_string (body.size ()) + "\r\n";
+			header = statusLine + contentType + contentLength + connection;
+			responseParts.push_back (header + "\r\n" + body);
+		}
 	}
 	status = READYTOSEND;
+	std::cout << responseParts[0] << std::endl;
 	std::cout << "Response created for client " << index + 1 << std::endl;
 }
 
