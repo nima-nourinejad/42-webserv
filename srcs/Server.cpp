@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:37:29 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/14 09:46:27 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -458,4 +458,27 @@ void Server::startListeningSocket()
 			++_retry;
 		}
 	}
+	if (!success)
+		throw SocketException ("Failed to start listening socket");
 }
+
+void Server::logError (std::string const & message)
+{
+	try
+	{
+		std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now ();
+		std::time_t timeInSeconds = std::chrono::system_clock::to_time_t (timePoint);
+		std::ofstream logFile ("server_error.log", std::ios::app);
+		if (!logFile.is_open ())
+			throw std::runtime_error ("Failed to open log file");
+		logFile << std::put_time (std::localtime (&timeInSeconds), "%Y-%m-%d %H:%M:%S") << " : ";
+		logFile << message << std::endl;
+		logFile.close ();
+	}
+	catch (std::exception const & e)
+	{
+		std::cerr << "Failed to log exception : " << e.what () << std::endl;
+		std::cerr << "Original exception : " << message << std::endl;
+	}
+}
+

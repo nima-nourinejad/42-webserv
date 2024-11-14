@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:37:20 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/14 09:47:33 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,18 @@ int main ()
 			server.handleEvents ();
 		}
 	}
+	catch(SocketException const & e)
+	{
+		e.log ();
+	}
 	catch(std::exception const & e)
 	{
-		std::cerr << e.what() << std::endl;
-	}	
+		Server::logError (e.what ());
+	}
+	catch(...)
+	{
+		Server::logError ("Unknown exception");
+	}
 	server.closeSocket ();
 	return 0;
 }

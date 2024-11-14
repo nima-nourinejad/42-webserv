@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:38:00 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/14 09:44:54 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,9 @@ class Server
 
 	/// Static Attributes
 	static volatile sig_atomic_t signal_status;
+
+	/// Static Methods
+	static void logError (std::string const & message);
 };
 
 #endif

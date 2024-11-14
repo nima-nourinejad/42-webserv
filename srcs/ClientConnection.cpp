@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:35:14 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/14 09:50:09 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -412,7 +412,6 @@ void ClientConnection::createResponseParts ()
 		}
 	}
 	status = READYTOSEND;
-	std::cout << responseParts[0] << std::endl;
 	std::cout << "Response created for client " << index + 1 << std::endl;
 }
 
