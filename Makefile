@@ -3,16 +3,16 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+         #
+#    By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/10/22 16:45:01 by asohrabi          #+#    #+#              #
-#    Updated: 2024/11/13 16:02:50 by asohrabi         ###   ########.fr        #
+#    Updated: 2024/11/14 21:24:50 by akovalev         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 # Compiler and flags
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++11 -Iincludes
+CXXFLAGS = -Wall -Wextra -Werror -std=c++17 -Iincludes #changed from -std=c++11 to -std=c++17 for filesystem functions of parser
 
 SRCS_DIR = srcs
 OBJs_DIR = objs
