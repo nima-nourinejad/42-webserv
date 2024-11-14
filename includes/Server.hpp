@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:44:54 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/14 15:09:00 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,8 +41,8 @@ class Server
 	Configration		_config;
 	int					_num_clients;
 	ClientConnection	_clients[MAX_CONNECTIONS];
-	struct epoll_event	_events[MAX_CONNECTIONS + 1];
-	struct epoll_event	_ready[MAX_CONNECTIONS + 1];
+	struct epoll_event	_events[2 * MAX_CONNECTIONS + 1];
+	struct epoll_event	_ready[2 * MAX_CONNECTIONS + 1];
 	int					_retry;
 	Response			_response;
 

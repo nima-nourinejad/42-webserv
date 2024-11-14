@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 10:25:46 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/14 15:10:31 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,7 @@ void Server::closeClientSockets ()
 
 int Server::waitForEvents ()
 {
-	int n_ready_fds = epoll_wait (_fd_epoll, _ready, MAX_CONNECTIONS + 1, 0);
+	int n_ready_fds = epoll_wait (_fd_epoll, _ready, 2 * MAX_CONNECTIONS + 1, 0);
 	if (n_ready_fds == -1)
 	{
 		if (errno == EINTR)
