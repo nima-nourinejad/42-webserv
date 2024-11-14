@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:46:27 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/14 10:25:46 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -454,12 +454,22 @@ void Server::startListeningSocket()
 		{
 			e.log ();
 			if (_socket_fd != -1)
+			{
 				close (_socket_fd);
+				_socket_fd = -1;
+			}
 			++_retry;
 		}
 	}
 	if (!success)
+	{
+		if (_socket_fd != -1)
+		{
+			close (_socket_fd);
+			_socket_fd = -1;
+		}
 		throw SocketException ("Failed to start listening socket");
+	}
 }
 
 void Server::logError (std::string const & message)

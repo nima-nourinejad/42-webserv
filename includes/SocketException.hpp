@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:38:03 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:38:04 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/14 11:35:50 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@ enum ErrorType
 	FIND_EMPTY_SLOT,
 	ADD_EPOLL,
 	ACCEPT_CLIENT,
+	INTERNAL_ERROR,
+	BAD_GATEWAY,
 };
 
 
