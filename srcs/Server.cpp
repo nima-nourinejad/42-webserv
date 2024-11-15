@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 15:53:08 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 16:00:24 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,8 @@ Server::Server (int port, std::string const & host, size_t maxBodySize)
 	startListeningSocket ();
 	setClientsMaxBodySize (maxBodySize);
 	eventData.type = LISTENING;
+	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
-	eventData.index = -1;
 };
 
 void Server::connectToSocket ()
@@ -126,6 +126,7 @@ void Server::closeSocket ()
 	signal (SIGINT, SIG_DFL);
 	closeClientSockets ();
 	removeEpoll (_socket_fd);
+	eventData.fd = -1;
 	if (_fd_epoll != -1)
 		close (_fd_epoll);
 	if (_socket_fd != -1)
@@ -306,6 +307,7 @@ void Server::handleErr (struct epoll_event const & event)
 	{
 		std::cerr << "Error on listening socket" << std::endl;
 		removeEpoll (_socket_fd);
+		eventData.fd = -1;
 		close (_socket_fd);
 		startListeningSocket ();
 	}
@@ -364,7 +366,6 @@ void Server::addEpoll (int fd, int index)
 	if (index == MAX_CONNECTIONS)
 	{
 		eventData.fd = fd;
-		eventData.index = index;
 		_events[index].data.ptr = &eventData;
 		_events[index].events = EPOLLIN | EPOLLHUP | EPOLLERR;
 	}
