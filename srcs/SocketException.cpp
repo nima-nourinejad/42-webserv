@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:31 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 11:36:04 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 14:22:50 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,10 +20,6 @@ int findType (std::string const & message)
 		return ACCEPT_CLIENT;
 	else if (message == "Failed to add to epoll")
 		return ADD_EPOLL;
-	else if (message == "Proxy : Failed to get address info" || message == "Proxy: No address info returned" || message == "Proxy: Invalid address family returned" || message == "Proxy: Failed to connect to upstream" || message == "Proxy: Connection closed by upstream")
-		return BAD_GATEWAY;
-	else if (message == "Proxy: Failed to create socket")
-		return INTERNAL_ERROR;	
 	return -1;
 }
 
