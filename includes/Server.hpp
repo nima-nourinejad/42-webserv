@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 14:03:11 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 15:52:55 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,8 @@ class Server
 	void handleTimeout (int index);
 	void closeClientSocket (int index);
 	void setClientsMaxBodySize (size_t maxBodySize);
-	void receiveMessage (ClientConnection * client);
-	void sendResponseParts (ClientConnection * client);
+	void receiveMessage (int index);
+	void sendResponseParts (int index);
 
 	/// Event Handling Methods
 	int waitForEvents ();

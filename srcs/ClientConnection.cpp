@@ -6,14 +6,19 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:50:09 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 15:49:51 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
 
 ClientConnection::ClientConnection ()
-    : index (-1), fd (-1), status (DISCONNECTED), keepAlive (true){};
+    : index (-1), fd (-1), status (DISCONNECTED), keepAlive (true)
+	{
+		eventData.type = CLIENT;
+		eventData.fd = -1;
+		eventData.index = -1;
+	};
 
 void ClientConnection::changeRequestToBadRequest ()
 {

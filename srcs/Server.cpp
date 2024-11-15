@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 14:12:46 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 15:53:08 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,9 @@ Server::Server (int port, std::string const & host, size_t maxBodySize)
 	createEpoll ();
 	startListeningSocket ();
 	setClientsMaxBodySize (maxBodySize);
+	eventData.type = LISTENING;
+	eventData.fd = -1;
+	eventData.index = -1;
 };
 
 void Server::connectToSocket ()
@@ -168,9 +171,8 @@ int Server::waitForEvents ()
 	return n_ready_fds;
 }
 
-void Server::sendResponseParts (ClientConnection * client)
+void Server::sendResponseParts (int index)
 {
-	int index = client->index;
 	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
 		return;
 	ssize_t bytes_sent;
@@ -212,9 +214,8 @@ void Server::sendResponseParts (ClientConnection * client)
 	}
 }
 
-void Server::receiveMessage (ClientConnection * client)
+void Server::receiveMessage (int index)
 {
-	int index = client->index;
 	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
 		return;
 	char buffer[16384] = {};
@@ -325,9 +326,9 @@ void Server::handleClientEvents (struct epoll_event const & event)
 	else
 	{
 		if (getClientStatus (event) < RECEIVED && (event.events & EPOLLIN))
-			receiveMessage (_clients + getClientIndex (event));
+			receiveMessage (getClientIndex (event));
 		else if (getClientStatus (event) == READYTOSEND && (event.events & EPOLLOUT))
-			sendResponseParts (_clients + getClientIndex (event));
+			sendResponseParts (getClientIndex (event));
 	}
 }
 
@@ -362,7 +363,6 @@ void Server::addEpoll (int fd, int index)
 {
 	if (index == MAX_CONNECTIONS)
 	{
-		eventData.type = LISTENING;
 		eventData.fd = fd;
 		eventData.index = index;
 		_events[index].data.ptr = &eventData;
@@ -373,7 +373,6 @@ void Server::addEpoll (int fd, int index)
 		_events[index].events = EPOLLIN | EPOLLOUT | EPOLLHUP | EPOLLERR;
 		_clients[index].eventData.fd = fd;
 		_clients[index].eventData.index = index;
-		_clients[index].eventData.type = CLIENT;
 		_events[index].data.ptr = &(_clients[index].eventData);
 	}
 	if (epoll_ctl (_fd_epoll, EPOLL_CTL_ADD, fd, _events + index) == -1)
