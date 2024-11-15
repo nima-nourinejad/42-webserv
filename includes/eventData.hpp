@@ -1,41 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   eventData.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 14:09:42 by nnourine         ###   ########.fr       */
+/*   Created: 2024/11/15 13:05:42 by nnourine          #+#    #+#             */
+/*   Updated: 2024/11/15 14:12:09 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
-#include <sys/epoll.h>
-
-int main ()
+enum eventTypes
 {
-	Server server(9001, "127.0.0.3", 1);
+	LISTENING,
+	CLIENT,
+};
 
-	try
-	{
-		while (server.signal_status != SIGINT)
-		{
-			server.handleEvents ();
-		}
-	}
-	catch(SocketException const & e)
-	{
-		e.log ();
-	}
-	catch(std::exception const & e)
-	{
-		Server::logError (e.what ());
-	}
-	catch(...)
-	{
-		Server::logError ("Unknown exception");
-	}
-	server.closeSocket ();
-	return 0;
-}
+struct eventData
+{
+	int index;
+	int fd;
+	int type;
+} ;

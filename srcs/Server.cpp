@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 15:10:31 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 14:12:46 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,6 +143,8 @@ void Server::closeClientSocket (int index)
 		_clients[index].request.clear ();
 		_clients[index].responseParts.clear ();
 		_clients[index].index = -1;
+		_clients[index].eventData.fd = -1;
+		_clients[index].eventData.index = -1;
 		--_num_clients;
 	}
 }
@@ -155,7 +157,7 @@ void Server::closeClientSockets ()
 
 int Server::waitForEvents ()
 {
-	int n_ready_fds = epoll_wait (_fd_epoll, _ready, 2 * MAX_CONNECTIONS + 1, 0);
+	int n_ready_fds = epoll_wait (_fd_epoll, _ready, MAX_CONNECTIONS + 1, 0);
 	if (n_ready_fds == -1)
 	{
 		if (errno == EINTR)
@@ -244,18 +246,27 @@ void Server::receiveMessage (ClientConnection * client)
 
 int Server::getClientStatus (struct epoll_event const & event) const
 {
-	if (event.data.fd == _socket_fd || event.data.ptr == nullptr)
+	if (eventType (event) == LISTENING)
 		return -1;
-	ClientConnection * target = (ClientConnection *)event.data.ptr;
-	return target->status;
+	struct eventData * target = (struct eventData *)event.data.ptr;
+	int index = target->index;
+	return _clients[index].status;
 }
 
 int Server::getClientIndex (struct epoll_event const & event) const
 {
-	if (event.data.fd == _socket_fd || event.data.ptr == nullptr)
+	if (eventType (event) == LISTENING)
 		return -1;
-	ClientConnection * target = (ClientConnection *)event.data.ptr;
+	struct eventData * target = (struct eventData *)event.data.ptr;
 	return target->index;
+}
+
+int Server::eventType (struct epoll_event const & event) const
+{
+	if (event.data.ptr == nullptr)
+		return -1;
+	struct eventData * target = (struct eventData *)event.data.ptr;
+	return target->type;
 }
 
 void Server::handleTimeout (int index)
@@ -290,7 +301,7 @@ void Server::prepareResponses ()
 
 void Server::handleErr (struct epoll_event const & event)
 {
-	if (event.data.fd == _socket_fd)
+	if (eventType (event) == LISTENING)
 	{
 		std::cerr << "Error on listening socket" << std::endl;
 		removeEpoll (_socket_fd);
@@ -314,9 +325,9 @@ void Server::handleClientEvents (struct epoll_event const & event)
 	else
 	{
 		if (getClientStatus (event) < RECEIVED && (event.events & EPOLLIN))
-			receiveMessage ((ClientConnection *)event.data.ptr);
+			receiveMessage (_clients + getClientIndex (event));
 		else if (getClientStatus (event) == READYTOSEND && (event.events & EPOLLOUT))
-			sendResponseParts ((ClientConnection *)event.data.ptr);
+			sendResponseParts (_clients + getClientIndex (event));
 	}
 }
 
@@ -333,7 +344,7 @@ void Server::handleSocketEvents ()
 	int n_ready_fds = waitForEvents ();
 	for (int i = 0; i < n_ready_fds; i++)
 	{
-		if (_ready[i].data.fd == _socket_fd)
+		if (eventType (_ready[i]) == LISTENING)
 			handleListeningEvents (_ready[i]);
 		else
 			handleClientEvents (_ready[i]);
@@ -349,13 +360,21 @@ void Server::handleEvents ()
 
 void Server::addEpoll (int fd, int index)
 {
-	_events[index].data.fd = fd;
 	if (index == MAX_CONNECTIONS)
+	{
+		eventData.type = LISTENING;
+		eventData.fd = fd;
+		eventData.index = index;
+		_events[index].data.ptr = &eventData;
 		_events[index].events = EPOLLIN | EPOLLHUP | EPOLLERR;
+	}
 	else
 	{
 		_events[index].events = EPOLLIN | EPOLLOUT | EPOLLHUP | EPOLLERR;
-		_events[index].data.ptr = &_clients[index];
+		_clients[index].eventData.fd = fd;
+		_clients[index].eventData.index = index;
+		_clients[index].eventData.type = CLIENT;
+		_events[index].data.ptr = &(_clients[index].eventData);
 	}
 	if (epoll_ctl (_fd_epoll, EPOLL_CTL_ADD, fd, _events + index) == -1)
 		throw SocketException ("Failed to add to epoll", fd);

@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:37:52 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 13:12:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@
 
 
 #include "SocketException.hpp"
+#include "eventData.hpp"
 
 enum ClientStatus
 {
@@ -60,6 +61,7 @@ class ClientConnection
 	std::string request;
 	std::vector<std::string> responseParts;
 	size_t maxBodySize;
+	struct eventData eventData; 
 
 	/// Public Methods
 	ClientConnection ();
