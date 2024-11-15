@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 14:09:42 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 17:24:31 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,26 @@
 
 int main ()
 {
-	Server server(9001, "127.0.0.3", 1);
+	ConfigParser config;
+	std::ifstream file("config/webserv.conf");;
+	if(!file.is_open())
+	{
+		std::cerr << "Error: could not open file" << std::endl;
+		return 1;
+	}
+	try
+	{
+		config.parseConfig(file);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return 1;
+	}
+	std::cout << "Successfully parsed config" << std::endl;
+	config.printServerConfig();
+	
+	Server server(config.getServerBlocks().at(0));
 
 	try
 	{

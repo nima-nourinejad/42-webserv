@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 15:52:55 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 17:20:27 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include "Configration.hpp"
 #include "ClientConnection.hpp"
 #include "Response.hpp"
+#include "ConfigParser.hpp"
 
 class Server
 {
@@ -89,6 +90,7 @@ class Server
     public:
 	/// Main Methods
 	Server (int port, std::string const & host, size_t maxBodySize);
+	Server (ServerBlock const & serverBlock);
 	void handleEvents ();
 	void closeSocket ();
 

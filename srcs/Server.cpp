@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 16:00:24 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/15 17:22:28 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,18 @@ Server::Server (int port, std::string const & host, size_t maxBodySize)
 	createEpoll ();
 	startListeningSocket ();
 	setClientsMaxBodySize (maxBodySize);
+	eventData.type = LISTENING;
+	eventData.index = MAX_CONNECTIONS;
+	eventData.fd = -1;
+};
+
+Server::Server (ServerBlock const & serverBlock)
+    : _socket_fd (-1), _fd_epoll (-1), _config (serverBlock.getListen(), serverBlock.getHost(), serverBlock.getClientMaxBodySize()), _num_clients (0)
+{
+	applyCustomSignal ();
+	createEpoll ();
+	startListeningSocket ();
+	setClientsMaxBodySize (serverBlock.getClientMaxBodySize());
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
