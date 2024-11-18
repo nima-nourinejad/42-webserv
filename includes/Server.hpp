@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 12:52:48 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 14:29:39 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <sys/epoll.h>
 
-#include "Configration.hpp"
+#include "Configuration.hpp"
 #include "ClientConnection.hpp"
 #include "Response.hpp"
 #include "ConfigParser.hpp"
@@ -38,7 +38,7 @@ class Server
 		int						_socket_fd;
 		int						_fd_epoll;
 		struct sockaddr_in		_address;
-		Configration			_config;
+		Configuration			_config;
 		int						_num_clients;
 		ClientConnection		_clients[MAX_CONNECTIONS];
 		struct epoll_event		_events[MAX_CONNECTIONS + 1];
@@ -88,8 +88,8 @@ class Server
 	
     public:
 		/// Main Methods
-		Server (int port, std::string const & host, size_t maxBodySize);
-		Server (ServerBlock const & serverBlock);
+		Server(int port, std::string const & host, size_t maxBodySize);
+		Server(ServerBlock const & serverBlock);
 		void					handleEvents ();
 		void					closeSocket ();
 

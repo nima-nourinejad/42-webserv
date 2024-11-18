@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/13 16:29:45 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 14:53:30 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ std::string	HttpHandler::handleRequest(const Request& req)
 			return handlePOST(req);
 		else if (req.getMethod() == "DELETE")
 			return handleDELETE(req);
-		else if (req.getMethod() == "CGI")
+		else if (req.getMethod() == "CGI") // check if for the CGI, it should start with CGI
 			return handleCGI(req);
 
 		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
