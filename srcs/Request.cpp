@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/10/28 14:07:34 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 12:42:18 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ std::string	Request::getBody() const
 	return _body;
 }
 
+// Might need to use Andre's parsing method
 void	Request::parse(const std::string &rawRequest)
 {
 	std::istringstream	stream(rawRequest);
@@ -70,6 +71,7 @@ void	Request::parse(const std::string &rawRequest)
 	if (!(requestLine >> _method >> _path >> _httpVersion))
 		handleError("Invalid request format");
 
+	// Handle headers
 	while (std::getline(stream, line) && line != "\r")
 	{
 		std::size_t	colon = line.find(':');
@@ -81,7 +83,7 @@ void	Request::parse(const std::string &rawRequest)
 			_headers[headerKey] = headerValue;
 		}
 	}
-
+	// Handle body
 	if (_headers["Content-Length"] != "")
 	{
 		try

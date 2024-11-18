@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/21 19:39:10 by akovalev          #+#    #+#             */
-/*   Updated: 2024/10/31 18:21:11 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/11/18 12:47:19 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,8 @@
 #include <algorithm>
 #include <sstream>
 
-enum class TokenType {
+enum class TokenType
+{
 	KEY_VALUE,
 	KEY_MULTI_VALUE,
 	OPEN,
@@ -32,10 +33,11 @@ enum class TokenType {
 	UNKNOWN
 };
 
-struct Token {
-	TokenType type;
-	std::string key;
-	std::vector<std::string> values;  
+struct Token
+{
+	TokenType					type;
+	std::string					key;
+	std::vector<std::string>	values;  
 
 	// Constructor for KEY_VALUE tokens (single value)
 	Token(TokenType t, const std::string& k, const std::string& v) 
@@ -52,19 +54,20 @@ struct Token {
 
 class ConfigParser
 {
-private:
-	std::vector<ServerBlock> _server_blocks;
-	std::vector<Token> _tokens;
-public:
-	ConfigParser(/* args */);
-	~ConfigParser();
-	std::vector<ServerBlock> parseConfig(std::ifstream& filepath);
-	std::vector<ServerBlock> getServerBlocks() const;
-	void tokenize(std::vector<Token>& tokens, std::ifstream& filepath);
-	void parseServerBlock(size_t& index);
-	void parseLocationBlock(size_t& index);
-	void printServerConfig();
-	void unexpectedToken(size_t i);
+	private:
+		std::vector<ServerBlock>	_server_blocks;
+		std::vector<Token>			_tokens;
+	public:
+		ConfigParser(/* args */);
+		~ConfigParser();
+
+		std::vector<ServerBlock>	parseConfig(std::ifstream& filepath);
+		std::vector<ServerBlock>	getServerBlocks() const;
+		void						tokenize(std::vector<Token>& tokens, std::ifstream& filepath);
+		void						parseServerBlock(size_t& index);
+		void						parseLocationBlock(size_t& index);
+		void						printServerConfig();
+		void						unexpectedToken(size_t i);
 };
 
 #endif

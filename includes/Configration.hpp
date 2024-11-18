@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Configration.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:55 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:37:56 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/18 12:43:08 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 13:12:16 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/18 12:46:51 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,42 +48,41 @@ class ClientConnection
 	private:
 
 	/// Constants
-		const size_t MAX_HEADER_SIZE = 32768;
+	const size_t				MAX_HEADER_SIZE = 32768;
 	
-      public:
+    public:
 
 	/// Public Attributes
-	int index;
-	int fd;
-	int status;
-	bool keepAlive;
-	time_t connectTime;
-	std::string request;
-	std::vector<std::string> responseParts;
-	size_t maxBodySize;
-	struct eventData eventData; 
+	int							index;
+	int							fd;
+	int							status;
+	bool						keepAlive;
+	time_t						connectTime;
+	std::string					request;
+	std::vector<std::string>	responseParts;
+	size_t						maxBodySize;
+	struct eventData			eventData; 
 
 	/// Public Methods
-	ClientConnection ();
-	void changeRequestToBadRequest ();
-	void changeRequestToServerError ();
-	bool finishedReceivingNonChunked ();
-	bool finishedReceivingChunked ();
-	bool finishedReceiving ();
-	size_t receivedLength () const;
-	void findRequestType ();
-	void connectionType ();
-	size_t getChunkedSize (std::string & unProcessed);
-	void grabChunkedData (std::string & unProcessed, size_t chunkedSize);
-	void grabChunkedHeader (std::string & unProcessed, std::string & header);
-	void handleChunkedEncoding ();
-	void createResponseParts ();
-	time_t getPassedTime () const;
-	void setCurrentTime ();
-	static void sendServerError (int fd, size_t maxBodySize);
-	static void sendServiceUnavailable (int socket_fd, size_t maxBodySize);
+	ClientConnection();
 
-
+	void						changeRequestToBadRequest();
+	void						changeRequestToServerError();
+	bool						finishedReceivingNonChunked();
+	bool						finishedReceivingChunked();
+	bool						finishedReceiving();
+	size_t						receivedLength() const;
+	void						findRequestType();
+	void						connectionType();
+	size_t						getChunkedSize(std::string & unProcessed);
+	void						grabChunkedData(std::string & unProcessed, size_t chunkedSize);
+	void						grabChunkedHeader(std::string & unProcessed, std::string & header);
+	void						handleChunkedEncoding();
+	void						createResponseParts();
+	time_t						getPassedTime() const;
+	void						setCurrentTime();
+	static void					sendServerError(int fd, size_t maxBodySize);
+	static void					sendServiceUnavailable(int socket_fd, size_t maxBodySize);
 };
 
 #endif
