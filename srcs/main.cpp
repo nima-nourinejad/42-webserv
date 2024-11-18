@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 12:57:51 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ int main()
 {
 	ConfigParser config;
 	std::ifstream file("config/webserv.conf");;
-	if(!file.is_open())
+	if (!file.is_open())
 	{
 		std::cerr << "Error: could not open file" << std::endl;
 		return 1;
@@ -49,11 +49,11 @@ int main()
 	}
 	catch(std::exception const & e)
 	{
-		Server::logError (e.what());
+		Server::logError(e.what());
 	}
 	catch(...)
 	{
-		Server::logError ("Unknown exception");
+		Server::logError("Unknown exception");
 	}
 	server.closeSocket();
 	return 0;

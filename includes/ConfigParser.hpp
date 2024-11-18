@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/21 19:39:10 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/18 12:47:19 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:19:32 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,11 +39,11 @@ struct Token
 	std::string					key;
 	std::vector<std::string>	values;  
 
-	// Constructor for KEY_VALUE tokens (single value)
+	// Constructor for KEY_VALUE tokens(single value)
 	Token(TokenType t, const std::string& k, const std::string& v) 
 		: type(t), key(k), values{v} {}
 
-	// Constructor for KEY_MULTI_VALUE tokens (multiple values)
+	// Constructor for KEY_MULTI_VALUE tokens(multiple values)
 	Token(TokenType t, const std::string& k, const std::vector<std::string>& vals)
 		: type(t), key(k), values(vals) {}
 

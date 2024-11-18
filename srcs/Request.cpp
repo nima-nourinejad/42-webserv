@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/18 12:42:18 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ Request::Request(const std::string &rawRequest)
 	{
 		parse(rawRequest);
 	}
-	catch (const SystemCallError &e)
+	catch(const SystemCallError &e)
 	{
 		std::cerr << "Error while parsing request: " << e.what() << std::endl;
 		throw;
@@ -96,11 +96,11 @@ void	Request::parse(const std::string &rawRequest)
 				handleError("Content length mismatch");
 
 		}
-		catch (const std::invalid_argument &e)
+		catch(const std::invalid_argument &e)
 		{
 			handleError("Invalid Content-Length header");
 		}
-		catch (const std::out_of_range &e)
+		catch(const std::out_of_range &e)
 		{
 			handleError("Content-Length out of range");
 		}

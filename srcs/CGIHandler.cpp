@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/05 11:32:10 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ std::string	CGIHandler::execute(const Request &req)
 
 			char *argv[] = { const_cast<char *>(_cgiPath.c_str()), NULL };
 			
-			// Set up environment variables (for simplicity, only CONTENT_LENGTH)
+			// Set up environment variables(for simplicity, only CONTENT_LENGTH)
 			std::string	contentLength = "CONTENT_LENGTH=" + std::to_string(req.getBody().size());
 			char *envp[] = { const_cast<char *>(contentLength.c_str()), NULL };
 
@@ -89,7 +89,7 @@ std::string	CGIHandler::execute(const Request &req)
 			return response.toString();
 		}
 	}
-	catch (const SystemCallError& e)
+	catch(const SystemCallError& e)
 	{
 		Response	response;
 		

@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 13:50:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,9 +164,9 @@ void ClientConnection::handleChunkedEncoding()
 	std::string unProcessed = request;
 	request.clear();
 	if (unProcessed.find("Transfer-Encoding: chunked") == std::string::npos)
-		return (changeRequestToServerError());
+		return(changeRequestToServerError());
 	if (unProcessed.find("\r\n0\r\n\r\n") != std::string::npos)
-		return (changeRequestToBadRequest());
+		return(changeRequestToBadRequest());
 	std::string header = "";
 	grabChunkedHeader(unProcessed, header);
 
@@ -174,7 +174,7 @@ void ClientConnection::handleChunkedEncoding()
 	while (true)
 	{
 		if (unProcessed.find("\r\n") == std::string::npos)
-			return (changeRequestToBadRequest());
+			return(changeRequestToBadRequest());
 		chunkedSize = getChunkedSize(unProcessed);
 		if (chunkedSize == 0)
 			return;
@@ -204,11 +204,11 @@ std::string findPath(std::string const & method, std::string const & uri)
 std::string createStatusLine(std::string const & method, std::string const & uri)
 {
 	std::string statusLine;
-	if (method == "GET" && (uri == "/" || uri == "/about" || uri == "/long"))
+	if (method == "GET" &&(uri == "/" || uri == "/about" || uri == "/long"))
 		statusLine = "HTTP/1.1 200 OK\r\n";
-	else if (method == "GET" && (uri == "/500"))
+	else if (method == "GET" &&(uri == "/500"))
 		statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-	else if (method == "GET" && (uri == "/400"))
+	else if (method == "GET" &&(uri == "/400"))
 		statusLine = "HTTP/1.1 400 Bad Request\r\n";
 	else
 		statusLine = "HTTP/1.1 404 Not Found\r\n";
@@ -289,9 +289,9 @@ void ClientConnection::sendServiceUnavailable(int socket_fd, size_t maxBodySize)
 		bytes_sent = send(temp_fd, response[0].c_str(), response[0].size(), MSG_DONTWAIT);
 		if (bytes_sent <= 0)
 			break;
-		if (bytes_sent < static_cast<ssize_t> (response[0].size()))
+		if (bytes_sent < static_cast<ssize_t>(response[0].size()))
 		{
-			std::string remainPart = response[0].substr (bytes_sent);
+			std::string remainPart = response[0].substr(bytes_sent);
 			response[0] = remainPart;
 		}
 		else
@@ -321,7 +321,7 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 		{
 			chunkSize = std::min(body.size(), maxBodySize);
 			chunk = body.substr(0, chunkSize);
-			sstream.str ("");
+			sstream.str("");
 			sstream << std::hex << chunkSize << "\r\n";
 			sstream << chunk << "\r\n";
 			response.push_back(sstream.str());
@@ -342,7 +342,7 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 		bytes_sent = send(fd, response[0].c_str(), response[0].size(), MSG_DONTWAIT);
 		if (bytes_sent <= 0)
 			break;
-		if (bytes_sent < static_cast<ssize_t> (response[0].size()))
+		if (bytes_sent < static_cast<ssize_t>(response[0].size()))
 		{
 			std::string remainPart = response[0].substr(bytes_sent);
 			response[0] = remainPart;
@@ -350,7 +350,7 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 		else
 			response.erase(response.begin());
 	}
-	close (fd);
+	close(fd);
 }
 
 void ClientConnection::createResponseParts()
@@ -399,11 +399,11 @@ void ClientConnection::createResponseParts()
 			{
 				chunkSize = std::min(body.size(), maxBodySize);
 				chunk = body.substr(0, chunkSize);
-				sstream.str ("");
+				sstream.str("");
 				sstream << std::hex << chunkSize << "\r\n";
 				sstream << chunk << "\r\n";
 				responseParts.push_back(sstream.str());
-				body = body.substr (chunkSize);
+				body = body.substr(chunkSize);
 			}
 			responseParts.push_back("0\r\n\r\n");
 		}
@@ -431,7 +431,7 @@ time_t ClientConnection::getPassedTime() const
 	time_t current_time = getCurrentTime();
 	if (current_time == -1)
 		throw SocketException("Failed to get passed time");
-	return (difftime(current_time, connectTime));
+	return(difftime(current_time, connectTime));
 }
 
 void ClientConnection::setCurrentTime()

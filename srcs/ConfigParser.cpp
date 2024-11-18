@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/18 13:07:05 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ std::vector<ServerBlock> ConfigParser::getServerBlocks() const
 
 std::string tokenTypeToString(TokenType type)
 {
-	switch (type)
+	switch(type)
 	{
 		case TokenType::OPEN: return "OPEN";
 		case TokenType::CLOSE: return "CLOSE";
@@ -267,7 +267,7 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 			{	
 				std::string comment;
 				std::getline(filepath, comment);
-				tokens.push_back(Token(TokenType::COMMENT, (word + comment)));
+				tokens.push_back(Token(TokenType::COMMENT,(word + comment)));
 			}
 			else {
 				tokens.push_back(Token(TokenType::COMMENT, word));
@@ -291,7 +291,7 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 			{
 				if (value.back() == ';')
 				{
-					tokens.push_back(Token(TokenType::KEY_VALUE, word, (value.substr(0, value.size() - 1))));
+					tokens.push_back(Token(TokenType::KEY_VALUE, word,(value.substr(0, value.size() - 1))));
 					tokens.push_back(Token(TokenType::SEMICOLON, ";")); 
 				}
 				else if (word == "location")
@@ -387,7 +387,7 @@ void ConfigParser::printServerConfig()
 // {
 // 	ConfigParser config;
 // 	std::ifstream file("config/webserv.conf");;
-// 	if(!file.is_open())
+// 	if (!file.is_open())
 // 	{
 // 		std::cerr << "Error: could not open file" << std::endl;
 // 		return 1;

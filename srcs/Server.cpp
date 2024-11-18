@@ -6,31 +6,31 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 12:57:51 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server (int port, std::string const & host, size_t maxBodySize)
-    : _socket_fd (-1), _fd_epoll (-1), _config (port, host, maxBodySize), _num_clients (0)
+Server::Server(int port, std::string const & host, size_t maxBodySize)
+    : _socket_fd(-1), _fd_epoll(-1), _config(port, host, maxBodySize), _num_clients(0)
 {
 	applyCustomSignal();
 	createEpoll();
 	startListeningSocket();
-	setClientsMaxBodySize (maxBodySize);
+	setClientsMaxBodySize(maxBodySize);
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
 };
 
-Server::Server (ServerBlock const & serverBlock)
-    : _socket_fd (-1), _fd_epoll (-1), _config (serverBlock.getListen(), serverBlock.getHost(), serverBlock.getClientMaxBodySize()), _num_clients (0)
+Server::Server(ServerBlock const & serverBlock)
+    : _socket_fd(-1), _fd_epoll(-1), _config(serverBlock.getListen(), serverBlock.getHost(), serverBlock.getClientMaxBodySize()), _num_clients(0)
 {
 	applyCustomSignal();
 	createEpoll();
 	startListeningSocket();
-	setClientsMaxBodySize (serverBlock.getClientMaxBodySize());
+	setClientsMaxBodySize(serverBlock.getClientMaxBodySize());
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
@@ -40,16 +40,16 @@ void Server::connectToSocket()
 {
 	if (signal_status != SIGINT)
 	{
-		if (bind (_socket_fd, (struct sockaddr *)&_address, sizeof (_address)) == -1)
-			throw SocketException ("Failed to bind socket");
+		if (bind(_socket_fd,(struct sockaddr *)&_address, sizeof(_address)) == -1)
+			throw SocketException("Failed to bind socket");
 	}
 	if (signal_status != SIGINT)
 	{
-		if (listen (_socket_fd, BACKLOG) == -1)
-			throw SocketException ("Failed to listen on socket");
+		if (listen(_socket_fd, BACKLOG) == -1)
+			throw SocketException("Failed to listen on socket");
 	}
 	std::cout << "Server is listening on host " << _config.host << " and port " << _config.port << std::endl;
-	addEpoll (_socket_fd, MAX_CONNECTIONS);
+	addEpoll(_socket_fd, MAX_CONNECTIONS);
 }
 
 bool Server::serverFull() const
@@ -72,7 +72,7 @@ int Server::findAvailableSlot() const
 	return -1;
 }
 
-void Server::occupyClientSlot (int availableSlot, int fd)
+void Server::occupyClientSlot(int availableSlot, int fd)
 {
 	std::cout << "Accepted client " << availableSlot + 1 << ". Waiting for the rquest" << std::endl;
 	_clients[availableSlot].fd = fd;
@@ -87,12 +87,12 @@ void Server::handlePendingConnections()
 	{
 		int availableSlot = findAvailableSlot();
 		if (availableSlot == -1)
-			throw SocketException ("Failed to find available slot for client");
-		int fd = accept (_socket_fd, nullptr, nullptr);
+			throw SocketException("Failed to find available slot for client");
+		int fd = accept(_socket_fd, nullptr, nullptr);
 		if (fd == -1)
 		{
 			if (errno != EAGAIN)
-				throw SocketException ("Failed to accept client");
+				throw SocketException("Failed to accept client");
 			else
 			{
 				std::cout << "No pending connections anymore" << std::endl;
@@ -101,9 +101,9 @@ void Server::handlePendingConnections()
 		}
 		else
 		{
-			addEpoll (fd, availableSlot);
+			addEpoll(fd, availableSlot);
 			++_num_clients;
-			occupyClientSlot (availableSlot, fd);
+			occupyClientSlot(availableSlot, fd);
 		}
 	}
 }
@@ -113,20 +113,20 @@ void Server::acceptClient()
 	std::cout << "There are pending connections" << std::endl;
 	if (serverFull())
 	{
-		ClientConnection::sendServiceUnavailable (_socket_fd, _config.maxBodySize);
+		ClientConnection::sendServiceUnavailable(_socket_fd, _config.maxBodySize);
 		return;
 	}
 	try
 	{
 		handlePendingConnections();
 	}
-	catch (SocketException const & e)
+	catch(SocketException const & e)
 	{
 		e.log();
 		if (e.type == ADD_EPOLL)
 		{
 			if (e.open_fd != -1)
-				ClientConnection::sendServerError (e.open_fd, _config.maxBodySize);
+				ClientConnection::sendServerError(e.open_fd, _config.maxBodySize);
 		}
 	}
 }
@@ -135,23 +135,23 @@ void Server::closeSocket()
 {
 	std::cout << std::endl
 		  << "Server is shutting down" << std::endl;
-	signal (SIGINT, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
 	closeClientSockets();
-	removeEpoll (_socket_fd);
+	removeEpoll(_socket_fd);
 	eventData.fd = -1;
 	if (_fd_epoll != -1)
-		close (_fd_epoll);
+		close(_fd_epoll);
 	if (_socket_fd != -1)
-		close (_socket_fd);
+		close(_socket_fd);
 }
 
-void Server::closeClientSocket (int index)
+void Server::closeClientSocket(int index)
 {
 	if (_clients[index].fd != -1 && index < MAX_CONNECTIONS && index >= 0)
 	{
 		std::cout << "Closing client " << index + 1 << std::endl;
-		removeEpoll (_clients[index].fd);
-		close (_clients[index].fd);
+		removeEpoll(_clients[index].fd);
+		close(_clients[index].fd);
 		_clients[index].fd = -1;
 		_clients[index].status = DISCONNECTED;
 		_clients[index].keepAlive = true;
@@ -168,52 +168,52 @@ void Server::closeClientSocket (int index)
 void Server::closeClientSockets()
 {
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
-		closeClientSocket (i);
+		closeClientSocket(i);
 }
 
 int Server::waitForEvents()
 {
-	int n_ready_fds = epoll_wait (_fd_epoll, _ready, MAX_CONNECTIONS + 1, 0);
+	int n_ready_fds = epoll_wait(_fd_epoll, _ready, MAX_CONNECTIONS + 1, 0);
 	if (n_ready_fds == -1)
 	{
 		if (errno == EINTR)
 			return 0;
 		else
-			throw SocketException ("Failed to wait for events");
+			throw SocketException("Failed to wait for events");
 	}
 	return n_ready_fds;
 }
 
-void Server::sendResponseParts (int index)
+void Server::sendResponseParts(int index)
 {
 	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
 		return;
 	ssize_t bytes_sent;
-	bytes_sent = send (_clients[index].fd, _clients[index].responseParts[0].c_str(), _clients[index].responseParts[0].size(), MSG_DONTWAIT);
+	bytes_sent = send(_clients[index].fd, _clients[index].responseParts[0].c_str(), _clients[index].responseParts[0].size(), MSG_DONTWAIT);
 	if (bytes_sent == 0)
 	{
 		std::cout << "Client " << index + 1 << " disconnected" << std::endl;
-		closeClientSocket (index);
+		closeClientSocket(index);
 		return;
 	}
 	else if (bytes_sent > 0)
 	{
-		if (bytes_sent < static_cast<ssize_t> (_clients[index].responseParts[0].size()))
+		if (bytes_sent < static_cast<ssize_t>(_clients[index].responseParts[0].size()))
 		{
-			std::string remainPart = _clients[index].responseParts[0].substr (bytes_sent);
+			std::string remainPart = _clients[index].responseParts[0].substr(bytes_sent);
 			_clients[index].responseParts[0] = remainPart;
 			return;
 		}
 		else
 		{
-			_clients[index].responseParts.erase (_clients[index].responseParts.begin());
+			_clients[index].responseParts.erase(_clients[index].responseParts.begin());
 			if (_clients[index].responseParts.empty())
 			{
 				std::cout << "All response parts sent to client " << index + 1 << std::endl;
 				if (_clients[index].keepAlive == false)
 				{
 					std::cout << "Client " << index + 1 << " requested to close connection" << std::endl;
-					closeClientSocket (index);
+					closeClientSocket(index);
 				}
 				else
 				{
@@ -227,18 +227,18 @@ void Server::sendResponseParts (int index)
 	}
 }
 
-void Server::receiveMessage (int index)
+void Server::receiveMessage(int index)
 {
 	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
 		return;
 	char buffer[16384] = {};
 	std::string stringBuffer;
 	ssize_t bytes_received;
-	bytes_received = recv (_clients[index].fd, buffer, sizeof (buffer), MSG_DONTWAIT);
+	bytes_received = recv(_clients[index].fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 	if (bytes_received == 0)
 	{
 		std::cout << "Client " << index + 1 << " disconnected" << std::endl;
-		closeClientSocket (index);
+		closeClientSocket(index);
 	}
 	else if (bytes_received > 0)
 	{
@@ -258,32 +258,32 @@ void Server::receiveMessage (int index)
 	}
 }
 
-int Server::getClientStatus (struct epoll_event const & event) const
+int Server::getClientStatus(struct epoll_event const & event) const
 {
-	if (eventType (event) == LISTENING)
+	if (eventType(event) == LISTENING)
 		return -1;
-	struct eventData * target = (struct eventData *)event.data.ptr;
+	struct eventData * target =(struct eventData *)event.data.ptr;
 	int index = target->index;
 	return _clients[index].status;
 }
 
-int Server::getClientIndex (struct epoll_event const & event) const
+int Server::getClientIndex(struct epoll_event const & event) const
 {
-	if (eventType (event) == LISTENING)
+	if (eventType(event) == LISTENING)
 		return -1;
-	struct eventData * target = (struct eventData *)event.data.ptr;
+	struct eventData * target =(struct eventData *)event.data.ptr;
 	return target->index;
 }
 
-int Server::eventType (struct epoll_event const & event) const
+int Server::eventType(struct epoll_event const & event) const
 {
 	if (event.data.ptr == nullptr)
 		return -1;
-	struct eventData * target = (struct eventData *)event.data.ptr;
+	struct eventData * target =(struct eventData *)event.data.ptr;
 	return target->type;
 }
 
-void Server::handleTimeout (int index)
+void Server::handleTimeout(int index)
 {
 	std::cout << "Client " << index + 1 << " timed out" << std::endl;
 	if (_clients[index].request.empty() == false)
@@ -292,7 +292,7 @@ void Server::handleTimeout (int index)
 		_clients[index].createResponseParts();
 	}
 	else
-		closeClientSocket (index);
+		closeClientSocket(index);
 }
 
 void Server::handleTimeouts()
@@ -300,7 +300,7 @@ void Server::handleTimeouts()
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
 		if (_clients[i].status > DISCONNECTED && _clients[i].status < RECEIVED && _clients[i].getPassedTime() > TIMEOUT)
-			handleTimeout (i);
+			handleTimeout(i);
 	}
 }
 
@@ -313,43 +313,43 @@ void Server::prepareResponses()
 	}
 }
 
-void Server::handleErr (struct epoll_event const & event)
+void Server::handleErr(struct epoll_event const & event)
 {
-	if (eventType (event) == LISTENING)
+	if (eventType(event) == LISTENING)
 	{
 		std::cerr << "Error on listening socket" << std::endl;
-		removeEpoll (_socket_fd);
+		removeEpoll(_socket_fd);
 		eventData.fd = -1;
-		close (_socket_fd);
+		close(_socket_fd);
 		startListeningSocket();
 	}
 	else
 	{
-		int index = getClientIndex (event);
+		int index = getClientIndex(event);
 		if (index == -1)
 			return;
 		std::cout << "Client " << index + 1 << " disconnected" << std::endl;
-		closeClientSocket (index);
+		closeClientSocket(index);
 	}
 }
 
-void Server::handleClientEvents (struct epoll_event const & event)
+void Server::handleClientEvents(struct epoll_event const & event)
 {
-	if (event.events & (EPOLLHUP | EPOLLERR))
-		handleErr (event);
+	if (event.events &(EPOLLHUP | EPOLLERR))
+		handleErr(event);
 	else
 	{
-		if (getClientStatus (event) < RECEIVED && (event.events & EPOLLIN))
-			receiveMessage (getClientIndex (event));
-		else if (getClientStatus (event) == READYTOSEND && (event.events & EPOLLOUT))
-			sendResponseParts (getClientIndex (event));
+		if (getClientStatus(event) < RECEIVED &&(event.events & EPOLLIN))
+			receiveMessage(getClientIndex(event));
+		else if (getClientStatus(event) == READYTOSEND &&(event.events & EPOLLOUT))
+			sendResponseParts(getClientIndex(event));
 	}
 }
 
-void Server::handleListeningEvents (struct epoll_event const & event)
+void Server::handleListeningEvents(struct epoll_event const & event)
 {
-	if (event.events & (EPOLLHUP | EPOLLERR))
-		handleErr (event);
+	if (event.events &(EPOLLHUP | EPOLLERR))
+		handleErr(event);
 	else if (event.events & EPOLLIN)
 		acceptClient();
 }
@@ -359,10 +359,10 @@ void Server::handleSocketEvents()
 	int n_ready_fds = waitForEvents();
 	for (int i = 0; i < n_ready_fds; i++)
 	{
-		if (eventType (_ready[i]) == LISTENING)
-			handleListeningEvents (_ready[i]);
+		if (eventType(_ready[i]) == LISTENING)
+			handleListeningEvents(_ready[i]);
 		else
-			handleClientEvents (_ready[i]);
+			handleClientEvents(_ready[i]);
 	}
 }
 
@@ -373,7 +373,7 @@ void Server::handleEvents()
 	prepareResponses();
 }
 
-void Server::addEpoll (int fd, int index)
+void Server::addEpoll(int fd, int index)
 {
 	if (index == MAX_CONNECTIONS)
 	{
@@ -388,15 +388,15 @@ void Server::addEpoll (int fd, int index)
 		_clients[index].eventData.index = index;
 		_events[index].data.ptr = &(_clients[index].eventData);
 	}
-	if (epoll_ctl (_fd_epoll, EPOLL_CTL_ADD, fd, _events + index) == -1)
-		throw SocketException ("Failed to add to epoll", fd);
+	if (epoll_ctl(_fd_epoll, EPOLL_CTL_ADD, fd, _events + index) == -1)
+		throw SocketException("Failed to add to epoll", fd);
 }
 
 void Server::createSocket()
 {
-	_socket_fd = socket (AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	_socket_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (_socket_fd == -1)
-		throw SocketException ("Failed to create socket");
+		throw SocketException("Failed to create socket");
 }
 
 void Server::setAddress()
@@ -407,25 +407,25 @@ void Server::setAddress()
 
 	struct addrinfo * result = nullptr;
 
-	int error = getaddrinfo (_config.host.c_str(), nullptr, &hints, &result);
+	int error = getaddrinfo(_config.host.c_str(), nullptr, &hints, &result);
 	if (error != 0)
 	{
-		std::string error_message = gai_strerror (error);
-		throw SocketException ("Failed to get address info : " + error_message);
+		std::string error_message = gai_strerror(error);
+		throw SocketException("Failed to get address info : " + error_message);
 	}
 	if (result == nullptr || result->ai_addr == nullptr)
-		throw SocketException ("No address info returned");
+		throw SocketException("No address info returned");
 	if (result->ai_family != AF_INET)
 	{
-		freeaddrinfo (result);
-		throw SocketException ("Invalid address family returned");
+		freeaddrinfo(result);
+		throw SocketException("Invalid address family returned");
 	}
-	_address = *reinterpret_cast<struct sockaddr_in *> (result->ai_addr);
-	freeaddrinfo (result);
-	_address.sin_port = htons (_config.port);
+	_address = *reinterpret_cast<struct sockaddr_in *>(result->ai_addr);
+	freeaddrinfo(result);
+	_address.sin_port = htons(_config.port);
 }
 
-void Server::signalHandler (int signal)
+void Server::signalHandler(int signal)
 {
 	if (signal == SIGINT)
 		signal_status = SIGINT;
@@ -433,33 +433,33 @@ void Server::signalHandler (int signal)
 
 void Server::applyCustomSignal()
 {
-	if (signal (SIGINT, &signalHandler) == SIG_ERR)
-		throw SocketException ("Failed to set signal handler");
+	if (signal(SIGINT, &signalHandler) == SIG_ERR)
+		throw SocketException("Failed to set signal handler");
 }
 
 volatile sig_atomic_t Server::signal_status = 0;
 
 void Server::createEpoll()
 {
-	_fd_epoll = epoll_create1 (0);
+	_fd_epoll = epoll_create1(0);
 	if (_fd_epoll == -1)
-		throw SocketException ("Failed to create epoll");
+		throw SocketException("Failed to create epoll");
 }
 
-void Server::removeEpoll (int fd)
+void Server::removeEpoll(int fd)
 {
-	if (epoll_ctl (_fd_epoll, EPOLL_CTL_DEL, fd, nullptr) == -1)
-		throw SocketException ("Failed to remove epoll event");
+	if (epoll_ctl(_fd_epoll, EPOLL_CTL_DEL, fd, nullptr) == -1)
+		throw SocketException("Failed to remove epoll event");
 }
 
 void Server::makeSocketReusable()
 {
 	int reusable = 1;
-	if (setsockopt (_socket_fd, SOL_SOCKET, SO_REUSEADDR, &reusable, sizeof (reusable)) == -1)
-		throw SocketException ("Failed to make socket reusable");
+	if (setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &reusable, sizeof(reusable)) == -1)
+		throw SocketException("Failed to make socket reusable");
 }
 
-void Server::setClientsMaxBodySize (size_t maxBodySize)
+void Server::setClientsMaxBodySize(size_t maxBodySize)
 {
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 		_clients[i].maxBodySize = maxBodySize;
@@ -481,12 +481,12 @@ void Server::startListeningSocket()
 			connectToSocket();
 			success = true;
 		}
-		catch (SocketException const & e)
+		catch(SocketException const & e)
 		{
 			e.log();
 			if (_socket_fd != -1)
 			{
-				close (_socket_fd);
+				close(_socket_fd);
 				_socket_fd = -1;
 			}
 			++_retry;
@@ -496,27 +496,27 @@ void Server::startListeningSocket()
 	{
 		if (_socket_fd != -1)
 		{
-			close (_socket_fd);
+			close(_socket_fd);
 			_socket_fd = -1;
 		}
-		throw SocketException ("Failed to start listening socket");
+		throw SocketException("Failed to start listening socket");
 	}
 }
 
-void Server::logError (std::string const & message)
+void Server::logError(std::string const & message)
 {
 	try
 	{
 		std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now();
-		std::time_t timeInSeconds = std::chrono::system_clock::to_time_t (timePoint);
-		std::ofstream logFile ("server_error.log", std::ios::app);
+		std::time_t timeInSeconds = std::chrono::system_clock::to_time_t(timePoint);
+		std::ofstream logFile("server_error.log", std::ios::app);
 		if (!logFile.is_open())
-			throw std::runtime_error ("Failed to open log file");
-		logFile << std::put_time (std::localtime (&timeInSeconds), "%Y-%m-%d %H:%M:%S") << " : ";
+			throw std::runtime_error("Failed to open log file");
+		logFile << std::put_time(std::localtime(&timeInSeconds), "%Y-%m-%d %H:%M:%S") << " : ";
 		logFile << message << std::endl;
 		logFile.close();
 	}
-	catch (std::exception const & e)
+	catch(std::exception const & e)
 	{
 		std::cerr << "Failed to log exception : " << e.what() << std::endl;
 		std::cerr << "Original exception : " << message << std::endl;

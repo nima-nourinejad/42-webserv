@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 14:29:39 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:19:32 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ class Server
 
 		/// Constants
 		static constexpr int	MAX_CONNECTIONS = 5;
-		static constexpr int	BACKLOG = (2 * MAX_CONNECTIONS);
+		static constexpr int	BACKLOG =(2 * MAX_CONNECTIONS);
 		static constexpr int	TIMEOUT = 10;
 		static constexpr int	MAX_RETRY = 5;
 
@@ -48,53 +48,53 @@ class Server
 		struct eventData 		eventData;
 
 		/// ClientConnection Methods
-		void					occupyClientSlot (int availbleSlot, int fd);
-		void					closeClientSockets ();
-		void					handleTimeout (int index);
-		void					closeClientSocket (int index);
-		void					setClientsMaxBodySize (size_t maxBodySize);
-		void					receiveMessage (int index);
-		void					sendResponseParts (int index);
+		void					occupyClientSlot(int availbleSlot, int fd);
+		void					closeClientSockets();
+		void					handleTimeout(int index);
+		void					closeClientSocket(int index);
+		void					setClientsMaxBodySize(size_t maxBodySize);
+		void					receiveMessage(int index);
+		void					sendResponseParts(int index);
 
 		/// Event Handling Methods
-		int						waitForEvents ();
-		int						findAvailableSlot () const;
-		int						getClientStatus (struct epoll_event const & event) const;
-		int						getClientIndex (struct epoll_event const & event) const;
-		bool					serverFull () const;
-		void					createEpoll ();
-		void					handleTimeouts ();
-		void					prepareResponses ();
-		void					removeEpoll (int fd);
-		void					handleSocketEvents ();
-		void					handlePendingConnections ();
-		void					addEpoll (int fd, int index);
-		void					handleErr (struct epoll_event const & event);
-		void					handleClientEvents (struct epoll_event const & event);
-		void					handleListeningEvents (struct epoll_event const & event);
-		int						eventType (struct epoll_event const & event) const;
+		int						waitForEvents();
+		int						findAvailableSlot() const;
+		int						getClientStatus(struct epoll_event const & event) const;
+		int						getClientIndex(struct epoll_event const & event) const;
+		bool					serverFull() const;
+		void					createEpoll();
+		void					handleTimeouts();
+		void					prepareResponses();
+		void					removeEpoll(int fd);
+		void					handleSocketEvents();
+		void					handlePendingConnections();
+		void					addEpoll(int fd, int index);
+		void					handleErr(struct epoll_event const & event);
+		void					handleClientEvents(struct epoll_event const & event);
+		void					handleListeningEvents(struct epoll_event const & event);
+		int						eventType(struct epoll_event const & event) const;
 		
 		/// Signal Methods
-		void					applyCustomSignal ();
-		static void				signalHandler (int signal);
+		void					applyCustomSignal();
+		static void				signalHandler(int signal);
 
 		/// Listening Socket Methods
-		void					setAddress ();
-		void					createSocket ();
-		void					makeSocketReusable ();
-		void					connectToSocket ();
-		void					acceptClient ();
-		void					startListeningSocket ();
+		void					setAddress();
+		void					createSocket();
+		void					makeSocketReusable();
+		void					connectToSocket();
+		void					acceptClient();
+		void					startListeningSocket();
 	
     public:
 		/// Main Methods
 		Server(int port, std::string const & host, size_t maxBodySize);
 		Server(ServerBlock const & serverBlock);
-		void					handleEvents ();
-		void					closeSocket ();
+		void					handleEvents();
+		void					closeSocket();
 
 		/// Static Methods
-		static void 			logError (std::string const & message);
+		static void 			logError(std::string const & message);
 
 		/// Static Attributes
 		static volatile sig_atomic_t signal_status;

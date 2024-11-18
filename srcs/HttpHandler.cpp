@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/18 14:53:30 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ std::string	HttpHandler::handleRequest(const Request& req)
 
 		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
 	}
-	catch (const SystemCallError &e)
+	catch(const SystemCallError &e)
 	{
 		return "HTTP/1.1 500 Internal Server Error\r\n\r\nError: " + std::string(e.what()) + "\n";
 	}
@@ -84,7 +84,7 @@ std::string	HttpHandler::handleGET(const Request &req)
 		response.setHeader("Content-Type", "text/html");
 		return response.toString();
 	}
-	catch (const SystemCallError &e)
+	catch(const SystemCallError &e)
 	{
 		if (close(fd) == -1)
 			handleError("close file descriptor");
@@ -114,7 +114,7 @@ std::string	HttpHandler::handlePOST(const Request &req)
 				std::getline(bodyStream, partContentType);
 				std::getline(bodyStream, line); // Empty line before part content
 
-				// Parse disposition to check for filename (file upload)
+				// Parse disposition to check for filename(file upload)
 				bool	isFileUpload = disposition.find("filename=") != std::string::npos;
 				
 				std::ostringstream	partData;

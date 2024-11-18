@@ -6,13 +6,13 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:31 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 12:57:51 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:19:58 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "SocketException.hpp"
 
-int findType (std::string const & message)
+int findType(std::string const & message)
 {
 	if (message == "Failed to find available slot for client")
 		return FIND_EMPTY_SLOT;
@@ -23,26 +23,26 @@ int findType (std::string const & message)
 	return -1;
 }
 
-SocketException::SocketException (std::string const & message)
-    : std::runtime_error (message + " : " + strerror (errno)), type (findType (message)), open_fd (-1){}
+SocketException::SocketException(std::string const & message)
+    : std::runtime_error(message + " : " + strerror(errno)), type(findType(message)), open_fd(-1){}
 
-SocketException::SocketException (std::string const & message, int open_fd)
-	: std::runtime_error (message + " : " + strerror (errno)), type (findType (message)), open_fd (open_fd) {}
+SocketException::SocketException(std::string const & message, int open_fd)
+	: std::runtime_error(message + " : " + strerror(errno)), type(findType(message)), open_fd(open_fd) {}
 
 void SocketException::log() const
 {
 	try
 	{
 		std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now();
-		std::time_t timeInSeconds = std::chrono::system_clock::to_time_t (timePoint);
-		std::ofstream logFile ("socket_error.log", std::ios::app);
+		std::time_t timeInSeconds = std::chrono::system_clock::to_time_t(timePoint);
+		std::ofstream logFile("socket_error.log", std::ios::app);
 		if (!logFile.is_open())
-		 	throw std::runtime_error ("Failed to open log file");
-		logFile << std::put_time (std::localtime (&timeInSeconds), "%Y-%m-%d %H:%M:%S") << " : ";
+		 	throw std::runtime_error("Failed to open log file");
+		logFile << std::put_time(std::localtime(&timeInSeconds), "%Y-%m-%d %H:%M:%S") << " : ";
 		logFile << what() << std::endl;
 		logFile.close();
 	}
-	catch (std::exception const & e)
+	catch(std::exception const & e)
 	{
 		std::cerr << "Failed to log exception : " << e.what() << std::endl;
 		std::cerr << "Original exception : " << what() << std::endl;
