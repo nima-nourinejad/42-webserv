@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 13:02:03 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 13:50:26 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ bool ClientConnection::finishedReceivingNonChunked()
 	{
 		contentLength = std::stoul(contentLengthString);
 	}
-	catch (...)
+	catch(...)
 	{
 		std::cerr << "Failed to convert content length to number" << std::endl;
 		changeRequestToBadRequest();
@@ -74,7 +74,7 @@ bool ClientConnection::finishedReceivingNonChunked()
 
 bool ClientConnection::finishedReceivingChunked()
 {
-	if (request.find ("\r\n0\r\n\r\n") != std::string::npos)
+	if (request.find("\r\n0\r\n\r\n") != std::string::npos)
 		return true;
 	return false;
 }
@@ -117,7 +117,7 @@ void ClientConnection::findRequestType()
 
 void ClientConnection::connectionType()
 {
-	if (request.find ("Connection: close") != std::string::npos)
+	if (request.find("Connection: close") != std::string::npos)
 		keepAlive = false;
 }
 
@@ -125,13 +125,13 @@ size_t ClientConnection::getChunkedSize(std::string & unProcessed)
 {
 	size_t chunkedSize;
 	std::string sizeString;
-	sizeString = unProcessed.substr(0, unProcessed.find ("\r\n"));
-	unProcessed = unProcessed.substr(unProcessed.find ("\r\n") + 2);
+	sizeString = unProcessed.substr(0, unProcessed.find("\r\n"));
+	unProcessed = unProcessed.substr(unProcessed.find("\r\n") + 2);
 	try
 	{
 		chunkedSize = std::stoul(sizeString, nullptr, 16);
 	}
-	catch (...)
+	catch(...)
 	{
 		changeRequestToBadRequest();
 		return 0;
@@ -165,10 +165,10 @@ void ClientConnection::handleChunkedEncoding()
 	request.clear();
 	if (unProcessed.find("Transfer-Encoding: chunked") == std::string::npos)
 		return (changeRequestToServerError());
-	if (unProcessed.find ("\r\n0\r\n\r\n") != std::string::npos)
+	if (unProcessed.find("\r\n0\r\n\r\n") != std::string::npos)
 		return (changeRequestToBadRequest());
 	std::string header = "";
-	grabChunkedHeader (unProcessed, header);
+	grabChunkedHeader(unProcessed, header);
 
 	size_t chunkedSize;
 	while (true)
@@ -217,7 +217,7 @@ std::string createStatusLine(std::string const & method, std::string const & uri
 
 std::string requestURI(std::string const & request)
 {
-	std::istringstream stream (request);
+	std::istringstream stream(request);
 	std::string method;
 	std::string uri;
 	stream >> method >> uri;
@@ -226,7 +226,7 @@ std::string requestURI(std::string const & request)
 
 std::string requestmethod(std::string const & request)
 {
-	std::istringstream stream (request);
+	std::istringstream stream(request);
 	std::string method;
 	stream >> method;
 	return method;
@@ -234,9 +234,9 @@ std::string requestmethod(std::string const & request)
 
 std::string readFile(std::string const & path)
 {
-	std::ifstream file (path.c_str());
+	std::ifstream file(path.c_str());
 	if (!file.is_open())
-		throw SocketException ("Failed to open file");
+		throw SocketException("Failed to open file");
 	std::stringstream read;
 	read << file.rdbuf();
 	file.close();
@@ -278,7 +278,7 @@ void ClientConnection::sendServiceUnavailable(int socket_fd, size_t maxBodySize)
 	}
 	else
 	{
-		std::string contentLength = "Content-Length: " + std::to_string (body.size()) + "\r\n";
+		std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
 		header = statusLine + contentType + contentLength + connection;
 		response.push_back(header + "\r\n" + body);
 	}
@@ -295,9 +295,9 @@ void ClientConnection::sendServiceUnavailable(int socket_fd, size_t maxBodySize)
 			response[0] = remainPart;
 		}
 		else
-			response.erase (response.begin());
+			response.erase(response.begin());
 	}
-	close (temp_fd);
+	close(temp_fd);
 }
 
 void ClientConnection::sendServerError(int fd, size_t maxBodySize)
