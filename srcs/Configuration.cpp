@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Configration.cpp                                   :+:      :+:    :+:   */
+/*   Configuration.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:08 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/14 09:37:09 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/18 13:08:59 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Configration.hpp"
+#include "Configuration.hpp"
 
-Configration::Configration (int port, std::string const & host, size_t maxBodySize)
-    : port (port), host (host), maxBodySize (maxBodySize){};
+Configuration::Configuration(int port, std::string const & host, size_t maxBodySize)
+    : port(port), host(host), maxBodySize(maxBodySize) {};
