@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   SocketException.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:31 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 14:22:50 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/18 12:57:51 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,22 +29,22 @@ SocketException::SocketException (std::string const & message)
 SocketException::SocketException (std::string const & message, int open_fd)
 	: std::runtime_error (message + " : " + strerror (errno)), type (findType (message)), open_fd (open_fd) {}
 
-void SocketException::log () const
+void SocketException::log() const
 {
 	try
 	{
-		std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now ();
+		std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now();
 		std::time_t timeInSeconds = std::chrono::system_clock::to_time_t (timePoint);
 		std::ofstream logFile ("socket_error.log", std::ios::app);
-		if (!logFile.is_open ())
+		if (!logFile.is_open())
 		 	throw std::runtime_error ("Failed to open log file");
 		logFile << std::put_time (std::localtime (&timeInSeconds), "%Y-%m-%d %H:%M:%S") << " : ";
-		logFile << what () << std::endl;
-		logFile.close ();
+		logFile << what() << std::endl;
+		logFile.close();
 	}
 	catch (std::exception const & e)
 	{
-		std::cerr << "Failed to log exception : " << e.what () << std::endl;
-		std::cerr << "Original exception : " << what () << std::endl;
+		std::cerr << "Failed to log exception : " << e.what() << std::endl;
+		std::cerr << "Original exception : " << what() << std::endl;
 	}
 }

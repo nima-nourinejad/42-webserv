@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/15 17:24:31 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/18 12:57:51 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include <sys/epoll.h>
 
-int main ()
+int main()
 {
 	ConfigParser config;
 	std::ifstream file("config/webserv.conf");;
@@ -40,21 +40,21 @@ int main ()
 	{
 		while (server.signal_status != SIGINT)
 		{
-			server.handleEvents ();
+			server.handleEvents();
 		}
 	}
 	catch(SocketException const & e)
 	{
-		e.log ();
+		e.log();
 	}
 	catch(std::exception const & e)
 	{
-		Server::logError (e.what ());
+		Server::logError (e.what());
 	}
 	catch(...)
 	{
 		Server::logError ("Unknown exception");
 	}
-	server.closeSocket ();
+	server.closeSocket();
 	return 0;
 }
