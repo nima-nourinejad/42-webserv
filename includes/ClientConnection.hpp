@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 12:46:51 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 16:02:12 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,12 +22,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
 #include "Request.hpp"
 #include "Response.hpp"
 #include "HttpHandler.hpp"
 #include "CGIHandler.hpp"
-
-
 #include "SocketException.hpp"
 #include "eventData.hpp"
 

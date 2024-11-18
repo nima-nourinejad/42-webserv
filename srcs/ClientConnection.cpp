@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 16:06:57 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -368,7 +368,8 @@ void ClientConnection::createResponseParts()
 		"\r\n";
 		Request		getRequest(rawGetRequest);
 		std::string	rootDir = "./www";
-		HttpHandler	httpHandler(rootDir);
+		ServerBlock	serverConfig;
+		HttpHandler	httpHandler(rootDir, serverConfig);
 		std::string	getResponse = httpHandler.handleRequest(getRequest);
 		responseParts.push_back(getResponse);
 	}

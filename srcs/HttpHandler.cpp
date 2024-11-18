@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 16:15:01 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,50 @@
 
 HttpHandler::HttpHandler() : _rootDir("") {}
 
-HttpHandler::HttpHandler(const std::string &rootDir) : _rootDir(rootDir) {}
+HttpHandler::HttpHandler(const std::string &rootDir, const ServerBlock &serverConfig)
+	: _rootDir(rootDir), _serverBlock(serverConfig) {}
 
 HttpHandler::~HttpHandler() {}
+
+bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
+{
+	// Check if the method is allowed for the requested path in the server configuration
+	for (const auto &location : _serverBlock.getLocations())
+	{
+		if (path.find(location.getLocation()) == 0) // Match location prefix
+		{
+			const std::vector<std::string>	&allowedMethods = location.getLimitExcept();
+			
+			return (std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end());
+		}
+	}
+	return false;
+}
+
+std::string	HttpHandler::_getErrorPage(int statusCode)
+{
+	const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
+	
+	if (errorPages.find(statusCode) != errorPages.end())
+		return errorPages.at(statusCode); // Custom error page
+	return "default_error.html";         // Default fallback
+}
+
+void HttpHandler::_validateRequest(const Request &req)
+{
+	const std::string	&method = req.getMethod();
+	const std::string	&path = req.getPath();
+
+	if (!_isMethodAllowed(method, path))
+		throw std::runtime_error("HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n");
+}
 
 std::string	HttpHandler::handleRequest(const Request& req)
 {
 	try
 	{
+		_validateRequest(req);
+
 		if (req.getMethod() == "GET")
 			return handleGET(req);
 		else if (req.getMethod() == "POST")
@@ -33,6 +69,10 @@ std::string	HttpHandler::handleRequest(const Request& req)
 
 		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
 	}
+	catch (const std::runtime_error &e)
+    {
+        return e.what(); // Handle runtime errors (e.g., method not allowed)
+    }
 	catch(const SystemCallError &e)
 	{
 		return "HTTP/1.1 500 Internal Server Error\r\n\r\nError: " + std::string(e.what()) + "\n";
@@ -48,16 +88,11 @@ std::string	HttpHandler::handleGET(const Request &req)
 
 	if (fd == -1)
 	{
-		if (errno == EACCES)
-		{
-			response.setStatusLine("HTTP/1.1 403 Forbidden");
-			response.setBody("Permission denied\n");
-		}
-		else if (errno == ENOENT)
-		{
-			response.setStatusLine("HTTP/1.1 404 Not Found");
-			response.setBody("File not found\n");
-		}
+		int			statusCode = (errno == EACCES) ? 403 : 404;
+		std::string	errorPage = _getErrorPage(statusCode);
+
+		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode));
+		response.setBody("Error: " + errorPage + "\n");
 		return response.toString();
 	}
 

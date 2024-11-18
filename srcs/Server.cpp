@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 16:01:01 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -467,7 +467,6 @@ void Server::setClientsMaxBodySize(size_t maxBodySize)
 
 void Server::startListeningSocket()
 {
-
 	_retry = 0;
 	bool success = false;
 
@@ -522,4 +521,3 @@ void Server::logError(std::string const & message)
 		std::cerr << "Original exception : " << message << std::endl;
 	}
 }
-

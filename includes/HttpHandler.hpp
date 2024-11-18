@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/05 13:06:36 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:42:00 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 #include "Response.hpp"
 #include "SystemCallError.hpp"
 #include "CGIHandler.hpp"
+#include "ServerBlock.hpp"
+
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -28,10 +30,15 @@ class HttpHandler
 	private:
 		CGIHandler	_cgiHandler;
 		std::string	_rootDir;
+		ServerBlock	_serverBlock;
+
+		bool		_isMethodAllowed(const std::string &method, const std::string &path);
+        std::string	_getErrorPage(int statusCode);
+        void		_validateRequest(const Request &req); // Validate the request against the configuration
 
 	public:
 		HttpHandler();
-		HttpHandler(const std::string &rootDir);
+		HttpHandler(const std::string &rootDir, const ServerBlock &serverConfig);
 		~HttpHandler();
 
 		std::string	handleRequest(const Request &req);
