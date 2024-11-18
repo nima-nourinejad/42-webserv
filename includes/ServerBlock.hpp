@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerBlock.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 17:53:25 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/18 12:53:54 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:26:29 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@
 #include <string>
 #include <algorithm>
 
-
 class ServerBlock
 {
 	private:
@@ -34,6 +33,8 @@ class ServerBlock
 	public:
 		ServerBlock(/* args */);
 		~ServerBlock();
+		ServerBlock(const ServerBlock& original); // copy constructor
+		ServerBlock& operator=(const ServerBlock& copy); // assignment operator
 
 		std::string					getServerName() const;
 		int							getListen() const;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationBlock.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:46:15 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/18 12:49:41 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:46:00 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,8 @@ class LocationBlock
 		LocationBlock(/* args */);
 		~LocationBlock();
 		LocationBlock(std::string location);
+		LocationBlock(const LocationBlock& original) = default;
+		LocationBlock& operator=(const LocationBlock& original) = default;
 
 		std::string 				getLocation() const;
 		std::string 				getRoot() const;

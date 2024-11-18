@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:12 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:33:34 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,30 @@ ServerBlock::ServerBlock(/* args */)
 
 ServerBlock::~ServerBlock()
 {
+}
+
+ServerBlock::ServerBlock(const ServerBlock& original)
+{
+	_server_name = original._server_name;
+	_listen = original._listen;
+	_locations = original._locations;
+	_error_pages = original._error_pages;
+	_host = original._host;
+	_client_max_body_size = original._client_max_body_size;
+}
+
+ServerBlock& ServerBlock::operator=(const ServerBlock& original)
+{
+	if (this != &original)
+	{
+		_server_name = original._server_name;
+		_listen = original._listen;
+		_locations = original._locations;
+		_error_pages = original._error_pages;
+		_host = original._host;
+		_client_max_body_size = original._client_max_body_size;
+	}
+	return *this;
 }
 
 std::string ServerBlock::getServerName() const
