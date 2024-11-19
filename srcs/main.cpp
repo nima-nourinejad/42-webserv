@@ -3,15 +3,25 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/19 18:44:37 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
-#include <sys/epoll.h>
+
+
+bool sigInt(std::vector<std::unique_ptr<Server>> const & servers)
+{
+	for (std::size_t i = 0; i < servers.size(); i++)
+	{
+		if (servers[i]->signal_status == SIGINT)
+			return true;
+	}
+	return false;
+}
 
 int main()
 {
@@ -33,28 +43,56 @@ int main()
 	}
 	std::cout << "Successfully parsed config" << std::endl;
 	config.printServerConfig();
-	
-	Server server(config.getServerBlocks().at(0));
 
-	try
+	//// Creating servers
+	std::vector<std::unique_ptr<Server>> servers;
+	for(std::size_t i = 0; (i < config.getServerBlocks().size() && !sigInt(servers)); i++)
 	{
-		while (server.signal_status != SIGINT)
+		try
 		{
-			server.handleEvents();
+			servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i)));
+		}
+		catch(SocketException const & e)
+		{
+			e.log();
+		}
+		catch(std::exception const & e)
+		{
+			Server::logError(e.what());
+		}
+		catch(...)
+		{
+			Server::logError("Unknown exception during server creation for config block " + std::to_string(i + 1));
 		}
 	}
-	catch(SocketException const & e)
+	
+	//// Handling events
+	std::size_t serverNum;
+	while (!sigInt(servers))
 	{
-		e.log();
+		if (servers.empty())
+			break;
+		if (serverNum >= servers.size())
+			serverNum = 0;
+		try
+		{
+			servers[serverNum]->handleEvents();
+			serverNum++;
+		}
+		catch(SocketException const & e)
+		{
+			e.log();
+			servers.erase(servers.begin() + serverNum);
+		}
+		catch(std::exception const & e)
+		{
+			Server::logError(e.what());
+			servers.erase(servers.begin() + serverNum);
+		}
+		catch(...)
+		{
+			Server::logError("Unknown exception during event handling");
+			servers.erase(servers.begin() + serverNum);
+		}
 	}
-	catch(std::exception const & e)
-	{
-		Server::logError(e.what());
-	}
-	catch(...)
-	{
-		Server::logError("Unknown exception");
-	}
-	server.closeSocket();
-	return 0;
 }

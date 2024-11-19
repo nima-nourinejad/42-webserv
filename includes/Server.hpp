@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 15:19:32 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/19 18:40:39 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ class Server
 		int						_retry;
 		Response				_response;
 		struct eventData 		eventData;
+		ServerBlock 			const * serverConfig;
 
 		/// ClientConnection Methods
 		void					occupyClientSlot(int availbleSlot, int fd);
@@ -85,13 +86,14 @@ class Server
 		void					connectToSocket();
 		void					acceptClient();
 		void					startListeningSocket();
+		void					closeSocket();
 	
     public:
 		/// Main Methods
 		Server(int port, std::string const & host, size_t maxBodySize);
 		Server(ServerBlock const & serverBlock);
 		void					handleEvents();
-		void					closeSocket();
+		~Server();
 
 		/// Static Methods
 		static void 			logError(std::string const & message);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 16:01:01 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/19 18:42:50 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ Server::Server(int port, std::string const & host, size_t maxBodySize)
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
+	serverConfig = nullptr;
 };
 
 Server::Server(ServerBlock const & serverBlock)
@@ -34,6 +35,7 @@ Server::Server(ServerBlock const & serverBlock)
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
+	serverConfig = &serverBlock;
 };
 
 void Server::connectToSocket()
@@ -520,4 +522,9 @@ void Server::logError(std::string const & message)
 		std::cerr << "Failed to log exception : " << e.what() << std::endl;
 		std::cerr << "Original exception : " << message << std::endl;
 	}
+}
+
+Server::~Server()
+{
+	closeSocket();
 }
