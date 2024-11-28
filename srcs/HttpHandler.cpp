@@ -6,27 +6,27 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/18 16:15:01 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/28 15:20:31 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpHandler.hpp"
 
-HttpHandler::HttpHandler() : _rootDir("") {}
+HttpHandler::HttpHandler() : _rootDir("") , _serverBlock(*(new ServerBlock)) {}
 
-HttpHandler::HttpHandler(const std::string &rootDir, const ServerBlock &serverConfig)
+HttpHandler::HttpHandler(const std::string &rootDir, ServerBlock &serverConfig)
 	: _rootDir(rootDir), _serverBlock(serverConfig) {}
 
 HttpHandler::~HttpHandler() {}
 
 bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
 {
-	// Check if the method is allowed for the requested path in the server configuration
 	for (const auto &location : _serverBlock.getLocations())
 	{
 		if (path.find(location.getLocation()) == 0) // Match location prefix
 		{
-			const std::vector<std::string>	&allowedMethods = location.getLimitExcept();
+			// const std::vector<std::string>	&allowedMethods = location.getLimitExcept();
+			const auto	&allowedMethods = location.getLimitExcept();
 			
 			return (std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end());
 		}
@@ -36,7 +36,8 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 
 std::string	HttpHandler::_getErrorPage(int statusCode)
 {
-	const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
+	// const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
+	const auto	&errorPages = _serverBlock.getErrorPages();
 	
 	if (errorPages.find(statusCode) != errorPages.end())
 		return errorPages.at(statusCode); // Custom error page
@@ -50,9 +51,21 @@ void HttpHandler::_validateRequest(const Request &req)
 
 	if (!_isMethodAllowed(method, path))
 		throw std::runtime_error("HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n");
+	
+	for (const auto &location : _serverBlock.getLocations())
+	{
+		if (req.getPath().find(location.getLocation()) == 0)
+		{
+			if (!location.getCgiPath().empty() && !std::filesystem::exists(location.getCgiPath()))
+				throw std::runtime_error("Invalid CGI Path");
+
+			if (!location.getRoot().empty() && !std::filesystem::exists(location.getRoot()))
+				throw std::runtime_error("Invalid root path");
+		}
+	}
 }
 
-std::string	HttpHandler::handleRequest(const Request& req)
+std::string	HttpHandler::handleRequest(const Request &req)
 {
 	try
 	{
@@ -67,7 +80,7 @@ std::string	HttpHandler::handleRequest(const Request& req)
 		else if (req.getMethod() == "CGI") // check if for the CGI, it should start with CGI
 			return handleCGI(req);
 
-		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
+		return _getErrorPage(405); // Method not allowed
 	}
 	catch (const std::runtime_error &e)
     {
@@ -75,7 +88,7 @@ std::string	HttpHandler::handleRequest(const Request& req)
     }
 	catch(const SystemCallError &e)
 	{
-		return "HTTP/1.1 500 Internal Server Error\r\n\r\nError: " + std::string(e.what()) + "\n";
+		return _getErrorPage(500); // Internal server error
 	}
 }
 

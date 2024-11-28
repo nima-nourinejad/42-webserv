@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:33 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:12 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/28 14:55:19 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,10 +34,7 @@ void	Response::setBody(const std::string &body)
 	_headers["Content-Length"] = std::to_string(body.size());
 }
 
-std::string	Response::getBody() const
-{
-	return _body;
-}
+std::string	Response::getBody() const { return _body; }
 
 std::string	Response::toString() const
 {

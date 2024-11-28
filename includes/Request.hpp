@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:09 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/04 17:27:53 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/28 14:50:44 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,14 +30,14 @@ class Request
 
 	public:
 		Request();
-		Request(const std::string &rawRequest);
+		Request(const std::string &rawRequest); //might be better with the explicit keyword
 		~Request();
 
-		std::string							getMethod() const;
-		std::string							getPath() const;
-		std::string							getHttpVersion() const;
-		std::string							getHeader(const std::string& key) const;
-		std::string							getBody() const;
+		const std::string					&getMethod() const;
+		const std::string					&getPath() const;
+		const std::string					&getHttpVersion() const;
+		const std::string					&getHeader(const std::string& key) const;
+		const std::string					&getBody() const;
 
 		void								parse(const std::string& rawRequest);
 };

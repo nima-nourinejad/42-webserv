@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/18 15:42:00 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/28 15:04:40 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,15 +30,17 @@ class HttpHandler
 	private:
 		CGIHandler	_cgiHandler;
 		std::string	_rootDir;
-		ServerBlock	_serverBlock;
+		ServerBlock	&_serverBlock;
+		// last one might be better to be const, then
+		// getlocations function in serverblock needs to change too
 
 		bool		_isMethodAllowed(const std::string &method, const std::string &path);
         std::string	_getErrorPage(int statusCode);
-        void		_validateRequest(const Request &req); // Validate the request against the configuration
+        void		_validateRequest(const Request &req);
 
 	public:
 		HttpHandler();
-		HttpHandler(const std::string &rootDir, const ServerBlock &serverConfig);
+		HttpHandler(const std::string &rootDir, ServerBlock &serverConfig); //if serverblock became const, here too
 		~HttpHandler();
 
 		std::string	handleRequest(const Request &req);

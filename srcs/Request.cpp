@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/28 14:50:34 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,35 +29,22 @@ Request::Request(const std::string &rawRequest)
 
 Request::~Request() {}
 
-std::string	Request::getMethod() const
-{
-	return _method;
-}
+const std::string	&Request::getMethod() const { return _method; }
 
-std::string	Request::getPath() const
-{
-	return _path;
-}
+const std::string	&Request::getPath() const { return _path; }
 
-std::string	Request::getHttpVersion() const
-{
-	return _httpVersion;
-}
+const std::string	&Request::getHttpVersion() const { return _httpVersion; }
 
-std::string	Request::getHeader(const std::string &key) const
+const std::string	&Request::getHeader(const std::string &key) const
 {
-	std::map<std::string, std::string>::const_iterator	it = _headers.find(key);
+	// std::map<std::string, std::string>::const_iterator	it = _headers.find(key);
+	auto	it = _headers.find(key);
 	
-	if (it != _headers.end())
-		return it->second;
-	return "";
+	return (it != _headers.end() ? it->second : "");
 }
-std::string	Request::getBody() const
-{
-	return _body;
-}
+const std::string	&Request::getBody() const { return _body; }
 
-// Might need to use Andre's parsing method
+// Might need to use Andrey's parsing method
 void	Request::parse(const std::string &rawRequest)
 {
 	std::istringstream	stream(rawRequest);
@@ -84,7 +71,7 @@ void	Request::parse(const std::string &rawRequest)
 		}
 	}
 	// Handle body
-	if (_headers["Content-Length"] != "")
+	if (!_headers["Content-Length"].empty())
 	{
 		try
 		{
@@ -94,7 +81,6 @@ void	Request::parse(const std::string &rawRequest)
 			stream.read(&_body[0], contentLength);
 			if (stream.gcount() != static_cast<std::streamsize>(contentLength))
 				handleError("Content length mismatch");
-
 		}
 		catch(const std::invalid_argument &e)
 		{
