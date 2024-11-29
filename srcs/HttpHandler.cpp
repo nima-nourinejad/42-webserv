@@ -6,18 +6,33 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/29 13:04:00 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 16:59:50 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpHandler.hpp"
 
-HttpHandler::HttpHandler() : _rootDir("") , _serverBlock(*(new ServerBlock)) {}
+// HttpHandler::HttpHandler() : _rootDir("") , _serverBlock(*(new ServerBlock)) {}
 
 HttpHandler::HttpHandler(ServerBlock &serverConfig)
-	: _rootDir(serverConfig.getLocations()[0].getRoot()), _serverBlock(serverConfig) {}
+	: _rootDir(serverConfig.getLocations()[0].getRoot()), _serverBlock(serverConfig)
+	{
+		//creating a default state of map
+		_errorPages[404]="default_404.html";
+		_errorPages[500]="default_403.html";
 
-HttpHandler::~HttpHandler() {}
+		//filling the map with the error pages from the server block
+		// std::map<int, std::string>::iterator errorPages_it = serverConfig.getErrorPages().begin();
+		// while (errorPages_it != serverConfig.getErrorPages().end())
+		// {
+		// 	_errorPages[errorPages_it->first] = errorPages_it->second;
+		// 	errorPages_it++;
+		// }
+		for (const auto &errorPage : serverConfig.getErrorPages())
+			_errorPages[errorPage.first] = errorPage.second;
+	}
+
+HttpHandler::~HttpHandler() {std::cout << "HttpHandler destructor" << std::endl;}
 
 bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
 {
@@ -27,8 +42,11 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 		{
 			// const std::vector<std::string>	&allowedMethods = location.getLimitExcept();
 			const auto	&allowedMethods = location.getLimitExcept();
+			std::cout << "..allowedMethods: " << allowedMethods[0] << std::endl;
+			bool		isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end();
 			
-			return (std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end());
+			std::cout << "..isMethodAllowed: " << isMethodAllowed << std::endl;
+			return (isMethodAllowed);
 		}
 	}
 	return false;
@@ -36,41 +54,54 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 
 std::string	HttpHandler::_getErrorPage(int statusCode)
 {
-	// const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
-	const auto	&errorPages = _serverBlock.getErrorPages();
+	const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
+	// const auto	&errorPages = _serverBlock.getErrorPages();
 	
+	std::cout << "we are here" << std::endl;
 	if (errorPages.find(statusCode) != errorPages.end())
+	{
+		std::cout << "we are here 2" << std::endl;
 		return errorPages.at(statusCode); // Custom error page
-	return "default_error.html";         // Default fallback
+	}
+	std::cout << "we are not here" << std::endl;
+	return "dummy.html";         // Default fallback
 }
 
-void HttpHandler::_validateRequest(const Request &req)
+std::string	HttpHandler::_validateRequest(const Request &req)
 {
-	const std::string	&method = req.getMethod();
-	const std::string	&path = req.getPath();
+	std::string	method = req.getMethod();
+	std::string	path = req.getPath();
 
 	if (!_isMethodAllowed(method, path))
-		throw std::runtime_error("HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n");
-	
+		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
 	for (const auto &location : _serverBlock.getLocations())
 	{
 		if (req.getPath().find(location.getLocation()) == 0)
 		{
 			if (!location.getCgiPath().empty() && !std::filesystem::exists(location.getCgiPath()))
-				throw std::runtime_error("Invalid CGI Path");
+				return "Invalid CGI Path"; // should be like a http response
 
 			if (!location.getRoot().empty() && !std::filesystem::exists(location.getRoot()))
-				throw std::runtime_error("Invalid root path");
+				return "Invalid root path"; // should be like a http response
 		}
 	}
+	return "Ok";
+}
+
+std::string	HttpHandler::createResponse(const std::string &request)
+{
+	Request	req(request);
+
+	return handleRequest(req);
 }
 
 std::string	HttpHandler::handleRequest(const Request &req)
 {
 	try
 	{
-		_validateRequest(req);
-
+		// std::string validation = _validateRequest(req);
+		// if (validation != "Ok")
+		// 	return validation;
 		if (req.getMethod() == "GET")
 			return handleGET(req);
 		else if (req.getMethod() == "POST")
@@ -91,26 +122,43 @@ std::string	HttpHandler::handleRequest(const Request &req)
 		return _getErrorPage(500); // Internal server error
 	}
 }
-
+std::string readFileError(std::string const & path)
+{
+	std::ifstream file(path.c_str());
+	if (!file.is_open())
+		throw SystemCallError("Failed to open file");
+	std::stringstream read;
+	read << file.rdbuf();
+	file.close();
+	return read.str();
+}
 std::string	HttpHandler::handleGET(const Request &req)
 {
+	std::cout << "we are at the start handleGet" << std::endl;
 	std::string	filePath = _rootDir + req.getPath();
 	Response	response;
-
+	std::cout << filePath << std::endl;
 	int fd = open(filePath.c_str(), O_RDONLY);
 
 	if (fd == -1)
 	{
+		std::cout << "fd is -1" << std::endl;
 		int			statusCode = (errno == EACCES) ? 403 : 404;
-		std::string	errorPage = _getErrorPage(statusCode);
+		
+		// std::string	errorPage = _getErrorPage(statusCode);
+		// std::cout << "errorPage: " << errorPage << std::endl;
+		std::string	errorPage = _errorPages.at(statusCode);
+		fd = open((_rootDir + "/" + errorPage).c_str(), O_RDONLY);
+		// response.setBody(readFileError(_rootDir + "/" + errorPage));
 
-		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode));
-		response.setBody("Error: " + errorPage + "\n");
-		return response.toString();
+		// response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode));
+		// // response.setBody("Error: " + errorPage + "\n");
+		// return response.toString();
 	}
 
 	try
 	{
+		std::cout << "we are at the try handleGet" << std::endl;
 		char		buffer[1024];
 		std::string	content;
 		ssize_t		bytesRead;

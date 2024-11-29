@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/29 13:03:45 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 16:47:10 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,14 +36,14 @@ class HttpHandler
 
 		bool		_isMethodAllowed(const std::string &method, const std::string &path);
         std::string	_getErrorPage(int statusCode);
-        void		_validateRequest(const Request &req);
+        std::string	_validateRequest(const Request &req);
+		std::map<int, std::string>	_errorPages;
 
 	public:
-		HttpHandler();
 		HttpHandler(ServerBlock &serverConfig); //if serverblock became const, here too
-		// HttpHandler &operator=(HttpHandler const &src);
 		~HttpHandler();
 
+		std::string	createResponse(const std::string &request);
 		std::string	handleRequest(const Request &req);
 		std::string	handleGET(const Request &req);
 		std::string	handlePOST(const Request &req);
