@@ -6,9 +6,11 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 17:46:30 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 17:54:47 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+// Andrey: Check if there needs to be a default root in the server block before defining the locations
 
 // Ali: Each Location block might have its own root, error page, maxboysize, index
 // Ali: Also add sth for return, alias, upload_path
