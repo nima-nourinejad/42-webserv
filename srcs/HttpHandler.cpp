@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/29 12:21:04 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 13:04:00 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -252,3 +252,14 @@ std::string HttpHandler::handleCGI(const Request &req)
 {
 	return _cgiHandler.execute(req);
 }
+
+// HttpHandler &HttpHandler::operator=(HttpHandler const &src)
+// {
+// 	if (this != &src)
+// 	{
+// 		_cgiHandler = src._cgiHandler;
+// 		_rootDir = src._rootDir;
+// 		_serverBlock = src._serverBlock;
+// 	}
+// 	return *this;
+// }

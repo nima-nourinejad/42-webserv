@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 16:02:12 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 13:32:43 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,10 +60,11 @@ class ClientConnection
 	std::string					request;
 	std::vector<std::string>	responseParts;
 	size_t						maxBodySize;
-	struct eventData			eventData; 
+	struct eventData			eventData;
+	HttpHandler					responseMaker;
 
 	/// Public Methods
-	ClientConnection();
+	ClientConnection(ServerBlock & serverBlock);
 
 	void						changeRequestToBadRequest();
 	void						changeRequestToServerError();

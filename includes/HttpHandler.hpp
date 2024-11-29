@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/29 12:21:12 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 13:03:45 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ class HttpHandler
 	public:
 		HttpHandler();
 		HttpHandler(ServerBlock &serverConfig); //if serverblock became const, here too
+		// HttpHandler &operator=(HttpHandler const &src);
 		~HttpHandler();
 
 		std::string	handleRequest(const Request &req);

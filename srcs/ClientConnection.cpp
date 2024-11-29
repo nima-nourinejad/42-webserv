@@ -6,14 +6,22 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 12:24:07 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 13:32:04 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
 
-ClientConnection::ClientConnection()
-    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true)
+// ClientConnection::ClientConnection()
+//     : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true)
+// 	{
+// 		eventData.type = CLIENT;
+// 		eventData.fd = -1;
+// 		eventData.index = -1;
+// 	};
+
+ClientConnection::ClientConnection(ServerBlock & serverBlock)
+    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(serverBlock.getClientMaxBodySize()), responseMaker(serverBlock)
 	{
 		eventData.type = CLIENT;
 		eventData.fd = -1;
@@ -355,9 +363,12 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 
 void ClientConnection::createResponseParts()
 {
+	
+	// std::string newResponse = _respo
+	
+	std::cout << "Creating response for client " << index + 1 << std::endl;
 	status = PREPARINGRESPONSE;
 	connectionType();
-	std::cout << "Creating response for client " << index + 1 << std::endl;
 	std::string method = requestmethod(request);
 	std::string uri = requestURI(request);
 	if (uri == "/index.html")
@@ -439,3 +450,4 @@ void ClientConnection::setCurrentTime()
 {
 	connectTime = getCurrentTime();
 }
+

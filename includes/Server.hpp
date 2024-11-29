@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 12:23:40 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 13:26:11 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,21 +40,20 @@ class Server
 		struct sockaddr_in		_address;
 		Configuration			_config;
 		int						_num_clients;
-		ClientConnection		_clients[MAX_CONNECTIONS];
+		std::vector<ClientConnection> _clients;
 		struct epoll_event		_events[MAX_CONNECTIONS + 1];
 		struct epoll_event		_ready[MAX_CONNECTIONS + 1];
 		int						_retry;
 		Response				_response;
 		struct eventData 		eventData;
-		ServerBlock 			const * serverConfig;
-		HttpHandler				_responseMaker;
+		// ServerBlock 			const * serverConfig;
 
 		/// ClientConnection Methods
 		void					occupyClientSlot(int availbleSlot, int fd);
 		void					closeClientSockets();
 		void					handleTimeout(int index);
 		void					closeClientSocket(int index);
-		void					setClientsMaxBodySize(size_t maxBodySize);
+		void					createClientConnections(ServerBlock & serverBlock);
 		void					receiveMessage(int index);
 		void					sendResponseParts(int index);
 
@@ -94,7 +93,7 @@ class Server
 	
     public:
 		/// Main Methods
-		Server(int port, std::string const & host, size_t maxBodySize, std::string const & name);
+		// Server(int port, std::string const & host, size_t maxBodySize, std::string const & name);
 		Server(ServerBlock & serverBlock);
 		void					handleEvents();
 		~Server();
