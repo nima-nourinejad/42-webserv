@@ -6,14 +6,14 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/19 18:42:50 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 12:23:11 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(int port, std::string const & host, size_t maxBodySize)
-    : _socket_fd(-1), _fd_epoll(-1), _config(port, host, maxBodySize), _num_clients(0)
+Server::Server(int port, std::string const & host, size_t maxBodySize, std::string const & name)
+    : _socket_fd(-1), _fd_epoll(-1), _config(port, host, maxBodySize, name), _num_clients(0)
 {
 	applyCustomSignal();
 	createEpoll();
@@ -25,8 +25,9 @@ Server::Server(int port, std::string const & host, size_t maxBodySize)
 	serverConfig = nullptr;
 };
 
-Server::Server(ServerBlock const & serverBlock)
-    : _socket_fd(-1), _fd_epoll(-1), _config(serverBlock.getListen(), serverBlock.getHost(), serverBlock.getClientMaxBodySize()), _num_clients(0)
+Server::Server(ServerBlock & serverBlock)
+    : _socket_fd(-1), _fd_epoll(-1), _config(serverBlock.getListen(),
+	serverBlock.getHost(), serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0), _responseMaker(serverBlock)
 {
 	applyCustomSignal();
 	createEpoll();
@@ -50,7 +51,8 @@ void Server::connectToSocket()
 		if (listen(_socket_fd, BACKLOG) == -1)
 			throw SocketException("Failed to listen on socket");
 	}
-	std::cout << "Server is listening on host " << _config.host << " and port " << _config.port << std::endl;
+	// std::cout << "Server is listening on host " << _config.host << " and port " << _config.port << std::endl;
+	printMessage("Server is listening on host " + _config.host + " and port " + std::to_string(_config.port));
 	addEpoll(_socket_fd, MAX_CONNECTIONS);
 }
 
@@ -58,7 +60,8 @@ bool Server::serverFull() const
 {
 	if (_num_clients >= MAX_CONNECTIONS)
 	{
-		std::cout << "Max clients reached" << std::endl;
+		// std::cout << "Max clients reached" << std::endl;
+		printMessage("Max clients reached");
 		return true;
 	}
 	return false;
@@ -76,7 +79,8 @@ int Server::findAvailableSlot() const
 
 void Server::occupyClientSlot(int availableSlot, int fd)
 {
-	std::cout << "Accepted client " << availableSlot + 1 << ". Waiting for the rquest" << std::endl;
+	// std::cout << "Accepted client " << availableSlot + 1 << ". Waiting for the rquest" << std::endl;
+	printMessage("Accepted client " + std::to_string(availableSlot + 1) + ". Waiting for the rquest");
 	_clients[availableSlot].fd = fd;
 	_clients[availableSlot].index = availableSlot;
 	_clients[availableSlot].status = WAITFORREQUEST;
@@ -97,7 +101,8 @@ void Server::handlePendingConnections()
 				throw SocketException("Failed to accept client");
 			else
 			{
-				std::cout << "No pending connections anymore" << std::endl;
+				// std::cout << "No pending connections anymore" << std::endl;
+				printMessage("No pending connections anymore");
 				break;
 			}
 		}
@@ -112,7 +117,8 @@ void Server::handlePendingConnections()
 
 void Server::acceptClient()
 {
-	std::cout << "There are pending connections" << std::endl;
+	// std::cout << "There are pending connections" << std::endl;
+	printMessage("There are pending connections");
 	if (serverFull())
 	{
 		ClientConnection::sendServiceUnavailable(_socket_fd, _config.maxBodySize);
@@ -135,8 +141,9 @@ void Server::acceptClient()
 
 void Server::closeSocket()
 {
-	std::cout << std::endl
-		  << "Server is shutting down" << std::endl;
+	// std::cout << std::endl
+	// 	  << "Server is shutting down" << std::endl;
+	printMessage("Server is shutting down");
 	signal(SIGINT, SIG_DFL);
 	closeClientSockets();
 	removeEpoll(_socket_fd);
@@ -151,7 +158,8 @@ void Server::closeClientSocket(int index)
 {
 	if (_clients[index].fd != -1 && index < MAX_CONNECTIONS && index >= 0)
 	{
-		std::cout << "Closing client " << index + 1 << std::endl;
+		// std::cout << "Closing client " << index + 1 << std::endl;
+		printMessage("Closing client " + std::to_string(index + 1));
 		removeEpoll(_clients[index].fd);
 		close(_clients[index].fd);
 		_clients[index].fd = -1;
@@ -194,7 +202,8 @@ void Server::sendResponseParts(int index)
 	bytes_sent = send(_clients[index].fd, _clients[index].responseParts[0].c_str(), _clients[index].responseParts[0].size(), MSG_DONTWAIT);
 	if (bytes_sent == 0)
 	{
-		std::cout << "Client " << index + 1 << " disconnected" << std::endl;
+		// std::cout << "Client " << index + 1 << " disconnected" << std::endl;
+		printMessage("Client " + std::to_string(index + 1) + " disconnected");
 		closeClientSocket(index);
 		return;
 	}
@@ -211,15 +220,18 @@ void Server::sendResponseParts(int index)
 			_clients[index].responseParts.erase(_clients[index].responseParts.begin());
 			if (_clients[index].responseParts.empty())
 			{
-				std::cout << "All response parts sent to client " << index + 1 << std::endl;
+				// std::cout << "All response parts sent to client " << index + 1 << std::endl;
+				printMessage("All response parts sent to client " + std::to_string(index + 1));
 				if (_clients[index].keepAlive == false)
 				{
-					std::cout << "Client " << index + 1 << " requested to close connection" << std::endl;
+					// std::cout << "Client " << index + 1 << " requested to close connection" << std::endl;
+					printMessage("Client " + std::to_string(index + 1) + " requested to close connection");
 					closeClientSocket(index);
 				}
 				else
 				{
-					std::cout << "Client " << index + 1 << " requested to keep connection alive. Waiting for a new rquest" << std::endl;
+					// std::cout << "Client " << index + 1 << " requested to keep connection alive. Waiting for a new rquest" << std::endl;
+					printMessage("Client " + std::to_string(index + 1) + " requested to keep connection alive. Waiting for a new rquest");
 					_clients[index].request.clear();
 					_clients[index].status = WAITFORREQUEST;
 					_clients[index].setCurrentTime();
@@ -239,12 +251,14 @@ void Server::receiveMessage(int index)
 	bytes_received = recv(_clients[index].fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 	if (bytes_received == 0)
 	{
-		std::cout << "Client " << index + 1 << " disconnected" << std::endl;
+		// std::cout << "Client " << index + 1 << " disconnected" << std::endl;
+		printMessage("Client " + std::to_string(index + 1) + " disconnected");
 		closeClientSocket(index);
 	}
 	else if (bytes_received > 0)
 	{
-		std::cout << "Received message from client " << index + 1 << std::endl;
+		// std::cout << "Received message from client " << index + 1 << std::endl;
+		printMessage("Received message from client " + std::to_string(index + 1));
 		if (_clients[index].status == WAITFORREQUEST)
 			_clients[index].status = RECEIVINGUNKOWNTYPE;
 		stringBuffer = buffer;
@@ -287,7 +301,8 @@ int Server::eventType(struct epoll_event const & event) const
 
 void Server::handleTimeout(int index)
 {
-	std::cout << "Client " << index + 1 << " timed out" << std::endl;
+	// std::cout << "Client " << index + 1 << " timed out" << std::endl;
+	printMessage("Client " + std::to_string(index + 1) + " timed out");
 	if (_clients[index].request.empty() == false)
 	{
 		_clients[index].status = RECEIVED;
@@ -330,7 +345,8 @@ void Server::handleErr(struct epoll_event const & event)
 		int index = getClientIndex(event);
 		if (index == -1)
 			return;
-		std::cout << "Client " << index + 1 << " disconnected" << std::endl;
+		// std::cout << "Client " << index + 1 << " disconnected" << std::endl;
+		printMessage("Client " + std::to_string(index + 1) + " disconnected");
 		closeClientSocket(index);
 	}
 }
@@ -410,17 +426,26 @@ void Server::setAddress()
 	struct addrinfo * result = nullptr;
 
 	int error = getaddrinfo(_config.host.c_str(), nullptr, &hints, &result);
-	if (error != 0)
+	// Should we throw an exception if the host is invalid?
+	if (error != 0 || result == nullptr || result->ai_addr == nullptr || result->ai_family != AF_INET)
 	{
-		std::string error_message = gai_strerror(error);
-		throw SocketException("Failed to get address info : " + error_message);
-	}
-	if (result == nullptr || result->ai_addr == nullptr)
-		throw SocketException("No address info returned");
-	if (result->ai_family != AF_INET)
-	{
-		freeaddrinfo(result);
-		throw SocketException("Invalid address family returned");
+		if (_config.host != "")
+			printMessage("Failed to get address info. Using default host as fallback");
+		else
+			printMessage("No host provided. Using default host as fallback");
+		if (result != nullptr)
+			freeaddrinfo(result);
+		_config.host = "0.0.0.0";
+		error = getaddrinfo(_config.host.c_str(), nullptr, &hints, &result);
+		if (error != 0)
+			throw SocketException("Failed to get address info (fallback host)");
+		if (result == nullptr || result->ai_addr == nullptr)
+			throw SocketException("No address info returned (fallback host)");
+		if (result->ai_family != AF_INET)
+		{
+			freeaddrinfo(result);
+			throw SocketException("Invalid address family returned (fallback host)");
+		}
 	}
 	_address = *reinterpret_cast<struct sockaddr_in *>(result->ai_addr);
 	freeaddrinfo(result);
@@ -527,4 +552,9 @@ void Server::logError(std::string const & message)
 Server::~Server()
 {
 	closeSocket();
+}
+
+void Server::printMessage(std::string const & message) const
+{
+	std::cout << _config.name << " : " << message << std::endl;
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/28 15:04:40 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 12:21:12 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ class HttpHandler
 
 	public:
 		HttpHandler();
-		HttpHandler(const std::string &rootDir, ServerBlock &serverConfig); //if serverblock became const, here too
+		HttpHandler(ServerBlock &serverConfig); //if serverblock became const, here too
 		~HttpHandler();
 
 		std::string	handleRequest(const Request &req);

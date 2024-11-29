@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/19 18:40:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 12:23:40 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ class Server
 		Response				_response;
 		struct eventData 		eventData;
 		ServerBlock 			const * serverConfig;
+		HttpHandler				_responseMaker;
 
 		/// ClientConnection Methods
 		void					occupyClientSlot(int availbleSlot, int fd);
@@ -87,11 +88,14 @@ class Server
 		void					acceptClient();
 		void					startListeningSocket();
 		void					closeSocket();
+		
+		///Utility Methods
+		void printMessage(std::string const & message) const;
 	
     public:
 		/// Main Methods
-		Server(int port, std::string const & host, size_t maxBodySize);
-		Server(ServerBlock const & serverBlock);
+		Server(int port, std::string const & host, size_t maxBodySize, std::string const & name);
+		Server(ServerBlock & serverBlock);
 		void					handleEvents();
 		~Server();
 

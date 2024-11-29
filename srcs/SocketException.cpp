@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   SocketException.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:31 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 16:01:22 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 11:09:04 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,14 @@ int findType(std::string const & message)
 }
 
 SocketException::SocketException(std::string const & message)
-    : std::runtime_error(message + " : " + strerror(errno)), type(findType(message)), open_fd(-1){}
+        : std::runtime_error(errno != 0 ? message + " : " + strerror(errno) : message),
+          type(findType(message)),
+          open_fd(-1) {}
 
 SocketException::SocketException(std::string const & message, int open_fd)
-	: std::runtime_error(message + " : " + strerror(errno)), type(findType(message)), open_fd(open_fd) {}
+	: std::runtime_error(errno != 0 ? message + " : " + strerror(errno) : message),
+          type(findType(message)),
+          open_fd(open_fd) {}
 
 void SocketException::log() const
 {

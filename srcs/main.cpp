@@ -6,12 +6,13 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/19 18:44:37 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 11:39:46 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
+// ServerBlock needs its own getRoot function so it searches for the root in the locations vector
 
+#include "Server.hpp"
 
 bool sigInt(std::vector<std::unique_ptr<Server>> const & servers)
 {
@@ -23,10 +24,16 @@ bool sigInt(std::vector<std::unique_ptr<Server>> const & servers)
 	return false;
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	ConfigParser config;
-	std::ifstream file("config/webserv.conf");;
+	if (argc != 2)
+	{
+		std::cerr << "Usage: ./webserv <config_file>" << std::endl;
+		return 1;
+	}
+	// std::ifstream file("config/webserv.conf");
+	std::ifstream file(argv[1]);
 	if (!file.is_open())
 	{
 		std::cerr << "Error: could not open file" << std::endl;

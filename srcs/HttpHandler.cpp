@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/28 15:20:31 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 12:21:04 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,8 @@
 
 HttpHandler::HttpHandler() : _rootDir("") , _serverBlock(*(new ServerBlock)) {}
 
-HttpHandler::HttpHandler(const std::string &rootDir, ServerBlock &serverConfig)
-	: _rootDir(rootDir), _serverBlock(serverConfig) {}
+HttpHandler::HttpHandler(ServerBlock &serverConfig)
+	: _rootDir(serverConfig.getLocations()[0].getRoot()), _serverBlock(serverConfig) {}
 
 HttpHandler::~HttpHandler() {}
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/18 16:06:57 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 12:24:07 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -367,9 +367,9 @@ void ClientConnection::createResponseParts()
 		"Host: localhost\r\n"
 		"\r\n";
 		Request		getRequest(rawGetRequest);
-		std::string	rootDir = "./www";
+		// std::string	rootDir = "./www";
 		ServerBlock	serverConfig;
-		HttpHandler	httpHandler(rootDir, serverConfig);
+		HttpHandler	httpHandler(serverConfig);
 		std::string	getResponse = httpHandler.handleRequest(getRequest);
 		responseParts.push_back(getResponse);
 	}

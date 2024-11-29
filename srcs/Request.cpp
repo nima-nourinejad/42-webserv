@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/28 14:50:34 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 10:23:57 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,9 @@ const std::string	&Request::getHeader(const std::string &key) const
 	// std::map<std::string, std::string>::const_iterator	it = _headers.find(key);
 	auto	it = _headers.find(key);
 	
-	return (it != _headers.end() ? it->second : "");
+	// return (it != _headers.end() ? it->second : "");
+	static const std::string empty_str = "";
+	return (it != _headers.end() ? it->second : empty_str);
 }
 const std::string	&Request::getBody() const { return _body; }
 
