@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/29 14:37:24 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 16:47:10 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class HttpHandler
 		bool		_isMethodAllowed(const std::string &method, const std::string &path);
         std::string	_getErrorPage(int statusCode);
         std::string	_validateRequest(const Request &req);
+		std::map<int, std::string>	_errorPages;
 
 	public:
 		HttpHandler(ServerBlock &serverConfig); //if serverblock became const, here too

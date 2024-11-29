@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 16:33:12 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 16:42:40 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -472,7 +472,7 @@ void Server::createClientConnections(ServerBlock & serverBlock)
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
 		_clients.push_back(ClientConnection());
-		// _clients[i].responseMaker = &_responseMaker;
+		_clients[i].responseMaker = &_responseMaker;
 		_clients[0].maxBodySize = _config.maxBodySize;
 	}
 	
