@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 13:26:11 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 16:30:40 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,12 +41,13 @@ class Server
 		Configuration			_config;
 		int						_num_clients;
 		std::vector<ClientConnection> _clients;
+		// ClientConnection		_clients[MAX_CONNECTIONS];
 		struct epoll_event		_events[MAX_CONNECTIONS + 1];
 		struct epoll_event		_ready[MAX_CONNECTIONS + 1];
 		int						_retry;
 		Response				_response;
 		struct eventData 		eventData;
-		// ServerBlock 			const * serverConfig;
+		HttpHandler				_responseMaker;
 
 		/// ClientConnection Methods
 		void					occupyClientSlot(int availbleSlot, int fd);

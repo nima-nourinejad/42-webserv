@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 13:34:48 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 16:33:12 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,24 @@
 Server::Server(ServerBlock & serverBlock)
     : _socket_fd(-1), _fd_epoll(-1), _config(serverBlock.getListen(),
 	serverBlock.getHost(), serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
+	, _responseMaker(serverBlock)
 {
+	
 	applyCustomSignal();
+	std::cout << "Server created" << std::endl;
 	createEpoll();
+	std::cout << "Epoll created" << std::endl;
 	startListeningSocket();
+	std::cout << "Listening socket created" << std::endl;
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
+	// for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	// {
+	// 	// _clients[i].responseMaker = &_responseMaker;
+	// 	_clients[i].maxBodySize = _config.maxBodySize;
+	// }
+	
 	createClientConnections(serverBlock);
 };
 
@@ -457,8 +468,14 @@ void Server::makeSocketReusable()
 
 void Server::createClientConnections(ServerBlock & serverBlock)
 {
+	(void)serverBlock;
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
-		_clients.push_back(ClientConnection(serverBlock));
+	{
+		_clients.push_back(ClientConnection());
+		// _clients[i].responseMaker = &_responseMaker;
+		_clients[0].maxBodySize = _config.maxBodySize;
+	}
+	
 }
 
 void Server::startListeningSocket()
@@ -471,9 +488,13 @@ void Server::startListeningSocket()
 		try
 		{
 			createSocket();
+			std::cout << "Socket created" << std::endl;
 			makeSocketReusable();
+			std::cout << "Socket made reusable" << std::endl;
 			setAddress();
+			std::cout << "Address set" << std::endl;
 			connectToSocket();
+			std::cout << "Connected to socket" << std::endl;
 			success = true;
 		}
 		catch(SocketException const & e)

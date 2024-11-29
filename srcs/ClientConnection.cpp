@@ -3,30 +3,30 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 13:32:04 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/11/29 16:35:25 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
 
-// ClientConnection::ClientConnection()
-//     : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true)
-// 	{
-// 		eventData.type = CLIENT;
-// 		eventData.fd = -1;
-// 		eventData.index = -1;
-// 	};
-
-ClientConnection::ClientConnection(ServerBlock & serverBlock)
-    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(serverBlock.getClientMaxBodySize()), responseMaker(serverBlock)
+ClientConnection::ClientConnection()
+    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(0),responseMaker(nullptr)
 	{
 		eventData.type = CLIENT;
 		eventData.fd = -1;
 		eventData.index = -1;
 	};
+
+// ClientConnection::ClientConnection(ServerBlock & serverBlock)
+//     : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(serverBlock.getClientMaxBodySize()), responseMaker(serverBlock)
+// 	{
+// 		eventData.type = CLIENT;
+// 		eventData.fd = -1;
+// 		eventData.index = -1;
+// 	};
 
 void ClientConnection::changeRequestToBadRequest()
 {
@@ -371,18 +371,13 @@ void ClientConnection::createResponseParts()
 	connectionType();
 	std::string method = requestmethod(request);
 	std::string uri = requestURI(request);
-	if (uri == "/index.html")
+	if (uri == "/index.html" || uri == "/non")
 	{
-		std::string	rawGetRequest =
-		"GET /index.html HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"\r\n";
-		Request		getRequest(rawGetRequest);
-		// std::string	rootDir = "./www";
-		ServerBlock	serverConfig;
-		HttpHandler	httpHandler(serverConfig);
-		std::string	getResponse = httpHandler.handleRequest(getRequest);
+		// std::cout << "Request for / : " << request << std::endl;
+		std::string	getResponse = responseMaker->createResponse(request);
 		responseParts.push_back(getResponse);
+		status = READYTOSEND;
+		std::cout << "Response created for client " << index + 1 << std::endl;
 	}
 	else
 	{
@@ -425,9 +420,10 @@ void ClientConnection::createResponseParts()
 			header = statusLine + contentType + contentLength + connection;
 			responseParts.push_back(header + "\r\n" + body);
 		}
+		status = READYTOSEND;
+		std::cout << "Response created for client " << index + 1 << std::endl;
 	}
-	status = READYTOSEND;
-	std::cout << "Response created for client " << index + 1 << std::endl;
+	
 }
 
 time_t getCurrentTime()
