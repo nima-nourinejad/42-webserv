@@ -3,14 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 14:12:29 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/11/29 17:34:21 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// ServerBlock needs its own getRoot function so it searches for the root in the locations vector
+// Andrey: check if each location block can contain multiple files (under the name of try_files)
+
+// Ali: Each Location block might have its own root, error page, maxboysize, index
+// Ali: Also add sth for return, alias, upload_path
 
 #include "Server.hpp"
 
