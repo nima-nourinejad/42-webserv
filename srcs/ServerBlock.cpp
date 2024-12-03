@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/29 16:05:24 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/03 18:27:07 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,8 +126,16 @@ void ServerBlock::setHost(const std::string& host)
 
 void ServerBlock::setClientMaxBodySize(std::string& client_max_body_size)
 {
-	if (client_max_body_size.empty() || !std::all_of(client_max_body_size.begin(), client_max_body_size.end(), ::isdigit)) 
-		throw std::invalid_argument("Incorrent client max body size format");
-	else
-		_client_max_body_size = std::stoi(client_max_body_size);
+	if (client_max_body_size.empty() || !std::all_of(client_max_body_size.begin(), client_max_body_size.end(), ::isdigit))
+		throw std::invalid_argument("Incorrect client_max_body_size format");
+
+	try {
+		int size = std::stoi(client_max_body_size);
+		if (size < 0 || size > 1000000000)
+			throw std::invalid_argument("client_max_body_size is out of range (0-1000000000)");
+		_client_max_body_size = size;
+	}
+	catch (const std::exception&) {
+		throw std::invalid_argument("Incorrect client_max_body_size format");
+	}
 }
