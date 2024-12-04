@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 17:02:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 17:08:42 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ class HttpHandler
 		std::string					createResponse(const std::string &request);
 		std::string					handleRequest(const Request &req);
 		std::string					handleGET(const Request &req);
+		std::string					handleFileRequest(const std::string &filePath);
 		std::string					handlePOST(const Request &req);
 		std::string					handleDELETE(const Request &req);
 		std::string					handleCGI(const Request &req);

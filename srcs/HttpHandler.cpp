@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 17:02:16 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 17:11:51 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -185,6 +185,26 @@ std::string readFileError(std::string const & path)
 }
 std::string	HttpHandler::handleGET(const Request &req)
 {
+	LocationBlock	matchedLocation;
+
+	for (const auto &location : _serverBlock.getLocations())
+	{
+		if (req.getPath().find(location.getLocation()) == 0)
+		{
+			matchedLocation = location;
+			break;
+		}
+	}
+
+	if (!matchedLocation.getIndex().empty())
+	{
+		std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation.getIndex();
+
+		if (std::filesystem::exists(indexFilePath)
+			&& std::filesystem::is_regular_file(indexFilePath))
+			return handleFileRequest(indexFilePath); //maybe just in index requested location
+	}
+
 	std::string	filePath = _rootDir + req.getPath();
 	Response	response;
 
@@ -221,6 +241,14 @@ std::string	HttpHandler::handleGET(const Request &req)
 		}
 	}
 
+	return handleFileRequest(filePath);
+}
+
+// Adding a helper function for file requests
+std::string	HttpHandler::handleFileRequest(const std::string &filePath)
+{
+	Response	response;
+
 	int fd = open(filePath.c_str(), O_RDONLY);
 
 	if (fd == -1)
@@ -243,19 +271,13 @@ std::string	HttpHandler::handleGET(const Request &req)
 		if (close(fd) == -1)
 			handleError("close file descriptor");
 
-		if (bytesRead < 0)
-		{
-			response.setStatusLine("HTTP/1.1 500 Internal Server Error");
-			response.setBody("Error reading file\n");
-			return response.toString();
-		}
 		response.setStatusLine("HTTP/1.1 200 OK");
 		response.setBody(content);
 		response.setHeader("Content-Type", "text/html");
 		return response.toString();
 	}
-	
-	catch(const SystemCallError &e)
+
+	catch (const SystemCallError &e)
 	{
 		if (close(fd) == -1)
 			handleError("close file descriptor");
