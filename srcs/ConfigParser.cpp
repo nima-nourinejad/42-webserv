@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/04 15:45:49 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 17:08:49 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -274,10 +274,6 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 				tokens.push_back(Token(TokenType::COMMENT, comment));
 			}
 		}
-		else if (word == "EOF")
-		{
-			tokens.push_back(Token(TokenType::END_OF_FILE, word));
-		}
 		else if (std::find(singleValueKeys.begin(), singleValueKeys.end(), word) != singleValueKeys.end())
 		{
 			std::string value;
@@ -327,22 +323,28 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 		else
 		{
 			tokens.push_back(Token(TokenType::UNKNOWN, word));
-			// printTokens(tokens);
+			printTokens(tokens);
 			throw std::runtime_error("Unknown token");
 		}
 		
 	}
+	if (filepath.eof()) {
+ 	  tokens.push_back(Token(TokenType::END_OF_FILE, ""));
+}
 }
 
 std::vector<ServerBlock>	ConfigParser::parseConfig(std::ifstream& filepath)
 {
 	tokenize(_tokens, filepath);
-	// printTokens(_tokens);
+	printTokens(_tokens);
 
 	for (size_t i = 0; i < _tokens.size(); i++)
 	{
 		while (_tokens[i].type == TokenType::COMMENT)
 			i++;
+		if (_tokens[i].type == TokenType::END_OF_FILE)
+			break;
+		else
 		if (_tokens[i].key != "server")
 		{
 			std::cout << "Issue at token " << i	<< " " << tokenTypeToString(_tokens[i].type) << std::endl;
