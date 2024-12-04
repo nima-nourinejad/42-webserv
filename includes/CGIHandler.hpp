@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/05 11:31:34 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 16:43:17 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,9 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "SystemCallError.hpp"
+#include "LocationBlock.hpp"
+#include "ServerBlock.hpp"
+
 #include <string>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -25,11 +28,10 @@
 class CGIHandler
 {
 	private:
-		std::string	_cgiPath;
+		ServerBlock	&_serverBlock;
 
 	public:
-		CGIHandler();
-		CGIHandler(const std::string &cgiPath);
+		CGIHandler(ServerBlock &serverConfig);
 		~CGIHandler();
 
 		std::string	execute(const Request &req);

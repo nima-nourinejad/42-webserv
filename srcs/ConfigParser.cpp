@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/04 15:21:28 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 15:45:49 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -327,7 +327,7 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 		else
 		{
 			tokens.push_back(Token(TokenType::UNKNOWN, word));
-			printTokens(tokens);
+			// printTokens(tokens);
 			throw std::runtime_error("Unknown token");
 		}
 		
@@ -337,7 +337,7 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 std::vector<ServerBlock>	ConfigParser::parseConfig(std::ifstream& filepath)
 {
 	tokenize(_tokens, filepath);
-	printTokens(_tokens);
+	// printTokens(_tokens);
 
 	for (size_t i = 0; i < _tokens.size(); i++)
 	{

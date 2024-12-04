@@ -6,15 +6,13 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 15:19:15 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 16:44:18 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "CGIHandler.hpp"
 
-CGIHandler::CGIHandler() : _cgiPath("") {}
-
-CGIHandler::CGIHandler(const std::string &cgiPath) : _cgiPath(cgiPath) {}
+CGIHandler::CGIHandler(ServerBlock &serverConfig) : _serverBlock(serverConfig) {}
 
 CGIHandler::~CGIHandler() {}
 
@@ -22,6 +20,31 @@ std::string	CGIHandler::execute(const Request &req)
 {
 	try
 	{
+		// Check for allowed CGI extensions
+		std::string		filePath = req.getPath();
+		std::string		extension = filePath.substr(filePath.find_last_of("."));
+		LocationBlock	matchedLocation;
+
+		for (const auto &location : _serverBlock.getLocations())
+		{
+			if (req.getPath().find(location.getLocation()) == 0)
+			{
+				matchedLocation = location;
+				break;
+			}
+		}
+
+		if (std::find(matchedLocation.getCgiExtension().begin(), matchedLocation.getCgiExtension().end(), extension)
+				== matchedLocation.getCgiExtension().end())
+			throw std::runtime_error("Unsupported CGI extension");
+
+		// Check file existence and permissions
+		if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath))
+			throw std::runtime_error("CGI file does not exist or is not a regular file");
+
+		if (access(filePath.c_str(), X_OK) != 0)
+			throw std::runtime_error("CGI file is not executable");
+
 		int	pipefd[2];
 
 		if (pipe(pipefd) == -1)
@@ -42,13 +65,13 @@ std::string	CGIHandler::execute(const Request &req)
 			if (close(pipefd[1]) == -1)
 				handleError("close write-end in child");
 
-			char *argv[] = { const_cast<char *>(_cgiPath.c_str()), NULL };
+			char *argv[] = { const_cast<char *>(filePath.c_str()), NULL };
 			
 			// Set up environment variables(for simplicity, only CONTENT_LENGTH)
 			std::string	contentLength = "CONTENT_LENGTH=" + std::to_string(req.getBody().size());
 			char *envp[] = { const_cast<char *>(contentLength.c_str()), NULL };
 
-			if (execve(_cgiPath.c_str(), argv, envp) == -1)
+			if (execve(filePath.c_str(), argv, envp) == -1)
 				handleError("execve");
 			_exit(1);
 		}
@@ -89,6 +112,7 @@ std::string	CGIHandler::execute(const Request &req)
 			return response.toString();
 		}
 	}
+
 	catch(const SystemCallError& e)
 	{
 		Response	response;

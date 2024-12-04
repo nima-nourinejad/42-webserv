@@ -6,14 +6,15 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 15:15:40 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 17:02:16 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpHandler.hpp"
 
 HttpHandler::HttpHandler(ServerBlock &serverConfig)
-	: _rootDir(serverConfig.getLocations()[0].getRoot()), _serverBlock(serverConfig)
+	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0].getRoot())
+	, _serverBlock(serverConfig)
 	{
 		//creating a default state of map
 		_errorPages[404]="default_404.html";
@@ -94,21 +95,79 @@ std::string	HttpHandler::handleRequest(const Request &req)
 		// std::string validation = _validateRequest(req);
 		// if (validation != "Ok")
 		// 	return validation;
+
+		LocationBlock	matchedLocation;
+
+		// Override root if location-specific root is defined
+		if (!matchedLocation.getRoot().empty())
+			_rootDir = matchedLocation.getRoot();
+
+		// Override error pages if location-specific error pages are defined
+		if (!matchedLocation.getErrorPages().empty())
+			_errorPages = matchedLocation.getErrorPages();
+
+		// Handle client_max_body_size for the specific location
+		if (matchedLocation.getClientMaxBodySize() > 0)
+			_maxBodySize = matchedLocation.getClientMaxBodySize(); //maybe not needed
+
+		for (const auto &location : _serverBlock.getLocations())
+		{
+			if (req.getPath().find(location.getLocation()) == 0)
+			{
+				matchedLocation = location;
+				break;
+			}
+		}
+
+		if (!matchedLocation.getReturn().second.empty())
+		{
+			Response	response;
+
+			response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation.getReturn().first) + " Redirect");
+			response.setHeader("Location", matchedLocation.getReturn().second);
+			return response.toString();
+		}
+
+		if (!matchedLocation.getAlias().empty())
+			_rootDir = matchedLocation.getAlias();
+
+		if (!matchedLocation.getUploadPath().empty())
+		{
+			// Handle file uploads logic (POST requests)
+			std::filesystem::path	uploadPath = matchedLocation.getUploadPath();
+
+			if (!std::filesystem::exists(uploadPath))
+				std::filesystem::create_directories(uploadPath);
+
+			if (!std::filesystem::is_directory(uploadPath))
+				throw std::runtime_error("Upload path is not writable");
+
+			// Test write by attempting to create a temporary file
+			std::ofstream	testFile((uploadPath / "test.tmp").string());
+
+			if (!testFile.is_open())
+				throw std::runtime_error("Upload path is not writable");
+
+			testFile.close();
+			std::filesystem::remove(uploadPath / "test.tmp");
+		}
+
+		if (!matchedLocation.getCgiPath().empty())
+			return handleCGI(req);
+
 		if (req.getMethod() == "GET")
 			return handleGET(req);
 		else if (req.getMethod() == "POST")
 			return handlePOST(req);
 		else if (req.getMethod() == "DELETE")
 			return handleDELETE(req);
-		else if (req.getMethod() == "CGI") // check if for the CGI, it should start with CGI
-			return handleCGI(req);
 
 		return _getErrorPage(405); // Method not allowed
 	}
 	catch (const std::runtime_error &e)
-    {
-        return e.what(); // Handle runtime errors (e.g., method not allowed)
-    }
+	{
+		return e.what(); // Handle runtime errors (e.g., method not allowed)
+	}
 	catch(const SystemCallError &e)
 	{
 		return _getErrorPage(500); // Internal server error
@@ -126,24 +185,54 @@ std::string readFileError(std::string const & path)
 }
 std::string	HttpHandler::handleGET(const Request &req)
 {
-	std::cout << "we are at the start handleGet" << std::endl;
 	std::string	filePath = _rootDir + req.getPath();
 	Response	response;
-	std::cout << filePath << std::endl;
+
+	// Check if the path is a directory
+	if (std::filesystem::is_directory(filePath))
+	{
+		LocationBlock	matchedLocation;
+
+		for (const auto &location : _serverBlock.getLocations())
+		{
+			if (req.getPath().find(location.getLocation()) == 0)
+			{
+				matchedLocation = location;
+				break;
+			}
+		}
+
+		if (matchedLocation.getAutoindex())
+		{
+			std::ostringstream	directoryListing;
+
+			directoryListing << "<html><body><h1>Index of " << req.getPath() << "</h1><ul>";
+			for (const auto &entry : std::filesystem::directory_iterator(filePath))
+			{
+				directoryListing << "<li><a href=\"" << entry.path().filename().string() << "\">";
+				directoryListing << entry.path().filename().string() << "</a></li>";
+			}
+			directoryListing << "</ul></body></html>";
+
+			response.setStatusLine("HTTP/1.1 200 OK");
+			response.setBody(directoryListing.str());
+			response.setHeader("Content-Type", "text/html");
+			return response.toString();
+		}
+	}
+
 	int fd = open(filePath.c_str(), O_RDONLY);
 
 	if (fd == -1)
 	{
-		std::cout << "fd is -1" << std::endl;
 		int			statusCode = (errno == EACCES) ? 403 : 404;
-
 		std::string	errorPage = _errorPages.at(statusCode);
+
 		fd = open((_rootDir + "/" + errorPage).c_str(), O_RDONLY);
 	}
 
 	try
 	{
-		std::cout << "we are at the try handleGet" << std::endl;
 		char		buffer[1024];
 		std::string	content;
 		ssize_t		bytesRead;
@@ -249,7 +338,6 @@ std::string	HttpHandler::extractFilename(const std::string& disposition)
 	}
 	return "uploaded_file";
 }
-
 
 void	HttpHandler::saveFile(const std::string &filename, const std::string &fileData)
 {

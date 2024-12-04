@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/04 15:06:37 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 17:02:02 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,16 +31,20 @@
 // Ali: Each Location block might have its own root, error page, maxbodysize,
 //      index
 //
-// Ali: Also add sth for return, alias, upload_path
-//
+// (Solved) - Autoindex, compiling with valgrind works fine but without that, segfault.
 // Ali: if the config file is loke this:
 	// location /files/ {
 	//     root /var/www;
 	//     autoindex on;
 	// }
 //
-//     so now in the /files page I should display a directory listing of all
+//     so now in the /files page you should display a directory listing of all
 //     the files and directories in /var/www/files/.
+// (Solved)
+// // Ali: Also add sth for return, alias, upload_path
+
+// new
+// Nima: I think maxbodysize in a specific location block should override in your side
 
 #include "Server.hpp"
 
@@ -56,12 +60,13 @@ bool sigInt(std::vector<std::unique_ptr<Server>> const & servers)
 
 int main(int argc, char **argv)
 {
-	ConfigParser config;
 	if (argc != 2)
 	{
 		std::cerr << "Usage: ./webserv <config_file>" << std::endl;
 		return 1;
 	}
+	ConfigParser config;
+
 	// std::ifstream file("config/webserv.conf");
 	std::ifstream file(argv[1]);
 	if (!file.is_open())
@@ -69,20 +74,24 @@ int main(int argc, char **argv)
 		std::cerr << "Error: could not open file" << std::endl;
 		return 1;
 	}
+
 	try
 	{
 		config.parseConfig(file);
 	}
+
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
 		return 1;
 	}
+
 	std::cout << "Successfully parsed config" << std::endl;
 	config.printServerConfig();
 
 	// Creating servers
-	std::vector<std::unique_ptr<Server>> servers;
+	std::vector<std::unique_ptr<Server>>	servers;
+
 	for(std::size_t i = 0; (i < config.getServerBlocks().size() && !sigInt(servers)); i++)
 	{
 		try
@@ -104,7 +113,8 @@ int main(int argc, char **argv)
 	}
 	
 	// Handling events
-	std::size_t serverNum;
+	std::size_t	serverNum;
+
 	while (!sigInt(servers))
 	{
 		if (servers.empty())

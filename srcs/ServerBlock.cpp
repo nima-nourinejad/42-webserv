@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/03 18:27:07 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/04 15:38:19 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,7 @@ void ServerBlock::setErrorPage(int code, const std::string& page)
 {
 	if (page.empty())
 		throw std::invalid_argument("Error page is empty");
-	if (code < 100 || code > 599)
+	if (code < 100 || code > 599) // 100 or 400?
 		throw std::invalid_argument("Error code is out of range");
 	_error_pages[code] = page;
 }

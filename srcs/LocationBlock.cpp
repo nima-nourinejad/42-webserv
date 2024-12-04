@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationBlock.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/03 18:43:11 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/04 16:48:57 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -212,7 +212,8 @@ void LocationBlock::setProxyPass(const std::string& proxy_pass)
 	if (!std::regex_match(proxy_pass, url_pattern))
 		throw std::invalid_argument("Invalid proxy pass URL format");
 	_proxy_pass = proxy_pass;
-}	
+}
+	
 void LocationBlock::setErrorPage(int code, const std::string& page)
 {
 	if (page.empty())
@@ -237,6 +238,7 @@ void LocationBlock::setLimitExcept(const std::vector<std::string>& values)
 		_limit_except.push_back(values[i]);
 	}
 }
+
 void LocationBlock::printLocationBlock()
 {
 	std::cout << "--------------------------------" << std::endl;
