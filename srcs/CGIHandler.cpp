@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 15:19:15 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,5 +103,4 @@ std::string	CGIHandler::execute(const Request &req)
 	unexpectedResponse.setStatusLine("HTTP/1.1 500 Internal Server Error");
 	unexpectedResponse.setBody("Unexpected error\n");
 	return unexpectedResponse.toString();
-	// return "HTTP/1.1 500 Internal Server Error\r\n\r\nUnexpected error\n";
 }

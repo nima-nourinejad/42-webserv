@@ -3,16 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/11/29 16:59:50 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/04 15:15:40 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpHandler.hpp"
-
-// HttpHandler::HttpHandler() : _rootDir("") , _serverBlock(*(new ServerBlock)) {}
 
 HttpHandler::HttpHandler(ServerBlock &serverConfig)
 	: _rootDir(serverConfig.getLocations()[0].getRoot()), _serverBlock(serverConfig)
@@ -22,17 +20,11 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig)
 		_errorPages[500]="default_403.html";
 
 		//filling the map with the error pages from the server block
-		// std::map<int, std::string>::iterator errorPages_it = serverConfig.getErrorPages().begin();
-		// while (errorPages_it != serverConfig.getErrorPages().end())
-		// {
-		// 	_errorPages[errorPages_it->first] = errorPages_it->second;
-		// 	errorPages_it++;
-		// }
 		for (const auto &errorPage : serverConfig.getErrorPages())
 			_errorPages[errorPage.first] = errorPage.second;
 	}
 
-HttpHandler::~HttpHandler() {std::cout << "HttpHandler destructor" << std::endl;}
+HttpHandler::~HttpHandler() {}
 
 bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
 {
@@ -54,8 +46,8 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 
 std::string	HttpHandler::_getErrorPage(int statusCode)
 {
-	const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
-	// const auto	&errorPages = _serverBlock.getErrorPages();
+	// const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
+	const auto	&errorPages = _serverBlock.getErrorPages();
 	
 	std::cout << "we are here" << std::endl;
 	if (errorPages.find(statusCode) != errorPages.end())
@@ -144,16 +136,9 @@ std::string	HttpHandler::handleGET(const Request &req)
 	{
 		std::cout << "fd is -1" << std::endl;
 		int			statusCode = (errno == EACCES) ? 403 : 404;
-		
-		// std::string	errorPage = _getErrorPage(statusCode);
-		// std::cout << "errorPage: " << errorPage << std::endl;
+
 		std::string	errorPage = _errorPages.at(statusCode);
 		fd = open((_rootDir + "/" + errorPage).c_str(), O_RDONLY);
-		// response.setBody(readFileError(_rootDir + "/" + errorPage));
-
-		// response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode));
-		// // response.setBody("Error: " + errorPage + "\n");
-		// return response.toString();
 	}
 
 	try
@@ -180,6 +165,7 @@ std::string	HttpHandler::handleGET(const Request &req)
 		response.setHeader("Content-Type", "text/html");
 		return response.toString();
 	}
+	
 	catch(const SystemCallError &e)
 	{
 		if (close(fd) == -1)
@@ -300,14 +286,3 @@ std::string HttpHandler::handleCGI(const Request &req)
 {
 	return _cgiHandler.execute(req);
 }
-
-// HttpHandler &HttpHandler::operator=(HttpHandler const &src)
-// {
-// 	if (this != &src)
-// 	{
-// 		_cgiHandler = src._cgiHandler;
-// 		_rootDir = src._rootDir;
-// 		_serverBlock = src._serverBlock;
-// 	}
-// 	return *this;
-// }

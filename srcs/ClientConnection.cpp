@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 17:10:27 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/04 15:21:00 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,14 +19,6 @@ ClientConnection::ClientConnection()
 		eventData.fd = -1;
 		eventData.index = -1;
 	};
-
-// ClientConnection::ClientConnection(ServerBlock & serverBlock)
-//     : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(serverBlock.getClientMaxBodySize()), responseMaker(serverBlock)
-// 	{
-// 		eventData.type = CLIENT;
-// 		eventData.fd = -1;
-// 		eventData.index = -1;
-// 	};
 
 void ClientConnection::changeRequestToBadRequest()
 {
@@ -363,24 +355,16 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 
 void ClientConnection::createResponseParts()
 {
-	
-	// std::string newResponse = _respo
-	
 	std::cout << "Creating response for client " << index + 1 << std::endl;
 	status = PREPARINGRESPONSE;
 	connectionType();
 	// std::string method = requestmethod(request);
 	// std::string uri = requestURI(request);
-	// if (uri == "/index.html" || uri == "/non")
-	// {
-	// 	// std::cout << "Request for / : " << request << std::endl;
-		std::string	getResponse = responseMaker->createResponse(request);
-		responseParts.push_back(getResponse);
-		status = READYTOSEND;
-	// 	std::cout << "Response created for client " << index + 1 << std::endl;
-	// }
-	// else
-	// {
+
+	std::string	getResponse = responseMaker->createResponse(request);
+	responseParts.push_back(getResponse);
+	status = READYTOSEND;
+
 	// 	std::string path = findPath(method, uri);
 	// 	std::string body = readFile(path);
 
@@ -424,7 +408,6 @@ void ClientConnection::createResponseParts()
 	// 	std::cout << "Response created for client " << index + 1 << std::endl;
 	// }
 
-
 	status = READYTOSEND;
 	std::cout << "Response created for client " << index + 1 << std::endl;
 
@@ -450,4 +433,3 @@ void ClientConnection::setCurrentTime()
 {
 	connectTime = getCurrentTime();
 }
-

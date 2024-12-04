@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/18 15:20:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 15:21:28 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,6 @@ void ConfigParser::parseServerBlock(size_t& index)
 		unexpectedToken(index);
 	while (index < _tokens.size())
 	{
-		//std::cout << "We are at index " << index << " and the token type is " << tokenTypeToString(_tokens[index].type) << std::endl;
 		if (_tokens[index].type == TokenType::OPEN)
 		{
 			if (serverBlockOpened)
@@ -157,7 +156,6 @@ void ConfigParser::parseLocationBlock(size_t& index)
 	_server_blocks[_server_blocks.size() - 1].getLocations().push_back(LocationBlock(_tokens[index - 1].values[0]));
 	while (index < _tokens.size())
 	{
-		//std::cout << "We are at index " << index << " and the token type is " << tokenTypeToString(_tokens[index].type) << std::endl;
 		if (_tokens[index].type == TokenType::OPEN)
 		{
 			if (locationBlockOpened)
@@ -336,14 +334,13 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 	}
 }
 
-std::vector<ServerBlock> ConfigParser::parseConfig(std::ifstream& filepath)
+std::vector<ServerBlock>	ConfigParser::parseConfig(std::ifstream& filepath)
 {
 	tokenize(_tokens, filepath);
 	printTokens(_tokens);
 
 	for (size_t i = 0; i < _tokens.size(); i++)
 	{
-		//std::cout << "We are at " << _tokens[i].key << std::endl;
 		while (_tokens[i].type == TokenType::COMMENT)
 			i++;
 		if (_tokens[i].key != "server")

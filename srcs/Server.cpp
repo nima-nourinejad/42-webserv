@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 16:42:40 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/04 15:22:17 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,11 +27,6 @@ Server::Server(ServerBlock & serverBlock)
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
-	// for (int i = 0; i < MAX_CONNECTIONS; ++i)
-	// {
-	// 	// _clients[i].responseMaker = &_responseMaker;
-	// 	_clients[i].maxBodySize = _config.maxBodySize;
-	// }
 	
 	createClientConnections(serverBlock);
 };

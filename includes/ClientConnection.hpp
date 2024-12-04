@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 15:57:44 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/04 15:16:17 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,12 +46,12 @@ class ClientConnection
 {
 	private:
 
-	/// Constants
+	// Constants
 	const size_t				MAX_HEADER_SIZE = 32768;
 	
     public:
 
-	/// Public Attributes
+	// Public Attributes
 	int							index;
 	int							fd;
 	int							status;
@@ -62,10 +62,8 @@ class ClientConnection
 	size_t						maxBodySize;
 	struct eventData			eventData;
 	HttpHandler					*responseMaker;
-	// HttpHandler					responseMaker;
 
-	/// Public Methods
-	// ClientConnection(ServerBlock & serverBlock);
+	// Public Methods
 	ClientConnection();
 
 	void						changeRequestToBadRequest();
