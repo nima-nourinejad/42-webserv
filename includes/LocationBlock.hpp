@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:46:15 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/18 15:46:00 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/09 18:46:46 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,22 @@ class LocationBlock
 		LocationBlock(/* args */);
 		~LocationBlock();
 		LocationBlock(std::string location);
-		LocationBlock(const LocationBlock& original) = default;
+		LocationBlock(const LocationBlock& original){
+			_location = original._location;
+			_root = original._root;
+			_index = original._index;
+			_autoindex = original._autoindex;
+			_cgi_extension = original._cgi_extension;
+			_cgi_path = original._cgi_path;
+			_upload_path = original._upload_path;
+			_proxy_pass = original._proxy_pass;
+			_return = original._return;
+			_alias = original._alias;
+			_client_max_body_size = original._client_max_body_size;
+			_error_pages = original._error_pages;
+			_limit_except = original._limit_except;
+			std::cout << "Location block copied, " << this << std::endl;
+		}
 		LocationBlock& operator=(const LocationBlock& original) = default;
 
 		std::string 				getLocation() const;
@@ -69,7 +84,7 @@ class LocationBlock
 		void						setErrorPage(int code, const std::string& page);
 		void						setReturn(std::string return_val, const std::string& url);
 		void						setAlias(const std::string& alias);
-		void						setClientMaxBodySize(std::string& client_max_body_size);
+		void						setClientMaxBodySize(const std::string& client_max_body_size);
 		void						printLocationBlock();
 		void						setLimitExcept(const std::vector<std::string>& vals);
 };

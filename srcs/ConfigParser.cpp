@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/04 17:08:49 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/09 18:58:58 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,85 +150,59 @@ void ConfigParser::parseLocationBlock(size_t& index)
 		std::cout << "Location block does not end with /" << std::endl;
 		unexpectedToken(index);
 	}
+
 	index++;
 	if (_tokens[index].type != TokenType::OPEN)
 		unexpectedToken(index);
-	_server_blocks[_server_blocks.size() - 1].getLocations().push_back(LocationBlock(_tokens[index - 1].values[0]));
-	while (index < _tokens.size())
-	{
-		if (_tokens[index].type == TokenType::OPEN)
-		{
-			if (locationBlockOpened)
-				unexpectedToken(index);
-			std::cout << "Opening location block" << std::endl;
-			locationBlockOpened = true;
-		}
-		else if (_tokens[index].type == TokenType::CLOSE)
-		{
-			if (!locationBlockOpened)
-				unexpectedToken(index);
-			std::cout << "Closing location block" << std::endl;
-			return;
-		}
-		else if (_tokens[index].key == "root")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setRoot(_tokens[index].values[0]);
-		}
-		else if (_tokens[index].key == "index")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setIndex(_tokens[index].values[0]);
-		}
-		else if (_tokens[index].key == "autoindex")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setAutoindex(_tokens[index].values[0]);
-		}
-		else if (_tokens[index].key == "cgi_pass")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setCgiPath(_tokens[index].values[0]);
-		}
-		else if (_tokens[index].key == "upload_path")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setUploadPath(_tokens[index].values[0]);
-		}
-		else if (_tokens[index].key == "proxy_pass")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setProxyPass(_tokens[index].values[0]);
-		}
-		else if (_tokens[index].key == "error_page")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setErrorPage(std::stoi(_tokens[index].values[0]), _tokens[index].values[1]);
-		}
-		else if (_tokens[index].key == "cgi_ext")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setCgiExtension(_tokens[index].values);
-		}
-		else if (_tokens[index].key == "return")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setReturn(_tokens[index].values[0], _tokens[index].values[1]);
-		}
-		else if (_tokens[index].key == "alias")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setAlias(_tokens[index].values[0]);
-		}
-		else if (_tokens[index].key == "limit_except")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setLimitExcept(_tokens[index].values);
-		}
-		else if (_tokens[index].key == "client_max_body_size")
-		{
-			_server_blocks[_server_blocks.size() - 1].getLocations().back().setClientMaxBodySize(_tokens[index].values[0]);
-		}
-		else if (_tokens[index].type == TokenType::SEMICOLON)
-		{
-			if (_tokens[index - 1].type != TokenType::KEY_VALUE && _tokens[index - 1].type != TokenType::KEY_MULTI_VALUE)
-				unexpectedToken(index);
-		}
-		else if (_tokens[index].type != TokenType::COMMENT)
-		{
-			unexpectedToken(index);
-		}
+	auto location_block = std::make_shared<LocationBlock>(_tokens[index - 1].values[0]);
+    _server_blocks.back().getLocations().push_back(location_block);
+	auto& current_location = *_server_blocks.back().getLocations().back();
+	
+    while (index < _tokens.size()) {
+        const auto& token = _tokens[index];
+
+        if (token.type == TokenType::OPEN) {
+            if (locationBlockOpened)
+                unexpectedToken(index);
+            locationBlockOpened = true;
+        } else if (token.type == TokenType::CLOSE) {
+            if (!locationBlockOpened)
+                unexpectedToken(index);
+            std::cout << "Closing location block" << std::endl;
+            return;
+        } else if (token.key == "root") {
+            current_location.setRoot(token.values[0]);
+        } else if (token.key == "index") {
+            current_location.setIndex(token.values[0]);
+        } else if (token.key == "autoindex") {
+            current_location.setAutoindex(token.values[0]);
+        } else if (token.key == "cgi_pass") {
+            current_location.setCgiPath(token.values[0]);
+        } else if (token.key == "upload_path") {
+            current_location.setUploadPath(token.values[0]);
+        } else if (token.key == "proxy_pass") {
+            current_location.setProxyPass(token.values[0]);
+        } else if (token.key == "error_page") {
+            current_location.setErrorPage(std::stoi(token.values[0]), token.values[1]);
+        } else if (token.key == "cgi_ext") {
+            current_location.setCgiExtension(token.values);
+        } else if (token.key == "return") {
+            current_location.setReturn(token.values[0], token.values[1]);
+        } else if (token.key == "alias") {
+            current_location.setAlias(token.values[0]);
+        } else if (token.key == "limit_except") {
+            current_location.setLimitExcept(token.values);
+        } else if (token.key == "client_max_body_size") {
+            current_location.setClientMaxBodySize(token.values[0]);
+        } else if (token.type == TokenType::SEMICOLON) {
+            if (_tokens[index - 1].type != TokenType::KEY_VALUE && 
+                _tokens[index - 1].type != TokenType::KEY_MULTI_VALUE)
+                unexpectedToken(index);
+        } else if (token.type != TokenType::COMMENT) {
+            unexpectedToken(index);
+        }
 		index++;
-}
+	}
 }
 
 void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
@@ -373,9 +347,9 @@ void ConfigParser::printServerConfig()
 			std::cout << page.first << " " << page.second << " " << std::endl;
 		}
 		std::cout << "Locations: " << std::endl;
-		for (LocationBlock& location : server.getLocations())
+		for (const std::shared_ptr<LocationBlock>& location : server.getLocations())
 		{
-			location.printLocationBlock();
+			location->printLocationBlock();
 			std::cout << "--------------------------------" << std::endl;
 			std::cout << std::endl;
 		}

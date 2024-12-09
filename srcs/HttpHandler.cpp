@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 17:11:51 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/09 19:05:06 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpHandler.hpp"
 
 HttpHandler::HttpHandler(ServerBlock &serverConfig)
-	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0].getRoot())
+	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0]->getRoot())
 	, _serverBlock(serverConfig)
 	{
 		//creating a default state of map
@@ -31,10 +31,10 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 {
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		if (path.find(location.getLocation()) == 0) // Match location prefix
+		if (path.find(location->getLocation()) == 0) // Match location prefix
 		{
 			// const std::vector<std::string>	&allowedMethods = location.getLimitExcept();
-			const auto	&allowedMethods = location.getLimitExcept();
+			const auto	&allowedMethods = location->getLimitExcept();
 			std::cout << "..allowedMethods: " << allowedMethods[0] << std::endl;
 			bool		isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end();
 			
@@ -69,12 +69,12 @@ std::string	HttpHandler::_validateRequest(const Request &req)
 		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		if (req.getPath().find(location.getLocation()) == 0)
+		if (req.getPath().find(location->getLocation()) == 0)
 		{
-			if (!location.getCgiPath().empty() && !std::filesystem::exists(location.getCgiPath()))
+			if (!location->getCgiPath().empty() && !std::filesystem::exists(location->getCgiPath()))
 				return "Invalid CGI Path"; // should be like a http response
 
-			if (!location.getRoot().empty() && !std::filesystem::exists(location.getRoot()))
+			if (!location->getRoot().empty() && !std::filesystem::exists(location->getRoot()))
 				return "Invalid root path"; // should be like a http response
 		}
 	}
@@ -96,45 +96,56 @@ std::string	HttpHandler::handleRequest(const Request &req)
 		// if (validation != "Ok")
 		// 	return validation;
 
-		LocationBlock	matchedLocation;
+		std::cout << "beginning of handle request" << std::endl;
+		
+		std::shared_ptr<LocationBlock> matchedLocation;
 
 		// Override root if location-specific root is defined
-		if (!matchedLocation.getRoot().empty())
-			_rootDir = matchedLocation.getRoot();
+		// if (!matchedLocation->getRoot().empty())
+		// 	_rootDir = matchedLocation->getRoot();
 
-		// Override error pages if location-specific error pages are defined
-		if (!matchedLocation.getErrorPages().empty())
-			_errorPages = matchedLocation.getErrorPages();
+		// // Override error pages if location-specific error pages are defined
+		// if (!matchedLocation->getErrorPages().empty())
+		// 	_errorPages = matchedLocation->getErrorPages();
 
-		// Handle client_max_body_size for the specific location
-		if (matchedLocation.getClientMaxBodySize() > 0)
-			_maxBodySize = matchedLocation.getClientMaxBodySize(); //maybe not needed
+		// // Handle client_max_body_size for the specific location
+		// if (matchedLocation->getClientMaxBodySize() > 0)
+		// 	_maxBodySize = matchedLocation->getClientMaxBodySize(); //maybe not needed
+
+		std::vector<std::shared_ptr<LocationBlock>> _copied_locations;
+
+		std::cout << "Size of copied locations before: " << _copied_locations.size() << std::endl;
+		
+		_copied_locations = _serverBlock.getLocations();
+		std::cout <<_copied_locations[0]->getLocation() << std::endl;
+
+		std::cout << "Size of copied locations: " << _copied_locations.size() << std::endl;
 
 		for (const auto &location : _serverBlock.getLocations())
 		{
-			if (req.getPath().find(location.getLocation()) == 0)
+			if (req.getPath().find(location->getLocation()) == 0)
 			{
 				matchedLocation = location;
 				break;
 			}
 		}
 
-		if (!matchedLocation.getReturn().second.empty())
+		if (!matchedLocation->getReturn().second.empty())
 		{
 			Response	response;
 
-			response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation.getReturn().first) + " Redirect");
-			response.setHeader("Location", matchedLocation.getReturn().second);
+			response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation->getReturn().first) + " Redirect");
+			response.setHeader("Location", matchedLocation->getReturn().second);
 			return response.toString();
 		}
 
-		if (!matchedLocation.getAlias().empty())
-			_rootDir = matchedLocation.getAlias();
+		if (!matchedLocation->getAlias().empty())
+			_rootDir = matchedLocation->getAlias();
 
-		if (!matchedLocation.getUploadPath().empty())
+		if (!matchedLocation->getUploadPath().empty())
 		{
 			// Handle file uploads logic (POST requests)
-			std::filesystem::path	uploadPath = matchedLocation.getUploadPath();
+			std::filesystem::path	uploadPath = matchedLocation->getUploadPath();
 
 			if (!std::filesystem::exists(uploadPath))
 				std::filesystem::create_directories(uploadPath);
@@ -152,7 +163,7 @@ std::string	HttpHandler::handleRequest(const Request &req)
 			std::filesystem::remove(uploadPath / "test.tmp");
 		}
 
-		if (!matchedLocation.getCgiPath().empty())
+		if (!matchedLocation->getCgiPath().empty())
 			return handleCGI(req);
 
 		if (req.getMethod() == "GET")
@@ -185,20 +196,20 @@ std::string readFileError(std::string const & path)
 }
 std::string	HttpHandler::handleGET(const Request &req)
 {
-	LocationBlock	matchedLocation;
+	std::shared_ptr<LocationBlock> matchedLocation;
 
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		if (req.getPath().find(location.getLocation()) == 0)
+		if (req.getPath().find(location->getLocation()) == 0)
 		{
 			matchedLocation = location;
 			break;
 		}
 	}
 
-	if (!matchedLocation.getIndex().empty())
+	if (!matchedLocation->getIndex().empty())
 	{
-		std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation.getIndex();
+		std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation->getIndex();
 
 		if (std::filesystem::exists(indexFilePath)
 			&& std::filesystem::is_regular_file(indexFilePath))
@@ -211,18 +222,18 @@ std::string	HttpHandler::handleGET(const Request &req)
 	// Check if the path is a directory
 	if (std::filesystem::is_directory(filePath))
 	{
-		LocationBlock	matchedLocation;
+		std::shared_ptr<LocationBlock> matchedLocation;
 
 		for (const auto &location : _serverBlock.getLocations())
 		{
-			if (req.getPath().find(location.getLocation()) == 0)
+			if (req.getPath().find(location->getLocation()) == 0)
 			{
 				matchedLocation = location;
 				break;
 			}
 		}
 
-		if (matchedLocation.getAutoindex())
+		if (matchedLocation->getAutoindex())
 		{
 			std::ostringstream	directoryListing;
 
