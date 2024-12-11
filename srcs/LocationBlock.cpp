@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationBlock.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/04 16:48:57 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/09 18:48:20 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@ LocationBlock::LocationBlock(/* args */)
 	_autoindex = false;
 	_client_max_body_size = 0;
 	_return = std::make_pair(0, "");
+	std::cout << "Default location block created, " << this << std::endl;
 }
 
 LocationBlock::LocationBlock(std::string location)
@@ -25,10 +26,12 @@ LocationBlock::LocationBlock(std::string location)
 	_client_max_body_size = 0;
 	_location = location;
 	_return = std::make_pair(0, "");
+	std::cout << "Location block created, " << this << std::endl;
 }
 
 LocationBlock::~LocationBlock()
 {
+	std::cout << "Location block destroyed, "<< this << std::endl;
 }
 
 std::string LocationBlock::getLocation() const
@@ -96,7 +99,7 @@ std::vector<std::string> LocationBlock::getLimitExcept() const
 	return _limit_except;
 }
 
-void LocationBlock::setClientMaxBodySize(std::string& client_max_body_size)
+void LocationBlock::setClientMaxBodySize(const std::string& client_max_body_size)
 {
 	if (client_max_body_size.empty() || !std::all_of(client_max_body_size.begin(), client_max_body_size.end(), ::isdigit))
 		throw std::invalid_argument("Incorrect client_max_body_size format");

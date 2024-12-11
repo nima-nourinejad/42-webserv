@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 16:44:18 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/09 18:58:58 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,19 +23,19 @@ std::string	CGIHandler::execute(const Request &req)
 		// Check for allowed CGI extensions
 		std::string		filePath = req.getPath();
 		std::string		extension = filePath.substr(filePath.find_last_of("."));
-		LocationBlock	matchedLocation;
+		std::shared_ptr<LocationBlock>	matchedLocation;
 
 		for (const auto &location : _serverBlock.getLocations())
 		{
-			if (req.getPath().find(location.getLocation()) == 0)
+			if (req.getPath().find(location->getLocation()) == 0)
 			{
 				matchedLocation = location;
 				break;
 			}
 		}
 
-		if (std::find(matchedLocation.getCgiExtension().begin(), matchedLocation.getCgiExtension().end(), extension)
-				== matchedLocation.getCgiExtension().end())
+		if (std::find(matchedLocation->getCgiExtension().begin(), matchedLocation->getCgiExtension().end(), extension)
+				== matchedLocation->getCgiExtension().end())
 			throw std::runtime_error("Unsupported CGI extension");
 
 		// Check file existence and permissions

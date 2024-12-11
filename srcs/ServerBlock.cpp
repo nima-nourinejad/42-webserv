@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/04 15:38:19 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/09 18:58:58 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ ServerBlock::ServerBlock(/* args */)
 
 ServerBlock::~ServerBlock()
 {
-
+	std::cout << "Server block destroyed, " << this << std::endl;
 }
 
 ServerBlock::ServerBlock(const ServerBlock& original)
@@ -57,9 +57,8 @@ int ServerBlock::getListen() const
 	return _listen;
 }
 
-std::vector<LocationBlock>& ServerBlock::getLocations()
-{
-	return _locations;
+std::vector<std::shared_ptr<LocationBlock>>& ServerBlock::getLocations() {
+    return _locations;
 }
 
 std::map<int, std::string> ServerBlock::getErrorPages() const
@@ -91,7 +90,7 @@ void ServerBlock::setListen(int listen)
 	_listen = listen;
 }
 
-void ServerBlock::setLocations(const std::vector<LocationBlock>& locations)
+void ServerBlock::setLocations(const std::vector<std::shared_ptr<LocationBlock>>& locations)
 {
 	_locations = locations;
 }
