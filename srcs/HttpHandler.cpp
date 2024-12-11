@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/09 19:05:06 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/11 11:51:27 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 HttpHandler::HttpHandler(ServerBlock &serverConfig)
 	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0]->getRoot())
-	, _serverBlock(serverConfig)
+	, _serverBlock(serverConfig), _maxBodySize(serverConfig.getClientMaxBodySize())
 	{
 		//creating a default state of map
 		_errorPages[404]="default_404.html";
