@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/11 11:51:27 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/11 12:26:37 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,18 +45,23 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 	return false;
 }
 
-std::string	HttpHandler::_getErrorPage(int statusCode)
+Response	HttpHandler::_getErrorPage(int statusCode)
 {
 	// const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
 	const auto	&errorPages = _serverBlock.getErrorPages();
+	Response	response;
 	
-	std::cout << "we are here" << std::endl;
+	// std::cout << "we are here" << std::endl;
 	if (errorPages.find(statusCode) != errorPages.end())
 	{
-		std::cout << "we are here 2" << std::endl;
-		return errorPages.at(statusCode); // Custom error page
+		// std::cout << "we are here 2" << std::endl;
+		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode));
+		// response.setBody(readFileError(_rootDir + errorPages.at(statusCode)));
+		response.setBody(errorPages.at(statusCode));
+		return response;
+		// return errorPages.at(statusCode); // Custom error page
 	}
-	std::cout << "we are not here" << std::endl;
+	// std::cout << "we are not here" << std::endl;
 	return "dummy.html";         // Default fallback
 }
 
@@ -81,14 +86,14 @@ std::string	HttpHandler::_validateRequest(const Request &req)
 	return "Ok";
 }
 
-std::string	HttpHandler::createResponse(const std::string &request)
+Response	HttpHandler::createResponse(const std::string &request)
 {
 	Request	req(request);
 
 	return handleRequest(req);
 }
 
-std::string	HttpHandler::handleRequest(const Request &req)
+Response	HttpHandler::handleRequest(const Request &req)
 {
 	try
 	{
@@ -100,27 +105,6 @@ std::string	HttpHandler::handleRequest(const Request &req)
 		
 		std::shared_ptr<LocationBlock> matchedLocation;
 
-		// Override root if location-specific root is defined
-		// if (!matchedLocation->getRoot().empty())
-		// 	_rootDir = matchedLocation->getRoot();
-
-		// // Override error pages if location-specific error pages are defined
-		// if (!matchedLocation->getErrorPages().empty())
-		// 	_errorPages = matchedLocation->getErrorPages();
-
-		// // Handle client_max_body_size for the specific location
-		// if (matchedLocation->getClientMaxBodySize() > 0)
-		// 	_maxBodySize = matchedLocation->getClientMaxBodySize(); //maybe not needed
-
-		std::vector<std::shared_ptr<LocationBlock>> _copied_locations;
-
-		std::cout << "Size of copied locations before: " << _copied_locations.size() << std::endl;
-		
-		_copied_locations = _serverBlock.getLocations();
-		std::cout <<_copied_locations[0]->getLocation() << std::endl;
-
-		std::cout << "Size of copied locations: " << _copied_locations.size() << std::endl;
-
 		for (const auto &location : _serverBlock.getLocations())
 		{
 			if (req.getPath().find(location->getLocation()) == 0)
@@ -129,6 +113,18 @@ std::string	HttpHandler::handleRequest(const Request &req)
 				break;
 			}
 		}
+		
+		// Override root if location-specific root is defined
+		if (!matchedLocation->getRoot().empty())
+			_rootDir = matchedLocation->getRoot();
+
+		// Override error pages if location-specific error pages are defined
+		if (!matchedLocation->getErrorPages().empty())
+			_errorPages = matchedLocation->getErrorPages();
+
+		// Handle client_max_body_size for the specific location
+		if (matchedLocation->getClientMaxBodySize() > 0)
+			_maxBodySize = matchedLocation->getClientMaxBodySize(); //maybe not needed
 
 		if (!matchedLocation->getReturn().second.empty())
 		{
@@ -136,7 +132,7 @@ std::string	HttpHandler::handleRequest(const Request &req)
 
 			response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation->getReturn().first) + " Redirect");
 			response.setHeader("Location", matchedLocation->getReturn().second);
-			return response.toString();
+			// return response.toString();
 		}
 
 		if (!matchedLocation->getAlias().empty())
@@ -248,6 +244,7 @@ std::string	HttpHandler::handleGET(const Request &req)
 			response.setStatusLine("HTTP/1.1 200 OK");
 			response.setBody(directoryListing.str());
 			response.setHeader("Content-Type", "text/html");
+			
 			return response.toString();
 		}
 	}

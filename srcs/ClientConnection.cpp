@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/04 15:21:00 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/11 12:17:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -361,9 +361,18 @@ void ClientConnection::createResponseParts()
 	// std::string method = requestmethod(request);
 	// std::string uri = requestURI(request);
 
-	std::string	getResponse = responseMaker->createResponse(request);
-	responseParts.push_back(getResponse);
-	status = READYTOSEND;
+	// std::string	getResponse = responseMaker->createResponse(request);
+	// responseParts.push_back(getResponse);
+	
+	Response response = responseMaker->createResponse(request);
+	
+	std::string body = response.getBody();
+	size_t maxBodySize = response.getChunkSize();
+	std::string statusLine = response.getStatusLine();
+	std::string rawHeader = response.getRawHeader();
+	
+	
+	
 
 	// 	std::string path = findPath(method, uri);
 	// 	std::string body = readFile(path);

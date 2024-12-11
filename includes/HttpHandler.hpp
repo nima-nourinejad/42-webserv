@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/11 11:49:55 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/11 12:22:15 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,20 +37,20 @@ class HttpHandler
 		size_t						_maxBodySize; // maybe not needed
 
 		bool						_isMethodAllowed(const std::string &method, const std::string &path);
-        std::string					_getErrorPage(int statusCode);
-        std::string					_validateRequest(const Request &req);
+		Response					_getErrorPage(int statusCode);
+		std::string					_validateRequest(const Request &req);
 
 	public:
 		HttpHandler(ServerBlock &serverConfig); //if serverblock became const, here too
 		~HttpHandler();
 
-		std::string					createResponse(const std::string &request);
-		std::string					handleRequest(const Request &req);
-		std::string					handleGET(const Request &req);
-		std::string					handleFileRequest(const std::string &filePath);
-		std::string					handlePOST(const Request &req);
-		std::string					handleDELETE(const Request &req);
-		std::string					handleCGI(const Request &req);
+		Response					createResponse(const std::string &request);
+		Response					handleRequest(const Request &req);
+		Response					handleGET(const Request &req);
+		Response					handleFileRequest(const std::string &filePath);
+		Response					handlePOST(const Request &req);
+		Response					handleDELETE(const Request &req);
+		Response					handleCGI(const Request &req);
 
 		std::string					extractFilename(const std::string &disposition);
 		void						saveFile(const std::string &filename, const std::string &fileData);
