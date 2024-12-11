@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 16:43:17 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/11 12:43:48 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ class CGIHandler
 		CGIHandler(ServerBlock &serverConfig);
 		~CGIHandler();
 
-		std::string	execute(const Request &req);
+		Response	execute(const Request &req);
 };
 
 

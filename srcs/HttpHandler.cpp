@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/11 12:26:37 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/11 16:30:54 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,10 +35,8 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 		{
 			// const std::vector<std::string>	&allowedMethods = location.getLimitExcept();
 			const auto	&allowedMethods = location->getLimitExcept();
-			std::cout << "..allowedMethods: " << allowedMethods[0] << std::endl;
 			bool		isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end();
 			
-			std::cout << "..isMethodAllowed: " << isMethodAllowed << std::endl;
 			return (isMethodAllowed);
 		}
 	}
@@ -51,18 +49,18 @@ Response	HttpHandler::_getErrorPage(int statusCode)
 	const auto	&errorPages = _serverBlock.getErrorPages();
 	Response	response;
 	
-	// std::cout << "we are here" << std::endl;
 	if (errorPages.find(statusCode) != errorPages.end())
 	{
-		// std::cout << "we are here 2" << std::endl;
-		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode));
+		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
 		// response.setBody(readFileError(_rootDir + errorPages.at(statusCode)));
 		response.setBody(errorPages.at(statusCode));
 		return response;
 		// return errorPages.at(statusCode); // Custom error page
 	}
-	// std::cout << "we are not here" << std::endl;
-	return "dummy.html";         // Default fallback
+	response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
+	response.setBody("dummy.html");
+	return response;
+	// return "dummy.html";         // Default fallback
 }
 
 std::string	HttpHandler::_validateRequest(const Request &req)
@@ -101,7 +99,7 @@ Response	HttpHandler::handleRequest(const Request &req)
 		// if (validation != "Ok")
 		// 	return validation;
 
-		std::cout << "beginning of handle request" << std::endl;
+		// std::cout << "beginning of handle request" << std::endl;
 		
 		std::shared_ptr<LocationBlock> matchedLocation;
 
@@ -130,8 +128,8 @@ Response	HttpHandler::handleRequest(const Request &req)
 		{
 			Response	response;
 
-			response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation->getReturn().first) + " Redirect");
-			response.setHeader("Location", matchedLocation->getReturn().second);
+			response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation->getReturn().first) + " Redirect" + "\r\n");
+			response.setHeader("Location", matchedLocation->getReturn().second + "\r\n");
 			// return response.toString();
 		}
 
@@ -173,14 +171,16 @@ Response	HttpHandler::handleRequest(const Request &req)
 	}
 	catch (const std::runtime_error &e)
 	{
-		return e.what(); // Handle runtime errors (e.g., method not allowed)
+		std::cout << "Error: " << e.what() << std::endl;
+		return _getErrorPage(405); // Method not allowed
+		// return e.what(); // Handle runtime errors (e.g., method not allowed)
 	}
 	catch(const SystemCallError &e)
 	{
 		return _getErrorPage(500); // Internal server error
 	}
 }
-std::string readFileError(std::string const & path)
+std::string HttpHandler::readFileError(std::string const &path)
 {
 	std::ifstream file(path.c_str());
 	if (!file.is_open())
@@ -190,7 +190,7 @@ std::string readFileError(std::string const & path)
 	file.close();
 	return read.str();
 }
-std::string	HttpHandler::handleGET(const Request &req)
+Response	HttpHandler::handleGET(const Request &req)
 {
 	std::shared_ptr<LocationBlock> matchedLocation;
 
@@ -241,11 +241,12 @@ std::string	HttpHandler::handleGET(const Request &req)
 			}
 			directoryListing << "</ul></body></html>";
 
-			response.setStatusLine("HTTP/1.1 200 OK");
+			response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 			response.setBody(directoryListing.str());
-			response.setHeader("Content-Type", "text/html");
+			response.setHeader("Content-Type", "text/html\r\n");
 			
-			return response.toString();
+			return response;
+			// return response.toString();
 		}
 	}
 
@@ -253,7 +254,7 @@ std::string	HttpHandler::handleGET(const Request &req)
 }
 
 // Adding a helper function for file requests
-std::string	HttpHandler::handleFileRequest(const std::string &filePath)
+Response	HttpHandler::handleFileRequest(const std::string &filePath)
 {
 	Response	response;
 
@@ -279,10 +280,12 @@ std::string	HttpHandler::handleFileRequest(const std::string &filePath)
 		if (close(fd) == -1)
 			handleError("close file descriptor");
 
-		response.setStatusLine("HTTP/1.1 200 OK");
+		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody(content);
-		response.setHeader("Content-Type", "text/html");
-		return response.toString();
+		response.setHeader("Content-Type", "text/html\r\n");
+		response.setHeader("Content-Length", std::to_string(content.size()) + "\r\n");
+		return response;
+		// return response.toString();
 	}
 
 	catch (const SystemCallError &e)
@@ -293,7 +296,7 @@ std::string	HttpHandler::handleFileRequest(const std::string &filePath)
 	}
 }
 
-std::string	HttpHandler::handlePOST(const Request &req)
+Response	HttpHandler::handlePOST(const Request &req)
 {
 	std::string	contentType = req.getHeader("Content-Type");
 	Response	response;
@@ -336,23 +339,24 @@ std::string	HttpHandler::handlePOST(const Request &req)
 			}
 		}
 
-		response.setStatusLine("HTTP/1.1 200 OK");
-		response.setHeader("Content-Type", "multipart/form-data");
-		response.setHeader("Content-Length", std::to_string(response.getBody().size()));
+		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
+		response.setHeader("Content-Type", "multipart/form-data\r\n");
+		response.setHeader("Content-Length", std::to_string(response.getBody().size()) + "\r\n");
 	}
 	else if (!req.getBody().empty())
 	{
-		response.setStatusLine("HTTP/1.1 200 OK");
+		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody(req.getBody());
-		response.setHeader("Content-Length", std::to_string(req.getBody().size()));
-		response.setHeader("Content-Type", "text/plain");
+		response.setHeader("Content-Length", std::to_string(req.getBody().size()) + "\r\n");
+		response.setHeader("Content-Type", "text/plain\r\n");
 	}
 	else
 	{
-		response.setStatusLine("HTTP/1.1 400 Bad Request");
+		response.setStatusLine("HTTP/1.1 400 " + getStatusMessage(400) + "\r\n");
 		response.setBody("Empty body in POST request\n");
 	}
-	return response.toString();
+	return response;
+	// return response.toString();
 }
 
 std::string	HttpHandler::extractFilename(const std::string& disposition)
@@ -377,30 +381,97 @@ void	HttpHandler::saveFile(const std::string &filename, const std::string &fileD
 	file.close();
 }
 
-std::string	HttpHandler::handleDELETE(const Request &req)
+Response	HttpHandler::handleDELETE(const Request &req)
 {
 	std::string filePath = _rootDir + req.getPath();
 	Response	response;
 
 	if (unlink(filePath.c_str()) == 0)
 	{
-		response.setStatusLine("HTTP/1.1 200 OK");
+		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody("File deleted successfully\n");
 	}
 	else if (errno == EACCES)
 	{
-		response.setStatusLine("HTTP/1.1 403 Forbidden");
+		response.setStatusLine("HTTP/1.1 403 " + getStatusMessage(403) + "\r\n");
 		response.setBody("Permission denied\n");
 	}
 	else if (errno == ENOENT)
 	{
-		response.setStatusLine("HTTP/1.1 404 Not Found");
+		response.setStatusLine("HTTP/1.1 404 " + getStatusMessage(404) + "\r\n");
 		response.setBody("File not found\n");
 	}
-	return response.toString();
+	return response;
+	// return response.toString();
 }
 
-std::string HttpHandler::handleCGI(const Request &req)
+Response HttpHandler::handleCGI(const Request &req)
 {
 	return _cgiHandler.execute(req);
+}
+
+std::string	HttpHandler::getStatusMessage(int statusCode)
+{
+	    // Map of status codes to their messages
+    static const std::unordered_map<int, std::string>	statusMessages = {
+        {100, "Continue"},
+        {101, "Switching Protocols"},
+        {102, "Processing"},
+        {200, "OK"},
+        {201, "Created"},
+        {202, "Accepted"},
+        {203, "Non-Authoritative Information"},
+        {204, "No Content"},
+        {205, "Reset Content"},
+        {206, "Partial Content"},
+        {207, "Multi-Status"},
+        {300, "Multiple Choices"},
+        {301, "Moved Permanently"},
+        {302, "Found"},
+        {303, "See Other"},
+        {304, "Not Modified"},
+        {305, "Use Proxy"},
+        {307, "Temporary Redirect"},
+        {308, "Permanent Redirect"},
+        {400, "Bad Request"},
+        {401, "Unauthorized"},
+        {402, "Payment Required"},
+        {403, "Forbidden"},
+        {404, "Not Found"},
+        {405, "Method Not Allowed"},
+        {406, "Not Acceptable"},
+        {407, "Proxy Authentication Required"},
+        {408, "Request Timeout"},
+        {409, "Conflict"},
+        {410, "Gone"},
+        {411, "Length Required"},
+        {412, "Precondition Failed"},
+        {413, "Payload Too Large"},
+        {414, "URI Too Long"},
+        {415, "Unsupported Media Type"},
+        {416, "Range Not Satisfiable"},
+        {417, "Expectation Failed"},
+        {418, "I'm a teapot"}, // Easter egg from RFC 2324
+        {422, "Unprocessable Entity"},
+        {426, "Upgrade Required"},
+        {500, "Internal Server Error"},
+        {501, "Not Implemented"},
+        {502, "Bad Gateway"},
+        {503, "Service Unavailable"},
+        {504, "Gateway Timeout"},
+        {505, "HTTP Version Not Supported"}
+    };
+
+    // Find the status code in the map and return the corresponding message
+    auto	it = statusMessages.find(statusCode);
+
+    if (it != statusMessages.end())
+        return it->second;
+
+    return "Unknown Status Code";
+}
+
+size_t	HttpHandler::getMaxBodySize() const
+{
+	return _maxBodySize;
 }

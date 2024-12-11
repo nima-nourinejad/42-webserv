@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/09 18:58:58 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/11 12:44:41 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ CGIHandler::CGIHandler(ServerBlock &serverConfig) : _serverBlock(serverConfig) {
 
 CGIHandler::~CGIHandler() {}
 
-std::string	CGIHandler::execute(const Request &req)
+Response	CGIHandler::execute(const Request &req)
 {
 	try
 	{
@@ -109,7 +109,8 @@ std::string	CGIHandler::execute(const Request &req)
 				response.setStatusLine("HTTP/1.1 500 Internal Server Error");
 				response.setBody("CGI script error\n");
 			}
-			return response.toString();
+			return response;
+			// return response.toString();
 		}
 	}
 
@@ -119,12 +120,14 @@ std::string	CGIHandler::execute(const Request &req)
 		
 		response.setStatusLine("HTTP/1.1 500 Internal Server Error");
 		response.setBody("Error: " + std::string(e.what()) + "\n");
-		return response.toString();
+		return response;
+		// return response.toString();
 	}
 
 	Response	unexpectedResponse;
 
 	unexpectedResponse.setStatusLine("HTTP/1.1 500 Internal Server Error");
 	unexpectedResponse.setBody("Unexpected error\n");
-	return unexpectedResponse.toString();
+	return unexpectedResponse;
+	// return unexpectedResponse.toString();
 }

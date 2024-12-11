@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/11 12:22:15 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/11 16:17:25 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 #include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
+#include <unordered_map>
 
 class HttpHandler
 {
@@ -54,6 +55,9 @@ class HttpHandler
 
 		std::string					extractFilename(const std::string &disposition);
 		void						saveFile(const std::string &filename, const std::string &fileData);
+		std::string					readFileError(std::string const& path);
+		std::string					getStatusMessage(int statusCode);
+		size_t						getMaxBodySize() const;
 };
 
 #endif
