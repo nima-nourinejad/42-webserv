@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/18 14:14:49 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/18 16:10:21 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -355,72 +355,85 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 
 void ClientConnection::createResponseParts()
 {
-	std::cout << "Creating response for client " << index + 1 << std::endl;
-	status = PREPARINGRESPONSE;
-	connectionType();
-	// std::string method = requestmethod(request);
-	// std::string uri = requestURI(request);
+	try{
+		
+		std::cout << "Creating response for client " << index + 1 << std::endl;
+		status = PREPARINGRESPONSE;
+		connectionType();
+		// std::string method = requestmethod(request);
+		// std::string uri = requestURI(request);
 
-	// std::string	getResponse = responseMaker->createResponse(request);
-	// responseParts.push_back(getResponse);
-	
-	Response	response = responseMaker->createResponse(request);	
-	std::string	body = response.getBody();
-	size_t		maxBodySize = responseMaker->getMaxBodySize();
-	std::string	statusLine = response.getStatusLine();
-	std::string	rawHeader = response.getRawHeader();
-	
-	
-	
+		// std::string	getResponse = responseMaker->createResponse(request);
+		// responseParts.push_back(getResponse);
+		
+		Response	response = responseMaker->createResponse(request);	
+		std::string	body = response.getBody();
+		size_t		maxBodySize = responseMaker->getMaxBodySize();
+		std::string	statusLine = response.getStatusLine();
+		std::string	rawHeader = response.getRawHeader();
+		
+		
+		
 
-	// 	std::string path = findPath(method, uri);
-	// 	std::string body = readFile(path);
+		// 	std::string path = findPath(method, uri);
+		// 	std::string body = readFile(path);
 
-	// 	std::string statusLine = createStatusLine(method, uri);
+		// 	std::string statusLine = createStatusLine(method, uri);
 
-	// 	std::string contentType = "Content-Type: text/html\r\n";
-	std::string connection;
-	if (keepAlive)
-		connection = "Connection: keep-alive\r\n";
-	else
-		connection = "Connection: close\r\n";
+		// 	std::string contentType = "Content-Type: text/html\r\n";
+		std::string connection;
+		if (keepAlive)
+			connection = "Connection: keep-alive\r\n";
+		else
+			connection = "Connection: close\r\n";
 
-	std::string header;
-	if (body.size() > maxBodySize)
-	{
-		// std::cout << "we are using chuncked" << std::endl;
-		responseParts.push_back(statusLine);
-		std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
-		// header = statusLine + contentType + transferEncoding + connection;
-		rawHeader = rawHeader + transferEncoding + connection;
-		responseParts.push_back(rawHeader + "\r\n");
-		size_t				chunkSize;
-		std::string			chunk;
-		std::stringstream	sstream;
-
-		while (body.size() > 0)
+		std::string header;
+		if (body.size() > maxBodySize)
 		{
-			chunkSize = std::min(body.size(), maxBodySize);
-			chunk = body.substr(0, chunkSize);
-			sstream.str("");
-			sstream << std::hex << chunkSize << "\r\n";
-			sstream << chunk << "\r\n";
-			responseParts.push_back(sstream.str());
-			body = body.substr(chunkSize);
-		}
-		responseParts.push_back("0\r\n\r\n");
-	}
-	else
-	{
-		// std::cout << "we are using not chuncked" << std::endl;
-		std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
-		header = statusLine + rawHeader + contentLength + connection;
-		// rawHeader = statusLine + rawHeader + contentLength + connection;
-		responseParts.push_back(header + "\r\n" + body);
-	}
+			// std::cout << "we are using chuncked" << std::endl;
+			responseParts.push_back(statusLine);
+			std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
+			// header = statusLine + contentType + transferEncoding + connection;
+			rawHeader = rawHeader + transferEncoding + connection;
+			responseParts.push_back(rawHeader + "\r\n");
+			size_t				chunkSize;
+			std::string			chunk;
+			std::stringstream	sstream;
 
-	status = READYTOSEND;
-	std::cout << "Response created for client " << index + 1 << std::endl;
+			while (body.size() > 0)
+			{
+				chunkSize = std::min(body.size(), maxBodySize);
+				chunk = body.substr(0, chunkSize);
+				sstream.str("");
+				sstream << std::hex << chunkSize << "\r\n";
+				sstream << chunk << "\r\n";
+				responseParts.push_back(sstream.str());
+				body = body.substr(chunkSize);
+			}
+			responseParts.push_back("0\r\n\r\n");
+		}
+		else
+		{
+			// std::cout << "we are using not chuncked" << std::endl;
+			std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
+			header = statusLine + rawHeader + contentLength + connection;
+			// rawHeader = statusLine + rawHeader + contentLength + connection;
+			responseParts.push_back(header + "\r\n" + body);
+		}
+
+		status = READYTOSEND;
+		std::cout << "Response created for client " << index + 1 << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		// Response	response = responseMaker->createResponse(request);	
+		// std::string	body = response.getBod500y();
+		// size_t		maxBodySize = responseMaker->getMaxBodySize();
+		// std::string	statusLine = response.getStatusLine500();
+		// std::string	rawHeader = response.getRawHeader500();
+		
+	}
 
 }
 

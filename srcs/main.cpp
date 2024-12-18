@@ -3,48 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/09 18:59:53 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/18 16:10:54 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// Andrey: Check if there needs to be a default root in the server block
-//         before defining the locations
+// Ali: Handle alias and return
 
-// Andrey's comments on git:
-// 1) If you specify a root directive in the server block,
-//    it acts as the default root for all location blocks within that server.
-//
-// 2) If a specific location block has its own root directive,
-//    that value will override the server block's root
-//    for requests that match that location.
-//
-// 3) If you do not specify a root in the server block,
-//    each location block must have its own root directive to serve files.
-//
-// 4) If no root directive is provided either in the server or location blocks,
-//    Nginx will not know where to serve static files from, and requests
-//    will likely result in a 404 Not Found or similar error.
+// Ali: If no root in server block and a location block has no root, return 404
 
-// Ali: Each Location block might have its own root, error page, maxbodysize,
-//      index
-//
-// (Solved) - Autoindex, compiling with valgrind works fine but without that, segfault.
-// Ali: if the config file is loke this:
-	// location /files/ {
-	//     root /var/www;
-	//     autoindex on;
-	// }
-//
-//     so now in the /files page you should display a directory listing of all
-//     the files and directories in /var/www/files/.
-// (Solved)
-// // Ali: Also add sth for return, alias, upload_path
-
-// new
-// Nima: I think maxbodysize in a specific location block should override in your side
+// Ali: for any "throw"s , return 500 (for each status code catch block in client connection)
 
 #include "Server.hpp"
 
