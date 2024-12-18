@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/18 14:30:10 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/18 15:10:09 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,10 +169,11 @@ Response	HttpHandler::handleRequest(const Request &req)
 			testFile.close();
 			std::filesystem::remove(uploadPath / "test.tmp");
 		}
-
+		std::cout << "Path: " << req.getPath() << std::endl;
+		std::cout << "CGI Path: " << matchedLocation->getCgiPath() << std::endl;
 		if (!matchedLocation->getCgiPath().empty())
 			return handleCGI(req);
-
+		std::cout << "Method: " << req.getMethod() << std::endl;
 		if (req.getMethod() == "GET")
 			return handleGET(req);
 		else if (req.getMethod() == "POST")
@@ -211,7 +212,7 @@ Response	HttpHandler::handleGET(const Request &req)
 
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		if (req.getPath().find(location->getLocation()) == 0)
+		if (req.getPath() == location->getLocation())
 		{
 			matchedLocation = location;
 			break;
@@ -221,13 +222,14 @@ Response	HttpHandler::handleGET(const Request &req)
 	if (!matchedLocation->getIndex().empty())
 	{
 		std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation->getIndex();
-
+		std::cout << "Index file path: " << indexFilePath << std::endl;
 		if (std::filesystem::exists(indexFilePath)
 			&& std::filesystem::is_regular_file(indexFilePath))
 			return handleFileRequest(indexFilePath); //maybe just in index requested location
 	}
 
 	std::string	filePath = _rootDir + req.getPath();
+	std::cout << "File path: " << filePath << std::endl;
 	Response	response;
 
 	// Check if the path is a directory
@@ -237,7 +239,7 @@ Response	HttpHandler::handleGET(const Request &req)
 
 		for (const auto &location : _serverBlock.getLocations())
 		{
-			if (req.getPath().find(location->getLocation()) == 0)
+			if (req.getPath() == location->getLocation())
 			{
 				matchedLocation = location;
 				break;
@@ -422,6 +424,7 @@ Response	HttpHandler::handleDELETE(const Request &req)
 
 Response HttpHandler::handleCGI(const Request &req)
 {
+	std::cout << "Handling CGI" << std::endl;
 	return _cgiHandler.execute(req);
 }
 
