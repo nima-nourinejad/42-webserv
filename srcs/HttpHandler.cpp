@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/11 16:30:54 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/18 11:19:13 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,6 +111,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 				break;
 			}
 		}
+
+		if (!matchedLocation)
+			return _getErrorPage(404); // Not found
 		
 		// Override root if location-specific root is defined
 		if (!matchedLocation->getRoot().empty())
