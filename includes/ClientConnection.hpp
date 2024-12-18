@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/04 15:16:17 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/18 17:05:56 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,19 @@ enum ClientStatus
 	READYTOSEND
 };
 
+// enum ClientStatus
+// {
+// 	DISCONNECTED,
+// 	WAITFORREQUEST,
+// 	RECEIVINGUNKOWNTYPE,
+// 	RECEIVINGNONCHUNKED,
+// 	RECEIVINGCHUNKED,
+// 	RECEIVED,
+// 	PREPARINGRESPONSE_OneTime,
+// 	PREPARINGRESPONSE_TakeTime,
+// 	READYTOSEND
+// };
+
 class ClientConnection
 {
 	private:
@@ -62,6 +75,7 @@ class ClientConnection
 	size_t						maxBodySize;
 	struct eventData			eventData;
 	HttpHandler					*responseMaker;
+	// int							pipefd[2];
 
 	// Public Methods
 	ClientConnection();

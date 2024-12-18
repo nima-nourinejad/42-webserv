@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/18 16:10:54 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/18 16:37:01 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 // Ali: If no root in server block and a location block has no root, return 404
 
 // Ali: for any "throw"s , return 500 (for each status code catch block in client connection)
+// Ali : size_t		maxBodySize = responseMaker->getMaxBodySize(); should become size_t maxBodySize = response.getMaxBodySize();
+// Andrey : add root directive to the server block
 
 #include "Server.hpp"
 
@@ -30,15 +32,21 @@ bool sigInt(std::vector<std::unique_ptr<Server>> const & servers)
 
 int main(int argc, char **argv)
 {
-	if (argc != 2)
+	std::string configPath;
+	if (argc > 2)
 	{
-		std::cerr << "Usage: ./webserv <config_file>" << std::endl;
+		std::cerr << "Error: too many arguments" << std::endl;
 		return 1;
 	}
+	if (argc ==1)
+		configPath = "config/config.conf";
+	else
+		configPath = argv[1];
+	
 	ConfigParser config;
 
 	// std::ifstream file("config/webserv.conf");
-	std::ifstream file(argv[1]);
+	std::ifstream file(configPath.c_str());
 	if (!file.is_open())
 	{
 		std::cerr << "Error: could not open file" << std::endl;

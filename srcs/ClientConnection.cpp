@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/18 16:10:21 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/18 16:57:56 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -355,6 +355,12 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 
 void ClientConnection::createResponseParts()
 {
+	
+	Response	response = responseMaker->createResponse(request);
+	// Response	response = responseMaker->createResponse(request, client_pipe_fd);
+	size_t		maxBodySize = responseMaker->getMaxBodySize();
+	// size_t maxBodySize = response.getMaxBodySize();
+	
 	try{
 		
 		std::cout << "Creating response for client " << index + 1 << std::endl;
@@ -366,9 +372,9 @@ void ClientConnection::createResponseParts()
 		// std::string	getResponse = responseMaker->createResponse(request);
 		// responseParts.push_back(getResponse);
 		
-		Response	response = responseMaker->createResponse(request);	
+			
 		std::string	body = response.getBody();
-		size_t		maxBodySize = responseMaker->getMaxBodySize();
+		
 		std::string	statusLine = response.getStatusLine();
 		std::string	rawHeader = response.getRawHeader();
 		
@@ -427,11 +433,10 @@ void ClientConnection::createResponseParts()
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
-		// Response	response = responseMaker->createResponse(request);	
-		// std::string	body = response.getBod500y();
-		// size_t		maxBodySize = responseMaker->getMaxBodySize();
-		// std::string	statusLine = response.getStatusLine500();
-		// std::string	rawHeader = response.getRawHeader500();
+		// std::string body = response.getErrorBody(status);
+		// std::string statusLine = response.getErrorStatusLine(status);
+		// std::string rawHeader = response.getErrorRawHeader(status);
+		///chunking
 		
 	}
 
