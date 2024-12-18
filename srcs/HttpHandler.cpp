@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/18 11:19:13 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/18 11:37:41 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -246,7 +246,7 @@ Response	HttpHandler::handleGET(const Request &req)
 
 			response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 			response.setBody(directoryListing.str());
-			response.setHeader("Content-Type", "text/html\r\n");
+			response.setHeader("Content-Type", "text/html");
 			
 			return response;
 			// return response.toString();
@@ -285,7 +285,7 @@ Response	HttpHandler::handleFileRequest(const std::string &filePath)
 
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody(content);
-		response.setHeader("Content-Type", "text/html\r\n");
+		response.setHeader("Content-Type", "text/html");
 		response.setHeader("Content-Length", std::to_string(content.size()) + "\r\n");
 		return response;
 		// return response.toString();
@@ -343,7 +343,7 @@ Response	HttpHandler::handlePOST(const Request &req)
 		}
 
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
-		response.setHeader("Content-Type", "multipart/form-data\r\n");
+		response.setHeader("Content-Type", "multipart/form-data");
 		response.setHeader("Content-Length", std::to_string(response.getBody().size()) + "\r\n");
 	}
 	else if (!req.getBody().empty())
@@ -351,7 +351,7 @@ Response	HttpHandler::handlePOST(const Request &req)
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody(req.getBody());
 		response.setHeader("Content-Length", std::to_string(req.getBody().size()) + "\r\n");
-		response.setHeader("Content-Type", "text/plain\r\n");
+		response.setHeader("Content-Type", "text/plain");
 	}
 	else
 	{
