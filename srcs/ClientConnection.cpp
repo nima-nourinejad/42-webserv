@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/11 16:20:27 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/18 14:14:49 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -388,6 +388,8 @@ void ClientConnection::createResponseParts()
 	std::string header;
 	if (body.size() > maxBodySize)
 	{
+		// std::cout << "we are using chuncked" << std::endl;
+		responseParts.push_back(statusLine);
 		std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
 		// header = statusLine + contentType + transferEncoding + connection;
 		rawHeader = rawHeader + transferEncoding + connection;
@@ -410,10 +412,11 @@ void ClientConnection::createResponseParts()
 	}
 	else
 	{
+		// std::cout << "we are using not chuncked" << std::endl;
 		std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
-		// header = statusLine + contentType + contentLength + connection;
-		rawHeader = rawHeader + contentLength + connection;
-		responseParts.push_back(rawHeader + "\r\n" + body);
+		header = statusLine + rawHeader + contentLength + connection;
+		// rawHeader = statusLine + rawHeader + contentLength + connection;
+		responseParts.push_back(header + "\r\n" + body);
 	}
 
 	status = READYTOSEND;

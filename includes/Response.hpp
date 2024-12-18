@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:44 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/11 16:07:39 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/18 14:26:32 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class Response
 
 		void								setStatusLine(const std::string &statusLine);
 		void								setHeader(const std::string &key, const std::string &value);
-		void								setBody(const std::string &body);
+		void								setBody(const std::string body);
 
 		std::string							getStatusLine() const;
 		std::string							getRawHeader() const;

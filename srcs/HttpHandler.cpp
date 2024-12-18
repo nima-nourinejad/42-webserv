@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/18 11:37:41 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/18 14:30:10 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,13 +52,17 @@ Response	HttpHandler::_getErrorPage(int statusCode)
 	if (errorPages.find(statusCode) != errorPages.end())
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-		// response.setBody(readFileError(_rootDir + errorPages.at(statusCode)));
-		response.setBody(errorPages.at(statusCode));
+		// std::cout << "rootdir: " << _rootDir << std::endl;
+		// std::cout << "readfileerror: " << readFileError(_rootDir + "/" + errorPages.at(statusCode)) << std::endl;
+		response.setBody(readFileError(_rootDir + "/" + errorPages.at(statusCode)));
+		// std::cout << "Error page: " << errorPages.at(statusCode) << std::endl;
+		// std::cout << "status line: " << response.getStatusLine() << std::endl;
+		// response.setBody(errorPages.at(statusCode));
 		return response;
 		// return errorPages.at(statusCode); // Custom error page
 	}
 	response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-	response.setBody("dummy.html");
+	response.setBody(readFileError(_rootDir + "/" + "dummy.html"));
 	return response;
 	// return "dummy.html";         // Default fallback
 }
@@ -105,15 +109,21 @@ Response	HttpHandler::handleRequest(const Request &req)
 
 		for (const auto &location : _serverBlock.getLocations())
 		{
-			if (req.getPath().find(location->getLocation()) == 0)
+			// if (req.getPath().find(location->getLocation()) == 0)
+			if (req.getPath() == location->getLocation())
 			{
 				matchedLocation = location;
+				std::cout << "Matched location: " << location->getLocation() << std::endl;
+				std::cout << "req.getpath: " << req.getPath()<< std::endl;
 				break;
 			}
 		}
 
 		if (!matchedLocation)
+		{
+			std::cout << "No matching location found" << std::endl;
 			return _getErrorPage(404); // Not found
+		}
 		
 		// Override root if location-specific root is defined
 		if (!matchedLocation->getRoot().empty())
@@ -185,10 +195,12 @@ Response	HttpHandler::handleRequest(const Request &req)
 }
 std::string HttpHandler::readFileError(std::string const &path)
 {
-	std::ifstream file(path.c_str());
+	std::ifstream	file(path.c_str());
+
 	if (!file.is_open())
 		throw SystemCallError("Failed to open file");
-	std::stringstream read;
+	std::stringstream	read;
+
 	read << file.rdbuf();
 	file.close();
 	return read.str();
