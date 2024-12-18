@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/09 18:58:58 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/18 17:25:07 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,11 @@ size_t ServerBlock::getClientMaxBodySize() const
 	return _client_max_body_size;
 }
 
+std::string ServerBlock::getRoot() const
+{
+	return _root;
+}
+
 void ServerBlock::setServerName(const std::string& server_name)
 {
 	if (server_name.empty())
@@ -137,4 +142,13 @@ void ServerBlock::setClientMaxBodySize(std::string& client_max_body_size)
 	catch (const std::exception&) {
 		throw std::invalid_argument("Incorrect client_max_body_size format");
 	}
+}
+
+void ServerBlock::setRoot(const std::string& root)
+{
+	if (root.empty())
+		throw std::invalid_argument("Root is empty");
+	if (!std::filesystem::exists(root) || !std::filesystem::is_directory(root))
+		throw std::invalid_argument("Root is not a valid directory");
+	_root = root;
 }

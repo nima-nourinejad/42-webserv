@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/09 18:58:58 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/18 17:27:30 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,6 +97,10 @@ void ConfigParser::parseServerBlock(size_t& index)
 		else if (_tokens[index].key == "server_name")
 		{
 			_server_blocks[_server_blocks.size() - 1].setServerName(_tokens[index].values[0]);
+		}
+		else if (_tokens[index].key == "root")
+		{
+			_server_blocks[_server_blocks.size() - 1].setRoot(_tokens[index].values[0]);
 		}
 		else if (_tokens[index].key == "listen")
 		{
@@ -210,7 +214,7 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 	std::vector<std::string> singleValueKeys = {
 		"server_name", "location", "listen", "client_max_body_size", "proxy_pass", 
 		"root", "index", "autoindex", "cgi_pass", "upload_path", 
-		"upload_store", "upload_max_file_size", "server", "host", "alias"
+		"upload_store", "upload_max_file_size", "server", "host", "alias", "root"
 	};
 
 	std::vector<std::string> multiValueKeys = {
@@ -338,6 +342,7 @@ void ConfigParser::printServerConfig()
 		std::cout << "Server name: ";
 		std::cout << server.getServerName() << std::endl;			
 		std::cout << std::endl;
+		std::cout << "Root: " << server.getRoot() << std::endl;
 		std::cout << "Listen: " << server.getListen() << std::endl;
 		std::cout << "Client max body size: " << server.getClientMaxBodySize() << std::endl;
 		std::cout << "Host: " << server.getHost() << std::endl;
