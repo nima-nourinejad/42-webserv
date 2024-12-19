@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/18 15:59:16 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/19 08:48:00 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -183,16 +183,19 @@ Response	HttpHandler::handleRequest(const Request &req)
 
 		return _getErrorPage(405); // Method not allowed
 	}
+	catch(const SystemCallError &e)
+	{
+		return _getErrorPage(500); // Internal server error
+	}
 	catch (const std::runtime_error &e)
 	{
 		std::cout << "Error: " << e.what() << std::endl;
 		return _getErrorPage(405); // Method not allowed
 		// return e.what(); // Handle runtime errors (e.g., method not allowed)
 	}
-	catch(const SystemCallError &e)
-	{
-		return _getErrorPage(500); // Internal server error
-	}
+	
+	
+	
 }
 std::string HttpHandler::readFileError(std::string const &path)
 {
