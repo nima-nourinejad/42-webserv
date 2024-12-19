@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/04 15:22:17 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/19 12:15:43 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,13 @@ void Server::handlePendingConnections()
 		}
 		else
 		{
+			int result = pipe(_clients[availableSlot].pipe);
+			if (result == -1)
+				throw SocketException("Failed to create pipe");
+			std::cout << "Pipe created" << std::endl;
+			std::cout << "Pipe[0]: " << _clients[availableSlot].pipe[0] << std::endl;
+			addEpoll(_clients[availableSlot].pipe[0], availableSlot + MAX_CONNECTIONS + 1);
+			///failure should close the pipe both ends
 			addEpoll(fd, availableSlot);
 			++_num_clients;
 			occupyClientSlot(availableSlot, fd);
@@ -145,16 +152,24 @@ void Server::closeClientSocket(int index)
 	{
 		printMessage("Closing client " + std::to_string(index + 1));
 		removeEpoll(_clients[index].fd);
+		removeEpoll(_clients[index].pipe[0]);
 		close(_clients[index].fd);
 		_clients[index].fd = -1;
+		close(_clients[index].pipe[0]);
+		_clients[index].pipe[0] = -1;
+		close(_clients[index].pipe[1]);
+		_clients[index].pipe[1] = -1;
 		_clients[index].status = DISCONNECTED;
 		_clients[index].keepAlive = true;
 		_clients[index].connectTime = 0;
 		_clients[index].request.clear();
 		_clients[index].responseParts.clear();
+		_clients[index].body.clear();
 		_clients[index].index = -1;
 		_clients[index].eventData.fd = -1;
 		_clients[index].eventData.index = -1;
+		_clients[index].pipeEventData.fd = -1;
+		_clients[index].pipeEventData.index = -1;
 		--_num_clients;
 	}
 }
@@ -167,7 +182,7 @@ void Server::closeClientSockets()
 
 int Server::waitForEvents()
 {
-	int n_ready_fds = epoll_wait(_fd_epoll, _ready, MAX_CONNECTIONS + 1, 0);
+	int n_ready_fds = epoll_wait(_fd_epoll, _ready, TOTAL_EVENTS, 0);
 	if (n_ready_fds == -1)
 	{
 		if (errno == EINTR)
@@ -272,7 +287,10 @@ int Server::getClientIndex(struct epoll_event const & event) const
 int Server::eventType(struct epoll_event const & event) const
 {
 	if (event.data.ptr == nullptr)
+	{
+		std::cout << "there is no data" << std::endl;
 		return -1;
+	}
 	struct eventData * target =(struct eventData *)event.data.ptr;
 	return target->type;
 }
@@ -348,35 +366,128 @@ void Server::handleListeningEvents(struct epoll_event const & event)
 		acceptClient();
 }
 
+void Server::handlePipeEvents(struct epoll_event const & event)
+{
+	// if (event.events &(EPOLLHUP | EPOLLERR))
+	// 	handleErr(event);
+	if (event.events & EPOLLIN)
+	{
+		int index = getClientIndex(event);
+		if (index == -1)
+			return;
+		if (_clients[index].status == PREPARINGRESPONSE)
+		{
+			_clients[index].accumulateResponseParts();
+			
+		}
+		
+	}
+}
+
+int getFd(struct epoll_event const & event)
+{
+	if (event.data.ptr == nullptr)
+	{
+		std::cout << "there is no data" << std::endl;
+		return -1;
+	}
+	std::cout << "data ptr is availble" << std::endl;
+	struct eventData * target =(struct eventData *)event.data.ptr;
+	return target->fd;
+}
+
+int getType(struct epoll_event const & event)
+{
+	if (event.data.ptr == nullptr)
+	{
+		std::cout << "there is no data" << std::endl;
+		return -1;
+	}
+	std::cout << "data ptr is availble" << std::endl;
+	struct eventData * target =(struct eventData *)event.data.ptr;
+	return target->type;
+}
+
+int getIndex(struct epoll_event const & event)
+{
+	if (event.data.ptr == nullptr)
+	{
+		std::cout << "there is no data" << std::endl;
+		return -1;
+	}
+	std::cout << "data ptr is availble" << std::endl;
+	struct eventData * target =(struct eventData *)event.data.ptr;
+	return target->index;
+}
+
 void Server::handleSocketEvents()
 {
 	int n_ready_fds = waitForEvents();
 	for (int i = 0; i < n_ready_fds; i++)
 	{
 		if (eventType(_ready[i]) == LISTENING)
+		{
+			// std::cout << "Listening event received for fd " << getFd(_ready[i]) << std::endl;
+			// std::cout << "Listening event index: " << getIndex(_ready[i]) << std::endl;
 			handleListeningEvents(_ready[i]);
-		else
+		}
+		else if (eventType(_ready[i]) == CLIENT)
+		{
+			// std::cout << "Client event received for fd " << getFd(_ready[i]) << std::endl;
+			// std::cout << "Client event index: " << getIndex(_ready[i]) << std::endl;
+			// std::cout << "Client status at the moment: " << _clients[getIndex(_ready[i])].status << std::endl;
 			handleClientEvents(_ready[i]);
+		}
+		else if (eventType(_ready[i]) == PIPE)
+		{
+			// std::cout << "pipeevent received for fd " << getFd(_ready[i]) << std::endl;
+			// std::cout << "pipeevent index: " << getIndex(_ready[i]) << std::endl;
+			// std::cout << "Client status at the moment: " << _clients[getIndex(_ready[i])].status << std::endl;
+			handlePipeEvents(_ready[i]);
+		}
 	}
 }
 
 void Server::handleEvents()
 {
+	prepareResponses();
 	handleSocketEvents();
 	handleTimeouts();
-	prepareResponses();
+	
 }
 
 void Server::addEpoll(int fd, int index)
 {
+	std::cout << "Adding to epoll with fd " << fd << " and index " << index << std::endl;
 	if (index == MAX_CONNECTIONS)
 	{
+		std::cout << "Listening socket added to epoll" << std::endl;
+		// std::cout << "Listening socket fd: " << fd << std::endl;
 		eventData.fd = fd;
+		
 		_events[index].data.ptr = &eventData;
+		
+		struct eventData *temp = (struct eventData *) _events[index].data.ptr;
+		std::cout << "temp fd " << temp->fd << std::endl;
+		
 		_events[index].events = EPOLLIN | EPOLLHUP | EPOLLERR;
+	}
+	else if (index > MAX_CONNECTIONS)
+	{
+		std::cout << "Pipe added to epoll" << std::endl;
+		std::cout << "Pipe fd: " << fd << std::endl;
+		int clientIndex = index - MAX_CONNECTIONS - 1;
+		std::cout << "Client index: " << clientIndex << std::endl;
+		_clients[clientIndex].pipeEventData.fd = fd;
+		_clients[clientIndex].pipeEventData.index = clientIndex;
+		_events[index].data.ptr = &(_clients[clientIndex].pipeEventData);
+		// _events[index].events = EPOLLIN | EPOLLHUP | EPOLLERR;
+		_events[index].events = EPOLLIN;
 	}
 	else
 	{
+		std::cout << "Client added to epoll" << std::endl;
+		std::cout << "Client fd: " << fd << std::endl;
 		_events[index].events = EPOLLIN | EPOLLOUT | EPOLLHUP | EPOLLERR;
 		_clients[index].eventData.fd = fd;
 		_clients[index].eventData.index = index;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/18 17:05:56 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/19 10:12:42 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,9 @@ class ClientConnection
 	size_t						maxBodySize;
 	struct eventData			eventData;
 	HttpHandler					*responseMaker;
-	// int							pipefd[2];
+	int							pipe[2];
+	std::string					body;
+	struct eventData			pipeEventData;
 
 	// Public Methods
 	ClientConnection();
@@ -93,6 +95,7 @@ class ClientConnection
 	void						grabChunkedHeader(std::string & unProcessed, std::string & header);
 	void						handleChunkedEncoding();
 	void						createResponseParts();
+	void						accumulateResponseParts();
 	time_t						getPassedTime() const;
 	void						setCurrentTime();
 	static void					sendServerError(int fd, size_t maxBodySize);

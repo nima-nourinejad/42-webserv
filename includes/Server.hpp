@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/04 15:18:51 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/19 10:26:31 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ class Server
 		static constexpr int			BACKLOG =(2 * MAX_CONNECTIONS);
 		static constexpr int			TIMEOUT = 10;
 		static constexpr int			MAX_RETRY = 5;
+		static constexpr int			TOTAL_EVENTS = 2 * MAX_CONNECTIONS + 1;
 
 		// Private Attributes
 		int								_socket_fd;
@@ -41,8 +42,8 @@ class Server
 		Configuration					_config;
 		int								_num_clients;
 		std::vector<ClientConnection>	_clients;
-		struct epoll_event				_events[MAX_CONNECTIONS + 1];
-		struct epoll_event				_ready[MAX_CONNECTIONS + 1];
+		struct epoll_event				_events[TOTAL_EVENTS];
+		struct epoll_event				_ready[TOTAL_EVENTS];
 		int								_retry;
 		Response						_response;
 		struct eventData 				eventData;
@@ -73,6 +74,7 @@ class Server
 		void							handleErr(struct epoll_event const & event);
 		void							handleClientEvents(struct epoll_event const & event);
 		void							handleListeningEvents(struct epoll_event const & event);
+		void							handlePipeEvents(struct epoll_event const & event);
 		int								eventType(struct epoll_event const & event) const;
 		
 		// Signal Methods
