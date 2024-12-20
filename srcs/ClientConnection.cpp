@@ -6,7 +6,7 @@
 /*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/20 09:57:36 by nima             ###   ########.fr       */
+/*   Updated: 2024/12/20 10:10:59 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -513,6 +513,7 @@ void ClientConnection::accumulateResponseParts()
 	while (true)
 	{
 		std::cout << "i am performing a read" << std::endl;
+		std::memset(buffer, 0, sizeof(buffer));
 		bytes_received = read(pipe[0], buffer, sizeof(buffer));
 		// bytes_received = recv(pipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
 		if (bytes_received > 0)
