@@ -6,7 +6,7 @@
 /*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/19 12:45:59 by nima             ###   ########.fr       */
+/*   Updated: 2024/12/20 09:57:36 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -472,10 +472,13 @@ void ClientConnection::createResponseParts()
 			if (pid == 0)
 			{
 				std::cout << "child process started" << std::endl;
+				std::cout << "i am closing the read end of pipe in the child process" << std::endl;
 				close(pipe[0]);
 				std::string	body = response.getBody();
+				std::cout << "i am writing to pipe in the child process" << std::endl;
 				write(pipe[1], body.c_str(), body.size());
-				
+				std::cout << "i am closing the write end of pipe in the child process" << std::endl;
+
 				close(pipe[1]);
 				std::cout << "child process ended" << std::endl;
 				exit(0);
@@ -500,63 +503,98 @@ void ClientConnection::accumulateResponseParts()
 {
 	
 	std::cout << "i am at start of accumulate" << std::endl;
+	std::cout << "i am closing the write end of pipe in the main process" << std::endl;
+	close(pipe[1]);
+	pipe[1] = -1;
+	// std::cout << "i am not closing the write end of pipe in the main process" << std::endl;
 	char buffer[16384] = {};
 	ssize_t bytes_received;
 	// bytes_received = recv(pipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
-	bytes_received = read(pipe[0], buffer, sizeof(buffer));
-	if (bytes_received > 0)
+	while (true)
 	{
-		std::string stringBuffer = buffer;
-		body += stringBuffer;
-		std::cout << "body:" << std::endl;
-		std::cout << body << std::endl;
+		std::cout << "i am performing a read" << std::endl;
+		bytes_received = read(pipe[0], buffer, sizeof(buffer));
+		// bytes_received = recv(pipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
+		if (bytes_received > 0)
+		{
+			std::string stringBuffer = buffer;
+			body += stringBuffer;
+			std::cout << "i recived data from pipr and current body :" << std::endl;
+			std::cout << body << std::endl;
+		}
+		else if (bytes_received == 0)
+		{
+			std::cout << "i recived 0 bytes from pipe which means EOF. i breaking out of loop" << std::endl;
+			break;
+		}
+	}
+	std::cout << "pipe read ended" << std::endl;
+	// std::cout << "Starting to accumulate data from pipe..." << std::endl;
+	// char buffer[16384]; // Buffer to read chunks
+	// ssize_t bytes_received;
+	// std::string body; // Accumulated body content
+
+	// bool eof_reached = false; // To track if EOF has been detected for the current interaction
+
+	// while (!eof_reached) {
+	// 	bytes_received = read(pipe[0], buffer, sizeof(buffer));
+	// 	if (bytes_received > 0) {
+	// 		// Append the valid portion of the buffer
+	// 		body.append(buffer, bytes_received);
+	// 		std::cout << "Chunk received. Current body size: " << body.size() << std::endl;
+	// 	} else if (bytes_received == 0) {
+	// 		// EOF detected
+	// 		eof_reached = true;
+	// 		std::cout << "All data received. Total body size: " << body.size() << std::endl;
+	// 	} else {
+	// 		// Handle read error
+	// 		perror("Error reading from pipe");
+	// 		break;
+	// 	}
 	// }
-	// else if (bytes_received == 0)
-	// {
-		Response	response = responseMaker->createResponse(request);
-		size_t		maxBodySize = responseMaker->getMaxBodySize();
-		connectionType();
-		std::string	statusLine = response.getStatusLine();
-		std::string	rawHeader = response.getRawHeader();
-		std::string connection;
-		if (keepAlive)
-			connection = "Connection: keep-alive\r\n";
-		else
-			connection = "Connection: close\r\n";
+	Response	response = responseMaker->createResponse(request);
+	size_t		maxBodySize = responseMaker->getMaxBodySize();
+	connectionType();
+	std::string	statusLine = response.getStatusLine();
+	std::string	rawHeader = response.getRawHeader();
+	std::string connection;
+	if (keepAlive)
+		connection = "Connection: keep-alive\r\n";
+	else
+		connection = "Connection: close\r\n";
 
-		std::string header;
-		if (body.size() > maxBodySize)
+	std::string header;
+	if (body.size() > maxBodySize)
+	{
+		responseParts.push_back(statusLine);
+		std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
+		rawHeader = rawHeader + transferEncoding + connection;
+		responseParts.push_back(rawHeader + "\r\n");
+		size_t				chunkSize;
+		std::string			chunk;
+		std::stringstream	sstream;
+
+		while (body.size() > 0)
 		{
-			responseParts.push_back(statusLine);
-			std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
-			rawHeader = rawHeader + transferEncoding + connection;
-			responseParts.push_back(rawHeader + "\r\n");
-			size_t				chunkSize;
-			std::string			chunk;
-			std::stringstream	sstream;
-
-			while (body.size() > 0)
-			{
-				chunkSize = std::min(body.size(), maxBodySize);
-				chunk = body.substr(0, chunkSize);
-				sstream.str("");
-				sstream << std::hex << chunkSize << "\r\n";
-				sstream << chunk << "\r\n";
-				responseParts.push_back(sstream.str());
-				body = body.substr(chunkSize);
-			}
-			responseParts.push_back("0\r\n\r\n");
+			chunkSize = std::min(body.size(), maxBodySize);
+			chunk = body.substr(0, chunkSize);
+			sstream.str("");
+			sstream << std::hex << chunkSize << "\r\n";
+			sstream << chunk << "\r\n";
+			responseParts.push_back(sstream.str());
+			body = body.substr(chunkSize);
 		}
-		else
-		{
-			std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
-			header = statusLine + rawHeader + contentLength + connection;
-			responseParts.push_back(header + "\r\n" + body);
-		}
+		responseParts.push_back("0\r\n\r\n");
+	}
+	else
+	{
+		std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
+		header = statusLine + rawHeader + contentLength + connection;
+		responseParts.push_back(header + "\r\n" + body);
+	}
 
-		status = READYTOSEND;
-		std::cout << "Response created for client " << index + 1 << std::endl;
-	}		
+	status = READYTOSEND;
+	std::cout << "Response created for client " << index + 1 << std::endl;	
 }
 
 time_t getCurrentTime()

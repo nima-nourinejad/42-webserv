@@ -6,7 +6,7 @@
 /*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/19 12:15:43 by nima             ###   ########.fr       */
+/*   Updated: 2024/12/20 10:06:57 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,12 +96,10 @@ void Server::handlePendingConnections()
 		}
 		else
 		{
-			int result = pipe(_clients[availableSlot].pipe);
-			if (result == -1)
-				throw SocketException("Failed to create pipe");
-			std::cout << "Pipe created" << std::endl;
-			std::cout << "Pipe[0]: " << _clients[availableSlot].pipe[0] << std::endl;
-			addEpoll(_clients[availableSlot].pipe[0], availableSlot + MAX_CONNECTIONS + 1);
+			// int result = pipe(_clients[availableSlot].pipe);
+			// if (result == -1)
+			// 	throw SocketException("Failed to create pipe");
+			// addEpoll(_clients[availableSlot].pipe[0], availableSlot + MAX_CONNECTIONS + 1);
 			///failure should close the pipe both ends
 			addEpoll(fd, availableSlot);
 			++_num_clients;
@@ -152,13 +150,20 @@ void Server::closeClientSocket(int index)
 	{
 		printMessage("Closing client " + std::to_string(index + 1));
 		removeEpoll(_clients[index].fd);
-		removeEpoll(_clients[index].pipe[0]);
 		close(_clients[index].fd);
 		_clients[index].fd = -1;
-		close(_clients[index].pipe[0]);
-		_clients[index].pipe[0] = -1;
-		close(_clients[index].pipe[1]);
-		_clients[index].pipe[1] = -1;
+		
+		if (_clients[index].pipe[0] != -1)
+		{
+			removeEpoll(_clients[index].pipe[0]);
+			close(_clients[index].pipe[0]);
+			_clients[index].pipe[0] = -1;
+		}
+		if (_clients[index].pipe[1] != -1)
+		{
+			close(_clients[index].pipe[1]);
+			_clients[index].pipe[1] = -1;
+		}
 		_clients[index].status = DISCONNECTED;
 		_clients[index].keepAlive = true;
 		_clients[index].connectTime = 0;
@@ -321,7 +326,14 @@ void Server::prepareResponses()
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
 		if (_clients[i].status == RECEIVED)
+		{
+			int result = pipe(_clients[i].pipe);
+			if (result == -1)
+				throw SocketException("Failed to create pipe");
+			addEpoll(_clients[i].pipe[0], i + MAX_CONNECTIONS + 1);
+			///failure should close the pipe both ends
 			_clients[i].createResponseParts();
+		}
 	}
 }
 
@@ -354,7 +366,18 @@ void Server::handleClientEvents(struct epoll_event const & event)
 		if (getClientStatus(event) < RECEIVED &&(event.events & EPOLLIN))
 			receiveMessage(getClientIndex(event));
 		else if (getClientStatus(event) == READYTOSEND &&(event.events & EPOLLOUT))
+		{
+			int index = getClientIndex(event);
+			int pipe_read_fd = _clients[index].pipe[0];
+			if (pipe_read_fd != -1)
+			{
+				std::cout << "cleaning up pipe" << std::endl;
+				removeEpoll(pipe_read_fd);
+				close(pipe_read_fd);
+				_clients[index].pipe[0] = -1;
+			}
 			sendResponseParts(getClientIndex(event));
+		}
 	}
 }
 
