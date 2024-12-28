@@ -3,19 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/18 16:37:01 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/28 11:39:01 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// Ali: Handle alias and return
+// (done) Ali: Handle alias and return
 
-// Ali: If no root in server block and a location block has no root, return 404
+// (done) Ali: If no root in server block and a location block has no root, return 404
 
 // Ali: for any "throw"s , return 500 (for each status code catch block in client connection)
-// Ali : size_t		maxBodySize = responseMaker->getMaxBodySize(); should become size_t maxBodySize = response.getMaxBodySize();
+// (done) Ali : size_t		maxBodySize = responseMaker->getMaxBodySize(); should become size_t maxBodySize = response.getMaxBodySize();
 // Andrey : add root directive to the server block
 
 #include "Server.hpp"

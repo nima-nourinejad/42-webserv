@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:33 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/18 14:26:45 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/28 11:36:33 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,8 @@ std::string	Response::getRawHeader() const
 }
 
 std::string	Response::getBody() const { return _body; }
+
+size_t	Response::getMaxBodySize() const { return _maxBodySize; }
 
 std::string	Response::toString() const
 {

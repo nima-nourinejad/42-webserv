@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/20 10:10:59 by nima             ###   ########.fr       */
+/*   Updated: 2024/12/28 11:38:23 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -554,7 +554,8 @@ void ClientConnection::accumulateResponseParts()
 	// 	}
 	// }
 	Response	response = responseMaker->createResponse(request);
-	size_t		maxBodySize = responseMaker->getMaxBodySize();
+	// size_t		maxBodySize = responseMaker->getMaxBodySize();
+	size_t		maxBodySize = response.getMaxBodySize(); //newly added
 	connectionType();
 	std::string	statusLine = response.getStatusLine();
 	std::string	rawHeader = response.getRawHeader();

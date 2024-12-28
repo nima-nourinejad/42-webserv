@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/18 15:23:28 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/28 11:44:40 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <sstream>
+
+class HttpHandler;
 
 class CGIHandler
 {

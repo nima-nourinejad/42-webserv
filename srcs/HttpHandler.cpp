@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/19 08:48:00 by nima             ###   ########.fr       */
+/*   Updated: 2024/12/28 11:41:46 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,8 +125,13 @@ Response	HttpHandler::handleRequest(const Request &req)
 			return _getErrorPage(404); // Not found
 		}
 		
+		if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty())
+			return _getErrorPage(404); // Not found
+		
 		// Override root if location-specific root is defined
-		if (!matchedLocation->getRoot().empty())
+		if (!matchedLocation->getAlias().empty())
+			_rootDir = matchedLocation->getAlias();
+		else if (!matchedLocation->getRoot().empty())
 			_rootDir = matchedLocation->getRoot();
 
 		// Override error pages if location-specific error pages are defined
@@ -139,15 +144,22 @@ Response	HttpHandler::handleRequest(const Request &req)
 
 		if (!matchedLocation->getReturn().second.empty())
 		{
-			Response	response;
+			Response			response;
+			const auto			&redirectInfo = matchedLocation->getReturn();
+			int					statusCode = redirectInfo.first;
+			const std::string	&redirectPath = redirectInfo.second;
 
-			response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation->getReturn().first) + " Redirect" + "\r\n");
-			response.setHeader("Location", matchedLocation->getReturn().second + "\r\n");
+			response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " Redirect" + "\r\n");
+			response.setHeader("Location", redirectPath + "\r\n");
+			response.setBody("Redirecting to " + redirectPath);
+			// response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation->getReturn().first) + " Redirect" + "\r\n");
+			// response.setHeader("Location", matchedLocation->getReturn().second + "\r\n");
+			// response.setBody("Redirecting to " + matchedLocation->getReturn().second);
+			return response;
 			// return response.toString();
 		}
 
-		if (!matchedLocation->getAlias().empty())
-			_rootDir = matchedLocation->getAlias();
+		
 
 		if (!matchedLocation->getUploadPath().empty())
 		{
@@ -158,13 +170,15 @@ Response	HttpHandler::handleRequest(const Request &req)
 				std::filesystem::create_directories(uploadPath);
 
 			if (!std::filesystem::is_directory(uploadPath))
-				throw std::runtime_error("Upload path is not writable");
+				// throw std::runtime_error("Upload path is not writable");
+				return _getErrorPage(500); // Internal server error
 
 			// Test write by attempting to create a temporary file
 			std::ofstream	testFile((uploadPath / "test.tmp").string());
 
 			if (!testFile.is_open())
-				throw std::runtime_error("Upload path is not writable");
+				// throw std::runtime_error("Upload path is not writable");
+				return _getErrorPage(500); // Internal server error
 
 			testFile.close();
 			std::filesystem::remove(uploadPath / "test.tmp");
@@ -202,7 +216,7 @@ std::string HttpHandler::readFileError(std::string const &path)
 	std::ifstream	file(path.c_str());
 
 	if (!file.is_open())
-		throw SystemCallError("Failed to open file");
+		throw SystemCallError("Failed to open file"); //
 	std::stringstream	read;
 
 	read << file.rdbuf();
@@ -312,7 +326,8 @@ Response	HttpHandler::handleFileRequest(const std::string &filePath)
 	{
 		if (close(fd) == -1)
 			handleError("close file descriptor");
-		throw;
+		// throw;
+		return _getErrorPage(500); // Internal server error
 	}
 }
 
