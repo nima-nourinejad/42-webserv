@@ -6,14 +6,14 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 19:11:44 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 19:18:18 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
 
 ClientConnection::ClientConnection()
-    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(0),responseMaker(nullptr)
+    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(0),responseMaker(nullptr), pid(-1), errorStatus(0)
 	{
 		eventData.type = CLIENT;
 		eventData.fd = -1;
@@ -355,95 +355,6 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 	}
 	close(fd);
 }
-
-// void ClientConnection::createResponseParts()
-// {
-	
-// 	Response	response = responseMaker->createResponse(request);
-// 	// Response	response = responseMaker->createResponse(request, client_pipe_fd);
-// 	size_t		maxBodySize = responseMaker->getMaxBodySize();
-// 	// size_t maxBodySize = response.getMaxBodySize();
-	
-// 	try{
-		
-// 		std::cout << "Creating response for client " << index + 1 << std::endl;
-// 		status = PREPARINGRESPONSE;
-// 		connectionType();
-// 		// std::string method = requestmethod(request);
-// 		// std::string uri = requestURI(request);
-
-// 		// std::string	getResponse = responseMaker->createResponse(request);
-// 		// responseParts.push_back(getResponse);
-		
-			
-// 		std::string	body = response.getBody();
-		
-// 		std::string	statusLine = response.getStatusLine();
-// 		std::string	rawHeader = response.getRawHeader();
-		
-		
-		
-
-// 		// 	std::string path = findPath(method, uri);
-// 		// 	std::string body = readFile(path);
-
-// 		// 	std::string statusLine = createStatusLine(method, uri);
-
-// 		// 	std::string contentType = "Content-Type: text/html\r\n";
-// 		std::string connection;
-// 		if (keepAlive)
-// 			connection = "Connection: keep-alive\r\n";
-// 		else
-// 			connection = "Connection: close\r\n";
-
-// 		std::string header;
-// 		if (body.size() > maxBodySize)
-// 		{
-// 			// std::cout << "we are using chuncked" << std::endl;
-// 			responseParts.push_back(statusLine);
-// 			std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
-// 			// header = statusLine + contentType + transferEncoding + connection;
-// 			rawHeader = rawHeader + transferEncoding + connection;
-// 			responseParts.push_back(rawHeader + "\r\n");
-// 			size_t				chunkSize;
-// 			std::string			chunk;
-// 			std::stringstream	sstream;
-
-// 			while (body.size() > 0)
-// 			{
-// 				chunkSize = std::min(body.size(), maxBodySize);
-// 				chunk = body.substr(0, chunkSize);
-// 				sstream.str("");
-// 				sstream << std::hex << chunkSize << "\r\n";
-// 				sstream << chunk << "\r\n";
-// 				responseParts.push_back(sstream.str());
-// 				body = body.substr(chunkSize);
-// 			}
-// 			responseParts.push_back("0\r\n\r\n");
-// 		}
-// 		else
-// 		{
-// 			// std::cout << "we are using not chuncked" << std::endl;
-// 			std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
-// 			header = statusLine + rawHeader + contentLength + connection;
-// 			// rawHeader = statusLine + rawHeader + contentLength + connection;
-// 			responseParts.push_back(header + "\r\n" + body);
-// 		}
-
-// 		status = READYTOSEND;
-// 		std::cout << "Response created for client " << index + 1 << std::endl;
-// 	}
-// 	catch(const std::exception& e)
-// 	{
-// 		std::cerr << e.what() << '\n';
-// 		// std::string body = response.getErrorBody(status);
-// 		// std::string statusLine = response.getErrorStatusLine(status);
-// 		// std::string rawHeader = response.getErrorRawHeader(status);
-// 		///chunking
-		
-// 	}
-
-// }
 
 void ClientConnection::createResponseParts()
 {

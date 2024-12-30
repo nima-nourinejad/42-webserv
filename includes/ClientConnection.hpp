@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 19:03:33 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 19:17:04 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,7 @@ class ClientConnection
 	int							pipe[2];
 	std::string					body;
 	pid_t						pid;
+	int							errorStatus;
 	struct eventData			pipeEventData;
 
 	// Public Methods
