@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/28 11:46:48 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/30 17:50:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,15 +108,15 @@ Response	CGIHandler::execute(const Request &req)
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
 			{
 				std::string	cgiOutput = output.str();
-				response.setStatusLine("HTTP/1.1 200 OK");
+				response.setStatusLine("HTTP/1.1 200 OK\r\n"); // should be changed and be like http handler
 				response.setBody(cgiOutput);
 				response.setHeader("Content-Length", std::to_string(cgiOutput.size()));
 				response.setHeader("Content-Type", "text/html");
 			}
 			else
 			{
-				response.setStatusLine("HTTP/1.1 500 Internal Server Error");
-				response.setBody("CGI script error\n");
+				response.setStatusLine("HTTP/1.1 500 Internal Server Error\r\n");
+				response.setBody("CGI script error"); // should be changed and be like http handler
 			}
 			return response;
 			// return response.toString();

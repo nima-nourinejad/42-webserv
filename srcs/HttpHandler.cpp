@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/30 16:10:40 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 17:28:05 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,8 +118,8 @@ Response	HttpHandler::handleRequest(const Request &req)
 			return _getErrorPage(404); // Not found
 		}
 		
-		if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty())
-			return _getErrorPage(404); // Not found
+		// if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty())
+		// 	return _getErrorPage(404); // Not found
 		
 		// Override root if location-specific root is defined
 		if (!matchedLocation->getAlias().empty())
@@ -138,6 +138,8 @@ Response	HttpHandler::handleRequest(const Request &req)
 		// Handle client_max_body_size for the specific location
 		if (matchedLocation->getClientMaxBodySize() > 0)
 			_maxBodySize = matchedLocation->getClientMaxBodySize(); //maybe not needed
+		
+		std::cout << "Max body size in Http Handler: " << _maxBodySize << std::endl;
 
 		if (!matchedLocation->getReturn().second.empty())
 		{
@@ -514,5 +516,6 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 
 size_t	HttpHandler::getMaxBodySize() const
 {
+	std::cout << "Max body size in Http Handler own method: " << _maxBodySize << std::endl;
 	return _maxBodySize;
 }

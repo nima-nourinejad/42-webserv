@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 16:25:55 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 17:29:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -469,9 +469,15 @@ void ClientConnection::createResponseParts()
 				std::cout << "i am closing the read end of pipe in the child process" << std::endl;
 				close(pipe[0]);
 				Response	response = responseMaker->createResponse(request);
+				size_t		maxBodySize = responseMaker->getMaxBodySize();
+				std::cout << "max body size is " << maxBodySize << std::endl;
+				std::string	maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
 				std::string	body = response.getBody();
+				std::string	statusLine = response.getStatusLine();
+				std::string	rawHeader = response.getRawHeader();
+				std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
 				std::cout << "i am writing to pipe in the child process" << std::endl;
-				write(pipe[1], body.c_str(), body.size());
+				write(pipe[1], fullMessage.c_str(), fullMessage.size());
 				std::cout << "i am closing the write end of pipe in the child process" << std::endl;
 
 				close(pipe[1]);
@@ -492,6 +498,29 @@ void ClientConnection::createResponseParts()
 		
 	}
 
+}
+
+size_t grabMaxBodySize(std::string &response)
+{
+	size_t maxBodySize;
+	std::string maxBodySizeString = response.substr(0, response.find("\r\n"));
+	response = response.substr(response.find("\r\n") + 2);
+	maxBodySize = std::stoul(maxBodySizeString);
+	return maxBodySize;
+}
+
+std::string grabStatusLine(std::string & response)
+{
+	std::string statusLine = response.substr(0, response.find("\r\n") + 2);
+	response = response.substr(response.find("\r\n") + 2);
+	return statusLine;
+}
+
+std::string grabRawHeader(std::string & modifiedResponse)
+{
+	std::string rawHeader = modifiedResponse.substr(0, modifiedResponse.find("\r\n\r\n") + 2);
+	modifiedResponse = modifiedResponse.substr(modifiedResponse.find("\r\n\r\n") + 4);
+	return rawHeader;
 }
 
 void ClientConnection::accumulateResponseParts()
@@ -557,12 +586,12 @@ void ClientConnection::accumulateResponseParts()
 	// 	}
 	// }
 	std::cout << "i am creating response object in the main process" << std::endl;
-	Response	response = responseMaker->createResponse(request);
+	// Response	response = responseMaker->createResponse(request);
 	// size_t		maxBodySize = responseMaker->getMaxBodySize();
-	size_t		maxBodySize = response.getMaxBodySize(); //newly added
+	size_t		maxBodySize = grabMaxBodySize(body);
 	connectionType();
-	std::string	statusLine = response.getStatusLine();
-	std::string	rawHeader = response.getRawHeader();
+	std::string	statusLine = grabStatusLine(body);
+	std::string	rawHeader = grabRawHeader(body);
 	std::string connection;
 	if (keepAlive)
 		connection = "Connection: keep-alive\r\n";
