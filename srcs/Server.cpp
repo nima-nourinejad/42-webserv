@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 16:26:10 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 18:18:55 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,8 +164,12 @@ void Server::closeClientSocket(int index)
 			close(_clients[index].pipe[1]);
 			_clients[index].pipe[1] = -1;
 		}
-		// if (_clients[index].pid != -1)
-		// 	waitpid(_clients[index].pid, 0, 0);
+		if (_clients[index].pid != -1)
+		{
+			std::cout << "killing child process" << std::endl;
+			kill(_clients[index].pid, SIGKILL);
+			_clients[index].pid = -1;
+		}
 		_clients[index].status = DISCONNECTED;
 		_clients[index].keepAlive = true;
 		_clients[index].connectTime = 0;

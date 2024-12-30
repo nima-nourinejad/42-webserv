@@ -9,6 +9,15 @@ import sys
 # Enable debugging
 cgitb.enable()
 
+import time
+
+def wait_and_print():
+    time.sleep(30)
+    print("This is printed after 8 seconds!")
+
+# Call the function
+wait_and_print()
+
 # HTML Template
 HTML_TEMPLATE = """
 <!DOCTYPE html>

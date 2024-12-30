@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 16:05:34 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 19:03:33 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,8 @@ class ClientConnection
 	void						setCurrentTime();
 	static void					sendServerError(int fd, size_t maxBodySize);
 	static void					sendServiceUnavailable(int socket_fd, size_t maxBodySize);
+	void						chunckBody(std::string statusLine, std::string rawHeader, std::string connection, size_t maxBodySize);
+	void 						processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, std::string &connection, size_t &maxBodySize);
 };
 
 #endif

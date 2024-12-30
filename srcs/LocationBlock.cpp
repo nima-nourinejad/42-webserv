@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/30 15:46:59 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 17:56:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,8 +121,8 @@ void LocationBlock::setAlias(const std::string& alias)
 	std::cout << "Alias: " << alias << std::endl;
 	if (alias.empty())
 		throw std::invalid_argument("Alias is empty");
-	if (alias[0] != '/')
-		throw std::invalid_argument("Incorrect alias format"); // maybe delete
+	// if (alias[0] != '/')
+	// 	throw std::invalid_argument("Incorrect alias format"); // maybe delete
 	if (!std::filesystem::exists(alias))
 		throw std::invalid_argument("Alias path does not exist");
 	_alias = alias;

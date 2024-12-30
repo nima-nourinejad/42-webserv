@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 17:29:58 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 19:11:44 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -447,9 +447,6 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 
 void ClientConnection::createResponseParts()
 {
-	
-	
-	
 	try{
 		
 		if (status == RECEIVED)
@@ -465,37 +462,23 @@ void ClientConnection::createResponseParts()
 			// 	throw SocketException("Failed to fork");
 			if (pid == 0)
 			{
-				std::cout << "child process started" << std::endl;
-				std::cout << "i am closing the read end of pipe in the child process" << std::endl;
 				close(pipe[0]);
 				Response	response = responseMaker->createResponse(request);
 				size_t		maxBodySize = responseMaker->getMaxBodySize();
-				std::cout << "max body size is " << maxBodySize << std::endl;
 				std::string	maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
 				std::string	body = response.getBody();
 				std::string	statusLine = response.getStatusLine();
 				std::string	rawHeader = response.getRawHeader();
 				std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
-				std::cout << "i am writing to pipe in the child process" << std::endl;
 				write(pipe[1], fullMessage.c_str(), fullMessage.size());
-				std::cout << "i am closing the write end of pipe in the child process" << std::endl;
-
 				close(pipe[1]);
-				std::cout << "child process ended" << std::endl;
 				exit(0);
 			}
-			else
-				std::cout << "parent process after after starting the child" << std::endl;
 		}
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';
-		// std::string body = response.getErrorBody(status);
-		// std::string statusLine = response.getErrorStatusLine(status);
-		// std::string rawHeader = response.getErrorRawHeader(status);
-		///chunking
-		
+		std::cerr << e.what() << '\n';		
 	}
 
 }
@@ -523,81 +506,9 @@ std::string grabRawHeader(std::string & modifiedResponse)
 	return rawHeader;
 }
 
-void ClientConnection::accumulateResponseParts()
+void ClientConnection::chunckBody(std::string statusLine, std::string rawHeader, std::string connection, size_t maxBodySize)
 {
-	
-	std::cout << "i am at start of accumulate" << std::endl;
-	std::cout << "i am closing the write end of pipe in the main process" << std::endl;
-	close(pipe[1]);
-	pipe[1] = -1;
-	body.clear();
-	// std::cout << "i am not closing the write end of pipe in the main process" << std::endl;
-	char buffer[16384] = {};
-	ssize_t bytes_received;
-	// bytes_received = recv(pipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
-	// if (pid != -1)
-	waitpid(pid, 0, 0);
-	// pid = -1;
-	while (true)
-	{
-		std::cout << "i am performing a read" << std::endl;
-		std::memset(buffer, 0, sizeof(buffer));
-		bytes_received = read(pipe[0], buffer, sizeof(buffer));
-		// bytes_received = recv(pipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
-		if (bytes_received > 0)
-		{
-			std::string stringBuffer = buffer;
-			body += stringBuffer;
-			std::cout << "i recived data from pipe and current body :" << std::endl;
-			std::cout << body << std::endl;
-		}
-		else if (bytes_received == 0)
-		{
-			std::cout << "i recived 0 bytes from pipe which means EOF. i breaking out of loop" << std::endl;
-			break;
-		}
-		else
-			std::cout << "i recived a minus value and stuck in the loop fuck you" << std::endl;
-		
-	}
-	
-	std::cout << "pipe read ended" << std::endl;
-	// std::cout << "Starting to accumulate data from pipe..." << std::endl;
-	// char buffer[16384]; // Buffer to read chunks
-	// ssize_t bytes_received;
-	// std::string body; // Accumulated body content
-
-	// bool eof_reached = false; // To track if EOF has been detected for the current interaction
-
-	// while (!eof_reached) {
-	// 	bytes_received = read(pipe[0], buffer, sizeof(buffer));
-	// 	if (bytes_received > 0) {
-	// 		// Append the valid portion of the buffer
-	// 		body.append(buffer, bytes_received);
-	// 		std::cout << "Chunk received. Current body size: " << body.size() << std::endl;
-	// 	} else if (bytes_received == 0) {
-	// 		// EOF detected
-	// 		eof_reached = true;
-	// 		std::cout << "All data received. Total body size: " << body.size() << std::endl;
-	// 	} else {
-	// 		// Handle read error
-	// 		perror("Error reading from pipe");
-	// 		break;
-	// 	}
-	// }
-	std::cout << "i am creating response object in the main process" << std::endl;
-	// Response	response = responseMaker->createResponse(request);
-	// size_t		maxBodySize = responseMaker->getMaxBodySize();
-	size_t		maxBodySize = grabMaxBodySize(body);
-	connectionType();
-	std::string	statusLine = grabStatusLine(body);
-	std::string	rawHeader = grabRawHeader(body);
-	std::string connection;
-	if (keepAlive)
-		connection = "Connection: keep-alive\r\n";
-	else
-		connection = "Connection: close\r\n";
-
+	responseParts.clear();
 	std::string header;
 	if (body.size() > maxBodySize)
 	{
@@ -627,7 +538,47 @@ void ClientConnection::accumulateResponseParts()
 		header = statusLine + rawHeader + contentLength + connection;
 		responseParts.push_back(header + "\r\n" + body);
 	}
+}
 
+void ClientConnection::processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, std::string &connection, size_t &maxBodySize)
+{
+	maxBodySize = grabMaxBodySize(body);
+	statusLine = grabStatusLine(body);
+	rawHeader = grabRawHeader(body);
+	if (keepAlive)
+		connection = "Connection: keep-alive\r\n";
+	else
+		connection = "Connection: close\r\n";
+}
+
+void ClientConnection::accumulateResponseParts()
+{
+	close(pipe[1]);
+	pipe[1] = -1;
+	body.clear();
+	char buffer[16384] = {};
+	ssize_t bytes_received;
+	if (pid != -1)
+		waitpid(pid, 0, 0);
+	pid = -1;
+	while (true)
+	{
+		std::memset(buffer, 0, sizeof(buffer));
+		bytes_received = read(pipe[0], buffer, sizeof(buffer));
+		if (bytes_received > 0)
+		{
+			std::string stringBuffer = buffer;
+			body += stringBuffer;
+		}
+		else if (bytes_received == 0)
+			break;
+		
+	}
+	connectionType();
+	size_t		maxBodySize;
+	std::string statusLine, rawHeader, connection;
+	processInforamtionAfterFork(statusLine, rawHeader,connection, maxBodySize);
+	chunckBody(statusLine, rawHeader, connection, maxBodySize);
 	status = READYTOSEND;
 	std::cout << "Response created for client " << index + 1 << std::endl;	
 }
