@@ -34,3 +34,5 @@ webserv
 
 # Log files
 *.log
+
+.vscode
