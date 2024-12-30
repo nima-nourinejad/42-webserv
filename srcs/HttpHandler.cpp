@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/28 11:41:46 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/30 16:10:40 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,19 +52,12 @@ Response	HttpHandler::_getErrorPage(int statusCode)
 	if (errorPages.find(statusCode) != errorPages.end())
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-		// std::cout << "rootdir: " << _rootDir << std::endl;
-		// std::cout << "readfileerror: " << readFileError(_rootDir + "/" + errorPages.at(statusCode)) << std::endl;
 		response.setBody(readFileError(_rootDir + "/" + errorPages.at(statusCode)));
-		// std::cout << "Error page: " << errorPages.at(statusCode) << std::endl;
-		// std::cout << "status line: " << response.getStatusLine() << std::endl;
-		// response.setBody(errorPages.at(statusCode));
 		return response;
-		// return errorPages.at(statusCode); // Custom error page
 	}
 	response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-	response.setBody(readFileError(_rootDir + "/" + "dummy.html"));
+	response.setBody(readFileError(_rootDir + "/" + "dummy.html")); // needed to make better
 	return response;
-	// return "dummy.html";         // Default fallback
 }
 
 std::string	HttpHandler::_validateRequest(const Request &req)
@@ -130,8 +123,12 @@ Response	HttpHandler::handleRequest(const Request &req)
 		
 		// Override root if location-specific root is defined
 		if (!matchedLocation->getAlias().empty())
-			_rootDir = matchedLocation->getAlias();
-		else if (!matchedLocation->getRoot().empty())
+			// _rootDir = matchedLocation->getAlias();
+			_filePath = matchedLocation->getAlias();
+		else
+			_filePath = _rootDir + req.getPath();
+		
+		if (!matchedLocation->getRoot().empty())
 			_rootDir = matchedLocation->getRoot();
 
 		// Override error pages if location-specific error pages are defined
@@ -164,13 +161,12 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (!matchedLocation->getUploadPath().empty())
 		{
 			// Handle file uploads logic (POST requests)
-			std::filesystem::path	uploadPath = matchedLocation->getUploadPath();
+			std::filesystem::path	uploadPath = matchedLocation->getUploadPath(); // may need to be handled better
 
 			if (!std::filesystem::exists(uploadPath))
 				std::filesystem::create_directories(uploadPath);
 
 			if (!std::filesystem::is_directory(uploadPath))
-				// throw std::runtime_error("Upload path is not writable");
 				return _getErrorPage(500); // Internal server error
 
 			// Test write by attempting to create a temporary file
@@ -238,19 +234,27 @@ Response	HttpHandler::handleGET(const Request &req)
 
 	if (!matchedLocation->getIndex().empty())
 	{
-		std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation->getIndex();
+		// std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation->getIndex();
+		std::string	indexFilePath = _filePath + matchedLocation->getIndex();
+		std::cout << "Matchedlocation.alias: " << matchedLocation->getAlias() << std::endl;
 		std::cout << "Index file path: " << indexFilePath << std::endl;
 		if (std::filesystem::exists(indexFilePath)
 			&& std::filesystem::is_regular_file(indexFilePath))
 			return handleFileRequest(indexFilePath); //maybe just in index requested location
 	}
 
-	std::string	filePath = _rootDir + req.getPath();
-	std::cout << "File path: " << filePath << std::endl;
+	// std::string	filePath = _rootDir + req.getPath();
+	// std::string	filePath;
+
+	// if (!matchedLocation->getAlias().empty())
+	// 	filePath = matchedLocation->getAlias();
+	// else
+	// 	filePath = _rootDir + req.getPath();
+	std::cout << "File path: " << _filePath << std::endl;
 	Response	response;
 
 	// Check if the path is a directory
-	if (std::filesystem::is_directory(filePath))
+	if (std::filesystem::is_directory(_filePath))
 	{
 		std::shared_ptr<LocationBlock> matchedLocation;
 
@@ -268,7 +272,7 @@ Response	HttpHandler::handleGET(const Request &req)
 			std::ostringstream	directoryListing;
 
 			directoryListing << "<html><body><h1>Index of " << req.getPath() << "</h1><ul>";
-			for (const auto &entry : std::filesystem::directory_iterator(filePath))
+			for (const auto &entry : std::filesystem::directory_iterator(_filePath))
 			{
 				directoryListing << "<li><a href=\"" << entry.path().filename().string() << "\">";
 				directoryListing << entry.path().filename().string() << "</a></li>";
@@ -284,7 +288,7 @@ Response	HttpHandler::handleGET(const Request &req)
 		}
 	}
 
-	return handleFileRequest(filePath);
+	return handleFileRequest(_filePath);
 }
 
 // Adding a helper function for file requests
@@ -418,10 +422,11 @@ void	HttpHandler::saveFile(const std::string &filename, const std::string &fileD
 
 Response	HttpHandler::handleDELETE(const Request &req)
 {
-	std::string filePath = _rootDir + req.getPath();
+	// std::string filePath = _rootDir + req.getPath();
+	(void)req;
 	Response	response;
 
-	if (unlink(filePath.c_str()) == 0)
+	if (unlink(_filePath.c_str()) == 0)
 	{
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody("File deleted successfully\n");

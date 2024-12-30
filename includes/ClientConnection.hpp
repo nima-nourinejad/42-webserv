@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/19 10:12:42 by nima             ###   ########.fr       */
+/*   Updated: 2024/12/30 16:05:34 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,7 @@ class ClientConnection
 	HttpHandler					*responseMaker;
 	int							pipe[2];
 	std::string					body;
+	pid_t						pid;
 	struct eventData			pipeEventData;
 
 	// Public Methods

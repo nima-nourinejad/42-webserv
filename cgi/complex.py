@@ -9,10 +9,6 @@ import sys
 # Enable debugging
 cgitb.enable()
 
-# Define the response content type
-# print("Content-Type: text/html")
-# print()  # End headers
-
 # HTML Template
 HTML_TEMPLATE = """
 <!DOCTYPE html>

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/28 11:38:23 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/30 16:25:55 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -448,25 +448,19 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 void ClientConnection::createResponseParts()
 {
 	
-	Response	response = responseMaker->createResponse(request);
+	
 	
 	try{
 		
 		if (status == RECEIVED)
 		{
+			responseParts.clear();
 			std::cout << "Creating response for client " << index + 1 << std::endl;
 			status = PREPARINGRESPONSE;
-			// body.clear();
-			// char buffer[16384] = {};
-			// size_t remain_data;
-
-			// remain_data = recv(pipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
-			// while (remain_data > 0)
-			// 	remain_data = recv(pipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
 			
 			std::cout << "i emptied the pipe" << std::endl;
 			
-			pid_t pid = fork();
+			pid = fork();
 			// if (pid == -1)
 			// 	throw SocketException("Failed to fork");
 			if (pid == 0)
@@ -474,6 +468,7 @@ void ClientConnection::createResponseParts()
 				std::cout << "child process started" << std::endl;
 				std::cout << "i am closing the read end of pipe in the child process" << std::endl;
 				close(pipe[0]);
+				Response	response = responseMaker->createResponse(request);
 				std::string	body = response.getBody();
 				std::cout << "i am writing to pipe in the child process" << std::endl;
 				write(pipe[1], body.c_str(), body.size());
@@ -484,7 +479,7 @@ void ClientConnection::createResponseParts()
 				exit(0);
 			}
 			else
-			std::cout << "parent process after after starting the child" << std::endl;
+				std::cout << "parent process after after starting the child" << std::endl;
 		}
 	}
 	catch(const std::exception& e)
@@ -506,10 +501,14 @@ void ClientConnection::accumulateResponseParts()
 	std::cout << "i am closing the write end of pipe in the main process" << std::endl;
 	close(pipe[1]);
 	pipe[1] = -1;
+	body.clear();
 	// std::cout << "i am not closing the write end of pipe in the main process" << std::endl;
 	char buffer[16384] = {};
 	ssize_t bytes_received;
 	// bytes_received = recv(pipe[0], buffer, sizeof(buffer), MSG_DONTWAIT);
+	// if (pid != -1)
+	waitpid(pid, 0, 0);
+	// pid = -1;
 	while (true)
 	{
 		std::cout << "i am performing a read" << std::endl;
@@ -520,7 +519,7 @@ void ClientConnection::accumulateResponseParts()
 		{
 			std::string stringBuffer = buffer;
 			body += stringBuffer;
-			std::cout << "i recived data from pipr and current body :" << std::endl;
+			std::cout << "i recived data from pipe and current body :" << std::endl;
 			std::cout << body << std::endl;
 		}
 		else if (bytes_received == 0)
@@ -528,7 +527,11 @@ void ClientConnection::accumulateResponseParts()
 			std::cout << "i recived 0 bytes from pipe which means EOF. i breaking out of loop" << std::endl;
 			break;
 		}
+		else
+			std::cout << "i recived a minus value and stuck in the loop fuck you" << std::endl;
+		
 	}
+	
 	std::cout << "pipe read ended" << std::endl;
 	// std::cout << "Starting to accumulate data from pipe..." << std::endl;
 	// char buffer[16384]; // Buffer to read chunks
@@ -553,6 +556,7 @@ void ClientConnection::accumulateResponseParts()
 	// 		break;
 	// 	}
 	// }
+	std::cout << "i am creating response object in the main process" << std::endl;
 	Response	response = responseMaker->createResponse(request);
 	// size_t		maxBodySize = responseMaker->getMaxBodySize();
 	size_t		maxBodySize = response.getMaxBodySize(); //newly added

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/11 16:17:25 by asohrabi         ###   ########.fr       */
+/*   Updated: 2024/12/30 14:48:39 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ class HttpHandler
 		// getlocations function in serverblock needs to change too
 		std::map<int, std::string>	_errorPages;
 		size_t						_maxBodySize; // maybe not needed
+		std::string					_filePath;
 
 		bool						_isMethodAllowed(const std::string &method, const std::string &path);
 		Response					_getErrorPage(int statusCode);

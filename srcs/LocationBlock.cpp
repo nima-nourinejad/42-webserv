@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationBlock.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/09 18:48:20 by akovalev         ###   ########.fr       */
+/*   Updated: 2024/12/30 15:46:59 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,7 +122,7 @@ void LocationBlock::setAlias(const std::string& alias)
 	if (alias.empty())
 		throw std::invalid_argument("Alias is empty");
 	if (alias[0] != '/')
-		throw std::invalid_argument("Incorrect alias format");
+		throw std::invalid_argument("Incorrect alias format"); // maybe delete
 	if (!std::filesystem::exists(alias))
 		throw std::invalid_argument("Alias path does not exist");
 	_alias = alias;
