@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 19:18:18 by nnourine         ###   ########.fr       */
+/*   Updated: 2024/12/30 19:32:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -377,9 +377,22 @@ void ClientConnection::createResponseParts()
 				Response	response = responseMaker->createResponse(request);
 				size_t		maxBodySize = responseMaker->getMaxBodySize();
 				std::string	maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
-				std::string	body = response.getBody();
-				std::string	statusLine = response.getStatusLine();
-				std::string	rawHeader = response.getRawHeader();
+				std::string body, statusLine, rawHeader;
+				if (!errorStatus)
+				{
+					body = response.getBody();
+					statusLine = response.getStatusLine();
+					rawHeader = response.getRawHeader();
+				}
+				else
+				{
+					// body = response.getErrorBody(errorStatus);
+					// statusLine = response.getErrorStatusLine(errorStatus);
+					// rawHeader = response.getErrorRawHeader(errorStatus);
+					body = "";
+					statusLine = "";
+					rawHeader = "";
+				}
 				std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
 				write(pipe[1], fullMessage.c_str(), fullMessage.size());
 				close(pipe[1]);
