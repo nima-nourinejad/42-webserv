@@ -24,6 +24,7 @@
 // body = response.getErrorBody(errorStatus);
 				// statusLine = response.getErrorStatusLine(errorStatus);
 					// rawHeader = response.getErrorRawHeader(errorStatus);
+// Nima: close pipe in case of fork failure 
 
 
 #include "Server.hpp"
