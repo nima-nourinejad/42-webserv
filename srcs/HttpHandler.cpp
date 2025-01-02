@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/02 14:00:37 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/02 14:17:55 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,15 +15,15 @@
 HttpHandler::HttpHandler(ServerBlock &serverConfig)
 	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0]->getRoot())
 	, _serverBlock(serverConfig), _maxBodySize(serverConfig.getClientMaxBodySize())
-	{
-		//creating a default state of map
-		_errorPages[404]="default_404.html";
-		_errorPages[500]="default_403.html";
+{
+	//creating a default state of map
+	_errorPages[404]="default_404.html";
+	_errorPages[500]="default_500.html";
 
-		//filling the map with the error pages from the server block
-		for (const auto &errorPage : serverConfig.getErrorPages())
-			_errorPages[errorPage.first] = errorPage.second;
-	}
+	//filling the map with the error pages from the server block
+	for (const auto &errorPage : serverConfig.getErrorPages())
+		_errorPages[errorPage.first] = errorPage.second;
+}
 
 HttpHandler::~HttpHandler() {}
 
@@ -45,7 +45,7 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 
 Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 {
-	const auto						&errorPages = _serverBlock.getErrorPages();
+	// const auto						&errorPages = _serverBlock.getErrorPages();
 	Response						response;
 	std::shared_ptr<LocationBlock>	matchedLocation;
 
@@ -58,21 +58,50 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 		}
 	}
 
-	if (!matchedLocation)
-	{
-		// std::cout << "No matching location found" << std::endl;
-		return getErrorPage(req, 404); // Not found
-	}
-	
-	if (errorPages.find(statusCode) != errorPages.end())
+	// Use location-specific error pages if available
+	if (matchedLocation && matchedLocation->getErrorPages().count(statusCode))
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-		response.setBody(readFileError(_rootDir + "/" + errorPages.at(statusCode)));
+		response.setBody(readFileError(matchedLocation->getRoot() + "/" + matchedLocation->getErrorPages().at(statusCode)));
 		return response;
 	}
+
+	// Use server block error pages if available
+	if (_serverBlock.getErrorPages().count(statusCode))
+	{
+		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
+		response.setBody(readFileError(_rootDir + "/" + _serverBlock.getErrorPages().at(statusCode)));
+		return response;
+	}
+
+	// Use default error pages as a fallback
+	if (_errorPages.count(statusCode))
+	{
+		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
+		response.setBody(readFileError(_errorPages.at(statusCode)));
+		return response;
+	}
+
+	// If no error page is found, return a generic error response
 	response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-	response.setBody(readFileError(_rootDir + "/" + "dummy.html")); // needed to make better
+	response.setBody("<html><body><h1>Error " + std::to_string(statusCode) + ": " + getStatusMessage(statusCode) + "</h1></body></html>");
 	return response;
+
+	// if (!matchedLocation)
+	// {
+	// 	// ?
+	// 	// return getErrorPage(req, 404); // Not found
+	// }
+	
+	// if (errorPages.find(statusCode) != errorPages.end())
+	// {
+	// 	response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
+	// 	response.setBody(readFileError(_rootDir + "/" + errorPages.at(statusCode)));
+	// 	return response;
+	// }
+	// response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
+	// response.setBody(readFileError(_rootDir + "/" + "dummy.html")); // needed to make better
+	// return response;
 }
 
 std::string	HttpHandler::_validateRequest(const Request &req)
