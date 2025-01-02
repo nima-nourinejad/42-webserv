@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 17:55:15 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 18:18:01 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -380,7 +380,6 @@ void ClientConnection::createResponseParts()
 		if (status == RECEIVED)
 		{
 			responseParts.clear();
-			std::cout << "Creating response for client " << index + 1 << std::endl;
 			status = PREPARINGRESPONSE;
 			pid = fork();
 			if (pid == -1)
@@ -533,7 +532,6 @@ void ClientConnection::accumulateResponseParts()
 	processInforamtionAfterFork(statusLine, rawHeader,connection, maxBodySize);
 	chunckBody(statusLine, rawHeader, connection, maxBodySize);
 	status = READYTOSEND;
-	std::cout << "Response created for client " << index + 1 << std::endl;	
 }
 
 time_t getCurrentTime()

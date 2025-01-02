@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 17:55:43 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 18:08:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,8 +75,8 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	std::cout << "Successfully parsed config" << std::endl;
-	config.printServerConfig();
+	// std::cout << "Successfully parsed config" << std::endl;
+	// config.printServerConfig();
 
 	// Creating servers
 	std::vector<std::unique_ptr<Server>>	servers;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/18 17:25:07 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/01/02 18:03:26 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,6 @@ ServerBlock::ServerBlock(/* args */)
 
 ServerBlock::~ServerBlock()
 {
-	std::cout << "Server block destroyed, " << this << std::endl;
 }
 
 ServerBlock::ServerBlock(const ServerBlock& original)

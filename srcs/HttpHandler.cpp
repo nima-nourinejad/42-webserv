@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/02 14:17:55 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/02 18:15:28 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,15 +150,15 @@ Response	HttpHandler::handleRequest(const Request &req)
 			if (req.getPath() == location->getLocation())
 			{
 				matchedLocation = location;
-				std::cout << "Matched location: " << location->getLocation() << std::endl;
-				std::cout << "req.getpath: " << req.getPath()<< std::endl;
+				// std::cout << "Matched location: " << location->getLocation() << std::endl;
+				// std::cout << "req.getpath: " << req.getPath()<< std::endl;
 				break;
 			}
 		}
 
 		if (!matchedLocation)
 		{
-			std::cout << "No matching location found" << std::endl;
+			// std::cout << "No matching location found" << std::endl;
 			return getErrorPage(req, 404); // Not found
 		}
 		
@@ -183,7 +183,7 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (matchedLocation->getClientMaxBodySize() > 0)
 			_maxBodySize = matchedLocation->getClientMaxBodySize(); //maybe not needed
 		
-		std::cout << "Max body size in Http Handler: " << _maxBodySize << std::endl;
+		// std::cout << "Max body size in Http Handler: " << _maxBodySize << std::endl;
 
 		if (!matchedLocation->getReturn().second.empty())
 		{
@@ -225,11 +225,11 @@ Response	HttpHandler::handleRequest(const Request &req)
 			testFile.close();
 			std::filesystem::remove(uploadPath / "test.tmp");
 		}
-		std::cout << "Path: " << req.getPath() << std::endl;
-		std::cout << "CGI Path: " << matchedLocation->getCgiPath() << std::endl;
+		// std::cout << "Path: " << req.getPath() << std::endl;
+		// std::cout << "CGI Path: " << matchedLocation->getCgiPath() << std::endl;
 		if (!matchedLocation->getCgiPath().empty())
 			return handleCGI(req);
-		std::cout << "Method: " << req.getMethod() << std::endl;
+		// std::cout << "Method: " << req.getMethod() << std::endl;
 		if (req.getMethod() == "GET")
 			return handleGET(req);
 		else if (req.getMethod() == "POST")
@@ -282,8 +282,8 @@ Response	HttpHandler::handleGET(const Request &req)
 	{
 		// std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation->getIndex();
 		std::string	indexFilePath = _filePath + matchedLocation->getIndex();
-		std::cout << "Matchedlocation.alias: " << matchedLocation->getAlias() << std::endl;
-		std::cout << "Index file path: " << indexFilePath << std::endl;
+		// std::cout << "Matchedlocation.alias: " << matchedLocation->getAlias() << std::endl;
+		// std::cout << "Index file path: " << indexFilePath << std::endl;
 		if (std::filesystem::exists(indexFilePath)
 			&& std::filesystem::is_regular_file(indexFilePath))
 			return handleFileRequest(req, indexFilePath); //maybe just in index requested location
@@ -296,7 +296,7 @@ Response	HttpHandler::handleGET(const Request &req)
 	// 	filePath = matchedLocation->getAlias();
 	// else
 	// 	filePath = _rootDir + req.getPath();
-	std::cout << "File path: " << _filePath << std::endl;
+	// std::cout << "File path: " << _filePath << std::endl;
 	Response	response;
 
 	// Check if the path is a directory
@@ -493,7 +493,7 @@ Response	HttpHandler::handleDELETE(const Request &req)
 
 Response HttpHandler::handleCGI(const Request &req)
 {
-	std::cout << "Handling CGI" << std::endl;
+	// std::cout << "Handling CGI" << std::endl;
 	return _cgiHandler.execute(req);
 }
 

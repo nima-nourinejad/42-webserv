@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 18:00:48 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 18:16:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,6 @@ void Server::handlePendingConnections()
 				throw SocketException("Failed to accept client");
 			else
 			{
-				printMessage("No pending connections anymore");
 				break;
 			}
 		}
@@ -102,7 +101,6 @@ void Server::handlePendingConnections()
 
 void Server::acceptClient()
 {
-	printMessage("There are pending connections");
 	if (serverFull())
 	{
 		ClientConnection::sendServiceUnavailable(_socket_fd, _config.maxBodySize);
@@ -140,7 +138,6 @@ void Server::closeClientSocket(int index)
 {
 	if (_clients[index].fd != -1 && index < MAX_CONNECTIONS && index >= 0)
 	{
-		printMessage("Closing client " + std::to_string(index + 1));
 		removeEpoll(_clients[index].fd);
 		close(_clients[index].fd);
 		_clients[index].fd = -1;
@@ -220,7 +217,6 @@ void Server::sendResponseParts(int index)
 			_clients[index].responseParts.erase(_clients[index].responseParts.begin());
 			if (_clients[index].responseParts.empty())
 			{
-				printMessage("All response parts sent to client " + std::to_string(index + 1));
 				if (_clients[index].keepAlive == false)
 				{
 					printMessage("Client " + std::to_string(index + 1) + " requested to close connection");
@@ -228,7 +224,7 @@ void Server::sendResponseParts(int index)
 				}
 				else
 				{
-					printMessage("Client " + std::to_string(index + 1) + " requested to keep connection alive. Waiting for a new rquest");
+					printMessage("Client " + std::to_string(index + 1) + " requested to keep connection alive. Waiting for a new request");
 					_clients[index].request.clear();
 					_clients[index].status = WAITFORREQUEST;
 					_clients[index].setCurrentTime();
@@ -367,7 +363,7 @@ void Server::handleErr(struct epoll_event const & event)
 		int index = getClientIndex(event);
 		if (index == -1)
 			return;
-		printMessage("Pipe for client " + std::to_string(index + 1) + " failed");
+		_clients[index].logError("Pipe error");
 		_clients[index].setPlain500Response();
 		if (_clients[index].pid != -1)
 		{

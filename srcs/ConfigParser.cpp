@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/18 17:27:30 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/01/02 18:08:51 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ void ConfigParser::parseServerBlock(size_t& index)
 {
 	bool serverBlockOpened = false;
 	_server_blocks.push_back(ServerBlock());
-	std::cout << "Parsing server block at index " << index << " with token type " << tokenTypeToString(_tokens[index].type) << std::endl;
+	// std::cout << "Parsing server block at index " << index << " with token type " << tokenTypeToString(_tokens[index].type) << std::endl;
 	index++;
 	if (_tokens[index].type != TokenType::OPEN)
 		unexpectedToken(index);
@@ -83,14 +83,14 @@ void ConfigParser::parseServerBlock(size_t& index)
 		{
 			if (serverBlockOpened)
 				unexpectedToken(index);
-			std::cout << "Opening server block" << std::endl;
+			// std::cout << "Opening server block" << std::endl;
 			serverBlockOpened = true;
 		}
 		else if (_tokens[index].type == TokenType::CLOSE)
 		{
 			if (!serverBlockOpened)
 				unexpectedToken(index);
-			std::cout << "Closing server block" << std::endl;
+			// std::cout << "Closing server block" << std::endl;
 			//printServerConfig();
 			break;
 		}
@@ -124,7 +124,7 @@ void ConfigParser::parseServerBlock(size_t& index)
 		}
 		else if (_tokens[index].key == "location")
 		{
-			std::cout << "Parsing location block" << std::endl;
+			// std::cout << "Parsing location block" << std::endl;
 			parseLocationBlock(index);
 		}
 		else if (_tokens[index].type == TokenType::SEMICOLON)
@@ -172,7 +172,7 @@ void ConfigParser::parseLocationBlock(size_t& index)
         } else if (token.type == TokenType::CLOSE) {
             if (!locationBlockOpened)
                 unexpectedToken(index);
-            std::cout << "Closing location block" << std::endl;
+            // std::cout << "Closing location block" << std::endl;
             return;
         } else if (token.key == "root") {
             current_location.setRoot(token.values[0]);
@@ -301,7 +301,7 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 		else
 		{
 			tokens.push_back(Token(TokenType::UNKNOWN, word));
-			printTokens(tokens);
+			// printTokens(tokens);
 			throw std::runtime_error("Unknown token");
 		}
 		
@@ -314,7 +314,7 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 std::vector<ServerBlock>	ConfigParser::parseConfig(std::ifstream& filepath)
 {
 	tokenize(_tokens, filepath);
-	printTokens(_tokens);
+	// printTokens(_tokens);
 
 	for (size_t i = 0; i < _tokens.size(); i++)
 	{

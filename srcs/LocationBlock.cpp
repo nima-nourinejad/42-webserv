@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/30 17:56:58 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 18:08:07 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@ LocationBlock::LocationBlock(/* args */)
 	_autoindex = false;
 	_client_max_body_size = 0;
 	_return = std::make_pair(0, "");
-	std::cout << "Default location block created, " << this << std::endl;
 }
 
 LocationBlock::LocationBlock(std::string location)
@@ -26,12 +25,10 @@ LocationBlock::LocationBlock(std::string location)
 	_client_max_body_size = 0;
 	_location = location;
 	_return = std::make_pair(0, "");
-	std::cout << "Location block created, " << this << std::endl;
 }
 
 LocationBlock::~LocationBlock()
 {
-	std::cout << "Location block destroyed, "<< this << std::endl;
 }
 
 std::string LocationBlock::getLocation() const
@@ -118,7 +115,7 @@ void LocationBlock::setClientMaxBodySize(const std::string& client_max_body_size
 
 void LocationBlock::setAlias(const std::string& alias)
 {
-	std::cout << "Alias: " << alias << std::endl;
+	// std::cout << "Alias: " << alias << std::endl;
 	if (alias.empty())
 		throw std::invalid_argument("Alias is empty");
 	// if (alias[0] != '/')

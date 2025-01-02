@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/02 16:57:42 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 18:16:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,19 +41,19 @@ Response	CGIHandler::execute(const Request &req)
 		// std::cout << "extension: " << extension << std::endl;
 		std::shared_ptr<LocationBlock>	matchedLocation;
 
-		std::cout << "Hi from CGIHandler" << std::endl;
+		// std::cout << "Hi from CGIHandler" << std::endl;
 		for (const auto &location : _serverBlock.getLocations())
 		{
-			std::cout << "location: " << location->getLocation() << std::endl;
+			// std::cout << "location: " << location->getLocation() << std::endl;
 			if (req.getPath() == location->getLocation())
 			{
 				matchedLocation = location;
 				break;
 			}
 		}
-		std::cout << "1Matched location: " << matchedLocation->getLocation() << std::endl;
+		// std::cout << "1Matched location: " << matchedLocation->getLocation() << std::endl;
 		std::string		filePath = matchedLocation->getCgiPath();
-		std::cout << "file path: " << filePath << std::endl;
+		// std::cout << "file path: " << filePath << std::endl;
 		// std::cout << "1Matched location: " << matchedLocation->getLocation() << std::endl;
 		// if (std::find(matchedLocation->getCgiExtension().begin(), matchedLocation->getCgiExtension().end(), extension)
 		// 		== matchedLocation->getCgiExtension().end())
@@ -62,11 +62,11 @@ Response	CGIHandler::execute(const Request &req)
 		// Check file existence and permissions
 		if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath))
 			throw std::runtime_error("CGI file does not exist or is not a regular file");
-		std::cout << "file path: " << filePath << std::endl;
+		// std::cout << "file path: " << filePath << std::endl;
 		if (access(filePath.c_str(), X_OK) != 0)
 			throw std::runtime_error("CGI file is not executable");
 		
-		std::cout << "Hi from part 2" << std::endl;
+		// std::cout << "Hi from part 2" << std::endl;
 		int	pipefd[2];
 
 		if (pipe(pipefd) == -1)
@@ -74,13 +74,13 @@ Response	CGIHandler::execute(const Request &req)
 
 		// pid_t	pid = fork();
 		_pid = fork();
-		std::cout << "pid: " << _pid << std::endl;
+		// std::cout << "pid: " << _pid << std::endl;
 		if (_pid == -1)
 			handleError("fork");
 
 		if (_pid == 0) // child
 		{
-			std::cout << "Hi from child" << std::endl;
+			// std::cout << "Hi from child" << std::endl;
 			if (close(pipefd[0]) == -1)
 				handleError("close read-end in child");
 
@@ -105,10 +105,10 @@ Response	CGIHandler::execute(const Request &req)
 				handleError("close write-end in parent");
 
 			int	status;
-			std::cout << "PID in parent: " << _pid << std::endl;
+			// std::cout << "PID in parent: " << _pid << std::endl;
 			if (waitpid(_pid, &status, 0) == -1)
 				handleError("waitpid");
-			std::cout << "pid after waitpid: " << _pid << std::endl;
+			// std::cout << "pid after waitpid: " << _pid << std::endl;
 
 			char				buffer[1024];
 			std::ostringstream	output;
