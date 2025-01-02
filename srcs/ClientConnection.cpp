@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 13:09:00 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 13:58:23 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -362,7 +362,7 @@ void ClientConnection::setPlain500Response()
 {
 	size_t		maxBodySize;
 	std::string statusLine, rawHeader, connection;
-	maxBodySize = responseMaker->getMaxBodySize();
+	maxBodySize = responseMaker->getMaxBodySize(request);
 	statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
 	rawHeader = "Content-Type: text/plain\r\n";
 	body = "500 Internal Server Error";
@@ -394,27 +394,25 @@ void ClientConnection::createResponseParts()
 			if (pid == 0)
 			{
 				close(pipe[0]);
-				size_t		maxBodySize = responseMaker->getMaxBodySize();
+				size_t		maxBodySize = responseMaker->getMaxBodySize(request);
 				std::string	maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
 				std::string body, statusLine, rawHeader;
 				try
 				{
-					Response	response = responseMaker->createResponse(request);
+						
+					Response	response;
 					if (!errorStatus)
-					{
-						body = response.getBody();
-						statusLine = response.getStatusLine();
-						rawHeader = response.getRawHeader();
-					}
+						response = responseMaker->createResponse(request);
 					else
 					{
-						// body = response.getErrorBody(errorStatus);
-						// statusLine = response.getErrorStatusLine(errorStatus);
-						// rawHeader = response.getErrorRawHeader(errorStatus);
-						body = "";
-						statusLine = "";
-						rawHeader = "";
+						Request		req(request);
+						
+						response = responseMaker->getErrorPage(req, errorStatus);
 					}
+	
+					body = response.getBody();
+					statusLine = response.getStatusLine();
+					rawHeader = response.getRawHeader();
 				}
 				catch(const std::exception& e)
 				{

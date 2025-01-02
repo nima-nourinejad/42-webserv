@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/30 17:28:05 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 14:00:37 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,11 +43,26 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 	return false;
 }
 
-Response	HttpHandler::_getErrorPage(int statusCode)
+Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 {
-	// const std::map<int, std::string>	&errorPages = _serverBlock.getErrorPages();
-	const auto	&errorPages = _serverBlock.getErrorPages();
-	Response	response;
+	const auto						&errorPages = _serverBlock.getErrorPages();
+	Response						response;
+	std::shared_ptr<LocationBlock>	matchedLocation;
+
+	for (const auto &location : _serverBlock.getLocations())
+	{
+		if (req.getPath() == location->getLocation())
+		{
+			matchedLocation = location;
+			break;
+		}
+	}
+
+	if (!matchedLocation)
+	{
+		// std::cout << "No matching location found" << std::endl;
+		return getErrorPage(req, 404); // Not found
+	}
 	
 	if (errorPages.find(statusCode) != errorPages.end())
 	{
@@ -115,11 +130,11 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (!matchedLocation)
 		{
 			std::cout << "No matching location found" << std::endl;
-			return _getErrorPage(404); // Not found
+			return getErrorPage(req, 404); // Not found
 		}
 		
 		// if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty())
-		// 	return _getErrorPage(404); // Not found
+		// 	return getErrorPage(req, 404); // Not found
 		
 		// Override root if location-specific root is defined
 		if (!matchedLocation->getAlias().empty())
@@ -169,14 +184,14 @@ Response	HttpHandler::handleRequest(const Request &req)
 				std::filesystem::create_directories(uploadPath);
 
 			if (!std::filesystem::is_directory(uploadPath))
-				return _getErrorPage(500); // Internal server error
+				return getErrorPage(req, 500); // Internal server error
 
 			// Test write by attempting to create a temporary file
 			std::ofstream	testFile((uploadPath / "test.tmp").string());
 
 			if (!testFile.is_open())
 				// throw std::runtime_error("Upload path is not writable");
-				return _getErrorPage(500); // Internal server error
+				return getErrorPage(req, 500); // Internal server error
 
 			testFile.close();
 			std::filesystem::remove(uploadPath / "test.tmp");
@@ -193,16 +208,16 @@ Response	HttpHandler::handleRequest(const Request &req)
 		else if (req.getMethod() == "DELETE")
 			return handleDELETE(req);
 
-		return _getErrorPage(405); // Method not allowed
+		return getErrorPage(req, 405); // Method not allowed
 	}
 	catch(const SystemCallError &e)
 	{
-		return _getErrorPage(500); // Internal server error
+		return getErrorPage(req, 500); // Internal server error
 	}
 	catch (const std::runtime_error &e)
 	{
 		std::cout << "Error: " << e.what() << std::endl;
-		return _getErrorPage(405); // Method not allowed
+		return getErrorPage(req, 405); // Method not allowed
 		// return e.what(); // Handle runtime errors (e.g., method not allowed)
 	}
 	
@@ -242,7 +257,7 @@ Response	HttpHandler::handleGET(const Request &req)
 		std::cout << "Index file path: " << indexFilePath << std::endl;
 		if (std::filesystem::exists(indexFilePath)
 			&& std::filesystem::is_regular_file(indexFilePath))
-			return handleFileRequest(indexFilePath); //maybe just in index requested location
+			return handleFileRequest(req, indexFilePath); //maybe just in index requested location
 	}
 
 	// std::string	filePath = _rootDir + req.getPath();
@@ -290,11 +305,11 @@ Response	HttpHandler::handleGET(const Request &req)
 		}
 	}
 
-	return handleFileRequest(_filePath);
+	return handleFileRequest(req, _filePath);
 }
 
 // Adding a helper function for file requests
-Response	HttpHandler::handleFileRequest(const std::string &filePath)
+Response	HttpHandler::handleFileRequest(const Request &req, const std::string &filePath)
 {
 	Response	response;
 
@@ -333,7 +348,7 @@ Response	HttpHandler::handleFileRequest(const std::string &filePath)
 		if (close(fd) == -1)
 			handleError("close file descriptor");
 		// throw;
-		return _getErrorPage(500); // Internal server error
+		return getErrorPage(req, 500); // Internal server error
 	}
 }
 
@@ -514,8 +529,25 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
     return "Unknown Status Code";
 }
 
-size_t	HttpHandler::getMaxBodySize() const
+size_t	HttpHandler::getMaxBodySize(const std::string &request)
 {
-	std::cout << "Max body size in Http Handler own method: " << _maxBodySize << std::endl;
+	// std::cout << "Max body size in Http Handler own method: " << _maxBodySize << std::endl;
+	Request							req(request);
+	std::shared_ptr<LocationBlock>	matchedLocation;
+
+	for (const auto &location : _serverBlock.getLocations())
+	{
+		// if (req.getPath().find(location->getLocation()) == 0)
+		if (req.getPath() == location->getLocation())
+		{
+			matchedLocation = location;
+			break;
+		}
+	}
+
+	if (!matchedLocation)
+	{
+		return _serverBlock.getClientMaxBodySize();
+	}
 	return _maxBodySize;
 }

@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:44 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/28 11:36:01 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/02 13:59:02 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,11 +23,13 @@ class Response
 		std::string							_statusLine;
 		std::map<std::string, std::string>	_headers;
 		std::string							_body;
-		size_t								_maxBodySize;
+		// size_t								_maxBodySize;
 
 	public:
 		Response();
 		Response(const std::string &statusLine);
+		Response(const Response &other);
+		Response &operator=(const Response &other);
 		~Response();
 
 		void								setStatusLine(const std::string &statusLine);
@@ -37,7 +39,7 @@ class Response
 		std::string							getStatusLine() const;
 		std::string							getRawHeader() const;
 		std::string							getBody() const;
-		size_t								getMaxBodySize() const;
+		// size_t								getMaxBodySize() const;
 		std::string							toString() const;
 };
 

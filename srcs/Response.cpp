@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:33 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/28 11:36:33 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/02 13:59:22 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,24 @@
 Response::Response() : _statusLine("HTTP/1.1 200 OK") {}
 
 Response::Response(const std::string &statusLine) : _statusLine(statusLine) {}
+
+Response::Response(const Response &other)
+{
+	_statusLine = other._statusLine;
+	_headers = other._headers;
+	_body = other._body;
+}
+
+Response	&Response::operator=(const Response &other)
+{
+	if (this != &other)
+	{
+		_statusLine = other._statusLine;
+		_headers = other._headers;
+		_body = other._body;
+	}
+	return *this;
+}
 
 Response::~Response() {}
 
@@ -50,7 +68,7 @@ std::string	Response::getRawHeader() const
 
 std::string	Response::getBody() const { return _body; }
 
-size_t	Response::getMaxBodySize() const { return _maxBodySize; }
+// size_t	Response::getMaxBodySize() const { return _maxBodySize; }
 
 std::string	Response::toString() const
 {

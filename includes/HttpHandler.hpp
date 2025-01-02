@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/30 14:48:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 13:50:19 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,6 @@ class HttpHandler
 		std::string					_filePath;
 
 		bool						_isMethodAllowed(const std::string &method, const std::string &path);
-		Response					_getErrorPage(int statusCode);
 		std::string					_validateRequest(const Request &req);
 
 	public:
@@ -49,16 +48,17 @@ class HttpHandler
 		Response					createResponse(const std::string &request);
 		Response					handleRequest(const Request &req);
 		Response					handleGET(const Request &req);
-		Response					handleFileRequest(const std::string &filePath);
+		Response					handleFileRequest(const Request &req, const std::string &filePath);
 		Response					handlePOST(const Request &req);
 		Response					handleDELETE(const Request &req);
 		Response					handleCGI(const Request &req);
 
+		Response					getErrorPage(const Request &req, int statusCode);
 		std::string					extractFilename(const std::string &disposition);
 		void						saveFile(const std::string &filename, const std::string &fileData);
 		std::string					readFileError(std::string const& path);
 		std::string					getStatusMessage(int statusCode);
-		size_t						getMaxBodySize() const;
+		size_t						getMaxBodySize(const std::string &request);
 };
 
 #endif
