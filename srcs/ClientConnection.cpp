@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 19:32:58 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 13:09:00 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,15 +25,17 @@ ClientConnection::ClientConnection()
 
 void ClientConnection::changeRequestToBadRequest()
 {
-	request.clear();
-	request = "Get /400 HTTP/1.1\r\n";
+	// request.clear();
+	// request = "Get /400 HTTP/1.1\r\n";
+	errorStatus = 400;
 	status = RECEIVED;
 }
 
 void ClientConnection::changeRequestToServerError()
 {
-	request.clear();
-	request = "Get /500 HTTP/1.1\r\n";
+	// request.clear();
+	// request = "Get /500 HTTP/1.1\r\n";
+	errorStatus = 500;
 	status = RECEIVED;
 }
 
@@ -356,6 +358,22 @@ void ClientConnection::sendServerError(int fd, size_t maxBodySize)
 	close(fd);
 }
 
+void ClientConnection::setPlain500Response()
+{
+	size_t		maxBodySize;
+	std::string statusLine, rawHeader, connection;
+	maxBodySize = responseMaker->getMaxBodySize();
+	statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
+	rawHeader = "Content-Type: text/plain\r\n";
+	body = "500 Internal Server Error";
+	if (keepAlive)
+		connection = "Connection: keep-alive\r\n";
+	else
+		connection = "Connection: close\r\n";
+	chunckBody(statusLine, rawHeader, connection, maxBodySize);
+	status = READYTOSEND;
+}
+
 void ClientConnection::createResponseParts()
 {
 	try{
@@ -365,33 +383,46 @@ void ClientConnection::createResponseParts()
 			responseParts.clear();
 			std::cout << "Creating response for client " << index + 1 << std::endl;
 			status = PREPARINGRESPONSE;
-			
-			std::cout << "i emptied the pipe" << std::endl;
-			
 			pid = fork();
-			// if (pid == -1)
-			// 	throw SocketException("Failed to fork");
+			if (pid == -1)
+			{
+				close(pipe[1]);
+				setPlain500Response();
+				logError("Failed to fork");
+				
+			}
 			if (pid == 0)
 			{
 				close(pipe[0]);
-				Response	response = responseMaker->createResponse(request);
 				size_t		maxBodySize = responseMaker->getMaxBodySize();
 				std::string	maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
 				std::string body, statusLine, rawHeader;
-				if (!errorStatus)
+				try
 				{
-					body = response.getBody();
-					statusLine = response.getStatusLine();
-					rawHeader = response.getRawHeader();
+					Response	response = responseMaker->createResponse(request);
+					if (!errorStatus)
+					{
+						body = response.getBody();
+						statusLine = response.getStatusLine();
+						rawHeader = response.getRawHeader();
+					}
+					else
+					{
+						// body = response.getErrorBody(errorStatus);
+						// statusLine = response.getErrorStatusLine(errorStatus);
+						// rawHeader = response.getErrorRawHeader(errorStatus);
+						body = "";
+						statusLine = "";
+						rawHeader = "";
+					}
 				}
-				else
+				catch(const std::exception& e)
 				{
-					// body = response.getErrorBody(errorStatus);
-					// statusLine = response.getErrorStatusLine(errorStatus);
-					// rawHeader = response.getErrorRawHeader(errorStatus);
-					body = "";
-					statusLine = "";
-					rawHeader = "";
+					statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
+					rawHeader = "Content-Type: text/plain\r\n";
+					body = "500 Internal Server Error";
+					std::string errorMessage = e.what();
+					logError("Child process for creating response failed: " + errorMessage);
 				}
 				std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
 				write(pipe[1], fullMessage.c_str(), fullMessage.size());
@@ -402,7 +433,10 @@ void ClientConnection::createResponseParts()
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';		
+		close(pipe[1]);
+		setPlain500Response();
+		std::string errorMessage = e.what();
+		logError("Creating response failed: " + errorMessage);	
 	}
 
 }
@@ -526,4 +560,30 @@ time_t ClientConnection::getPassedTime() const
 void ClientConnection::setCurrentTime()
 {
 	connectTime = getCurrentTime();
+}
+
+void ClientConnection::logError(std::string const & message)
+{
+	try
+	{
+		std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now();
+		std::time_t timeInSeconds = std::chrono::system_clock::to_time_t(timePoint);
+		std::ofstream logFile("server_error.log", std::ios::app);
+		if (!logFile.is_open())
+			throw std::runtime_error("Failed to open log file");
+		logFile << std::put_time(std::localtime(&timeInSeconds), "%Y-%m-%d %H:%M:%S") << " : ";
+		logFile << message << std::endl;
+		logFile.close();
+	}
+	catch(std::exception const & e)
+	{
+		std::cerr << "Failed to log exception : " << e.what() << std::endl;
+		std::cerr << "Original exception : " << message << std::endl;
+	}
+}
+
+void ClientConnection::checkRequestSize()
+{
+	if (request.size() > MAX_REQUEST_SIZE)
+		changeRequestToBadRequest();
 }

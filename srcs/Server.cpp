@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 19:20:50 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 13:30:00 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,11 +96,6 @@ void Server::handlePendingConnections()
 		}
 		else
 		{
-			// int result = pipe(_clients[availableSlot].pipe);
-			// if (result == -1)
-			// 	throw SocketException("Failed to create pipe");
-			// addEpoll(_clients[availableSlot].pipe[0], availableSlot + MAX_CONNECTIONS + 1);
-			///failure should close the pipe both ends
 			addEpoll(fd, availableSlot);
 			++_num_clients;
 			occupyClientSlot(availableSlot, fd);
@@ -264,10 +259,12 @@ void Server::receiveMessage(int index)
 	else if (bytes_received > 0)
 	{
 		printMessage("Received message from client " + std::to_string(index + 1));
+		_clients[index].setCurrentTime();
 		if (_clients[index].status == WAITFORREQUEST)
 			_clients[index].status = RECEIVINGUNKOWNTYPE;
 		stringBuffer = buffer;
 		_clients[index].request += stringBuffer;
+		_clients[index].checkRequestSize();
 		if (_clients[index].status == RECEIVINGUNKOWNTYPE)
 			_clients[index].findRequestType();
 		if (_clients[index].finishedReceiving())
@@ -336,10 +333,21 @@ void Server::prepareResponses()
 		{
 			int result = pipe(_clients[i].pipe);
 			if (result == -1)
-				throw SocketException("Failed to create pipe");
-			addEpoll(_clients[i].pipe[0], i + MAX_CONNECTIONS + 1);
-			///failure should close the pipe both ends
-			_clients[i].createResponseParts();
+				_clients[i].setPlain500Response();
+			else
+			{
+				try
+				{
+					addEpoll(_clients[i].pipe[0], i + MAX_CONNECTIONS + 1);
+					_clients[i].createResponseParts();
+				}
+				catch(const std::exception& e)
+				{
+					_clients[i].setPlain500Response();
+					close(_clients[i].pipe[0]);
+					close(_clients[i].pipe[1]);
+				}
+			}
 		}
 	}
 }
@@ -354,13 +362,23 @@ void Server::handleErr(struct epoll_event const & event)
 		close(_socket_fd);
 		startListeningSocket();
 	}
-	else
+	else if (eventType(event) == CLIENT)
 	{
 		int index = getClientIndex(event);
 		if (index == -1)
 			return;
 		printMessage("Client " + std::to_string(index + 1) + " disconnected");
 		closeClientSocket(index);
+	}
+	else if (eventType(event) == PIPE)
+	{
+		int index = getClientIndex(event);
+		if (index == -1)
+			return;
+		printMessage("Pipe for client " + std::to_string(index + 1) + " failed");
+		_clients[index].setPlain500Response();
+		close(_clients[index].pipe[0]);
+		close(_clients[index].pipe[1]);
 	}
 }
 
@@ -400,7 +418,7 @@ void Server::handlePipeEvents(struct epoll_event const & event)
 {
 	// if (event.events &(EPOLLHUP | EPOLLERR))
 	// 	handleErr(event);
-	if (event.events & EPOLLIN)
+	if  (event.events & EPOLLIN)
 	{
 		int index = getClientIndex(event);
 		if (index == -1)
@@ -457,22 +475,14 @@ void Server::handleSocketEvents()
 	{
 		if (eventType(_ready[i]) == LISTENING)
 		{
-			// std::cout << "Listening event received for fd " << getFd(_ready[i]) << std::endl;
-			// std::cout << "Listening event index: " << getIndex(_ready[i]) << std::endl;
 			handleListeningEvents(_ready[i]);
 		}
 		else if (eventType(_ready[i]) == CLIENT)
 		{
-			// std::cout << "Client event received for fd " << getFd(_ready[i]) << std::endl;
-			// std::cout << "Client event index: " << getIndex(_ready[i]) << std::endl;
-			// std::cout << "Client status at the moment: " << _clients[getIndex(_ready[i])].status << std::endl;
 			handleClientEvents(_ready[i]);
 		}
 		else if (eventType(_ready[i]) == PIPE)
 		{
-			// std::cout << "pipeevent received for fd " << getFd(_ready[i]) << std::endl;
-			// std::cout << "pipeevent index: " << getIndex(_ready[i]) << std::endl;
-			// std::cout << "Client status at the moment: " << _clients[getIndex(_ready[i])].status << std::endl;
 			handlePipeEvents(_ready[i]);
 		}
 	}

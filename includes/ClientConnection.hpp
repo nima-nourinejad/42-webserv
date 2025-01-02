@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 19:17:04 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 13:03:53 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ class ClientConnection
 
 	// Constants
 	const size_t				MAX_HEADER_SIZE = 32768;
+	const size_t				MAX_REQUEST_SIZE = 1048576;
 	
     public:
 
@@ -104,6 +105,9 @@ class ClientConnection
 	static void					sendServiceUnavailable(int socket_fd, size_t maxBodySize);
 	void						chunckBody(std::string statusLine, std::string rawHeader, std::string connection, size_t maxBodySize);
 	void 						processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, std::string &connection, size_t &maxBodySize);
+	void						setPlain500Response();
+	void 						logError(std::string const & message);
+	void						checkRequestSize();
 };
 
 #endif
