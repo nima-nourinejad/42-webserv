@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2024/12/30 19:39:47 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 17:55:43 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ bool sigInt(std::vector<std::unique_ptr<Server>> const & servers)
 
 int main(int argc, char **argv)
 {
+	
 	std::string configPath;
 	if (argc > 2)
 	{
@@ -99,7 +100,6 @@ int main(int argc, char **argv)
 			Server::logError("Unknown exception during server creation for config block " + std::to_string(i + 1));
 		}
 	}
-	
 	// Handling events
 	std::size_t	serverNum;
 

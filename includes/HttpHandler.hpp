@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/02 13:50:19 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/02 15:01:56 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ class HttpHandler
 		Response					handleDELETE(const Request &req);
 		Response					handleCGI(const Request &req);
 
+		CGIHandler					getCGIHandler() const { return _cgiHandler; } // maybe not needed
 		Response					getErrorPage(const Request &req, int statusCode);
 		std::string					extractFilename(const std::string &disposition);
 		void						saveFile(const std::string &filename, const std::string &fileData);

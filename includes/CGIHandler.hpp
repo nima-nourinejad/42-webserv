@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/28 11:44:40 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/02 15:02:15 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,11 +31,14 @@ class CGIHandler
 {
 	private:
 		ServerBlock	_serverBlock;
+		pid_t		_pid;
 
 	public:
+		CGIHandler();
 		CGIHandler(ServerBlock &serverConfig);
 		~CGIHandler();
 
+		pid_t		getPid() const { return _pid; } // maybe not needed
 		Response	execute(const Request &req);
 };
 

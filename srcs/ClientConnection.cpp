@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 13:58:23 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/02 17:55:15 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,6 @@ bool ClientConnection::finishedReceivingNonChunked()
 	std::string contentLengthString;
 	if (request.find("Content-Length: ") == std::string::npos)
 	{
-		std::cout << "No content length found" << std::endl;
 		return true;
 	}
 	contentLengthString = request.substr(request.find("Content-Length: ") + 16);
@@ -398,8 +397,7 @@ void ClientConnection::createResponseParts()
 				std::string	maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
 				std::string body, statusLine, rawHeader;
 				try
-				{
-						
+				{						
 					Response	response;
 					if (!errorStatus)
 						response = responseMaker->createResponse(request);
@@ -409,7 +407,6 @@ void ClientConnection::createResponseParts()
 						
 						response = responseMaker->getErrorPage(req, errorStatus);
 					}
-	
 					body = response.getBody();
 					statusLine = response.getStatusLine();
 					rawHeader = response.getRawHeader();

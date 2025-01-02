@@ -6,21 +6,34 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/30 17:50:58 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 16:57:42 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "CGIHandler.hpp"
 
+CGIHandler::CGIHandler() : _pid(-1) {}
+
 CGIHandler::CGIHandler(ServerBlock &serverConfig) : _serverBlock(serverConfig) {}
 
-CGIHandler::~CGIHandler() {}
+CGIHandler::~CGIHandler() 
+{
+	// std::cout << "Hi from CGIHandler destructor" << std::endl;
+	// std::cout << "pid: " << _pid << std::endl;
+	// if (_pid != -1)
+	// {
+	// 	std::cout << "Killing CGI child process" << std::endl;
+	// 	kill(_pid, SIGKILL);
+	// 	_pid = -1;
+	// 	std::cout << "Killed CGI child process" << std::endl;
+	// }
+	// std::cout << "Bye from CGIHandler destructor" << std::endl;
+}
 
 Response	CGIHandler::execute(const Request &req)
 {
 	try
 	{
-		
 		// Check for allowed CGI extensions
 		// std::string		filePath = req.getPath();
 		// std::cout << "file path: " << filePath << std::endl;
@@ -59,13 +72,15 @@ Response	CGIHandler::execute(const Request &req)
 		if (pipe(pipefd) == -1)
 			handleError("pipe");
 
-		pid_t	pid = fork();
-
-		if (pid == -1)
+		// pid_t	pid = fork();
+		_pid = fork();
+		std::cout << "pid: " << _pid << std::endl;
+		if (_pid == -1)
 			handleError("fork");
 
-		if (pid == 0) // child
+		if (_pid == 0) // child
 		{
+			std::cout << "Hi from child" << std::endl;
 			if (close(pipefd[0]) == -1)
 				handleError("close read-end in child");
 
@@ -90,8 +105,10 @@ Response	CGIHandler::execute(const Request &req)
 				handleError("close write-end in parent");
 
 			int	status;
-			if (waitpid(pid, &status, 0) == -1)
+			std::cout << "PID in parent: " << _pid << std::endl;
+			if (waitpid(_pid, &status, 0) == -1)
 				handleError("waitpid");
+			std::cout << "pid after waitpid: " << _pid << std::endl;
 
 			char				buffer[1024];
 			std::ostringstream	output;
