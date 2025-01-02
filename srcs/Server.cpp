@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 13:30:00 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 14:11:05 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -377,8 +377,22 @@ void Server::handleErr(struct epoll_event const & event)
 			return;
 		printMessage("Pipe for client " + std::to_string(index + 1) + " failed");
 		_clients[index].setPlain500Response();
-		close(_clients[index].pipe[0]);
-		close(_clients[index].pipe[1]);
+		if (_clients[index].pipe[0] != -1)
+		{
+			removeEpoll(_clients[index].pipe[0]);
+			close(_clients[index].pipe[0]);
+			_clients[index].pipe[0] = -1;
+		}
+		if (_clients[index].pipe[1] != -1)
+		{
+			close(_clients[index].pipe[1]);
+			_clients[index].pipe[1] = -1;
+		}
+		if (_clients[index].pid != -1)
+		{
+			kill(_clients[index].pid, SIGKILL);
+			_clients[index].pid = -1;
+		}
 	}
 }
 
@@ -416,9 +430,9 @@ void Server::handleListeningEvents(struct epoll_event const & event)
 
 void Server::handlePipeEvents(struct epoll_event const & event)
 {
-	// if (event.events &(EPOLLHUP | EPOLLERR))
-	// 	handleErr(event);
-	if  (event.events & EPOLLIN)
+	if (event.events & (EPOLLHUP | EPOLLERR) & getClientStatus(event) == PREPARINGRESPONSE)
+		handleErr(event);
+	else if  (event.events & EPOLLIN)
 	{
 		int index = getClientIndex(event);
 		if (index == -1)
@@ -521,8 +535,7 @@ void Server::addEpoll(int fd, int index)
 		_clients[clientIndex].pipeEventData.fd = fd;
 		_clients[clientIndex].pipeEventData.index = clientIndex;
 		_events[index].data.ptr = &(_clients[clientIndex].pipeEventData);
-		// _events[index].events = EPOLLIN | EPOLLHUP | EPOLLERR;
-		_events[index].events = EPOLLIN;
+		_events[index].events = EPOLLIN | EPOLLHUP | EPOLLERR;
 	}
 	else
 	{
