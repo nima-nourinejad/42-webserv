@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/03 14:01:29 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 14:36:53 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@ ClientConnection::ClientConnection()
 
 void ClientConnection::changeRequestToBadRequest()
 {
-	// std::cout << "request : " << request << std::endl;
 	errorStatus = 400;
 	status = RECEIVED;
 }
@@ -205,10 +204,8 @@ void ClientConnection::setPlain500Response()
 void ClientConnection::createResponseParts()
 {
 	try{
-		// std::cout << "received request: " << request << std::endl;
 		if (status == RECEIVED)
 		{
-			// std::cout << "Creating response" << std::endl;
 			responseParts.clear();
 			status = PREPARINGRESPONSE;
 			pid = fork();

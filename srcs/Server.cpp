@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/03 13:05:45 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 14:37:18 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -260,10 +260,8 @@ void Server::receiveMessage(int index)
 			_clients[index].findRequestType();
 		if (_clients[index].finishedReceiving())
 		{
-			std::cout << "request before unchunking: "<< std::endl << _clients[index].request << std::endl;
 			if (_clients[index].status == RECEIVINGCHUNKED)
 				_clients[index].handleChunkedEncoding();
-			std::cout << "request after unchunking: "<< std::endl << _clients[index].request << std::endl;
 			_clients[index].status = RECEIVED;
 		}
 	}
