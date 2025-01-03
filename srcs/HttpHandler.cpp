@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/03 14:01:12 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 18:17:48 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,6 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 	{
 		if (path.find(location->getLocation()) == 0) // Match location prefix
 		{
-			// const std::vector<std::string>	&allowedMethods = location.getLimitExcept();
 			const auto	&allowedMethods = location->getLimitExcept();
 			bool		isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end();
 			
@@ -45,7 +44,6 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 
 Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 {
-	// const auto						&errorPages = _serverBlock.getErrorPages();
 	Response						response;
 	std::shared_ptr<LocationBlock>	matchedLocation;
 
@@ -94,22 +92,6 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 	response.setHeader("Content-Type", "text/html");
 	response.setBody("<html><body><h1>Error " + std::to_string(statusCode) + ": " + getStatusMessage(statusCode) + "</h1></body></html>");
 	return response;
-
-	// if (!matchedLocation)
-	// {
-	// 	// ?
-	// 	// return getErrorPage(req, 404); // Not found
-	// }
-	
-	// if (errorPages.find(statusCode) != errorPages.end())
-	// {
-	// 	response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-	// 	response.setBody(readFileError(_rootDir + "/" + errorPages.at(statusCode)));
-	// 	return response;
-	// }
-	// response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-	// response.setBody(readFileError(_rootDir + "/" + "dummy.html")); // needed to make better
-	// return response;
 }
 
 std::string	HttpHandler::_validateRequest(const Request &req)
@@ -147,29 +129,21 @@ Response	HttpHandler::handleRequest(const Request &req)
 		// std::string validation = _validateRequest(req);
 		// if (validation != "Ok")
 		// 	return validation;
-
-		// std::cout << "beginning of handle request" << std::endl;
 		
 		std::shared_ptr<LocationBlock> matchedLocation;
 
 		for (const auto &location : _serverBlock.getLocations())
 		{
-			// if (req.getPath().find(location->getLocation()) == 0)
 			if (req.getPath() == location->getLocation())
 			{
 				matchedLocation = location;
-				// std::cout << "Matched location: " << location->getLocation() << std::endl;
-				// std::cout << "req.getpath: " << req.getPath()<< std::endl;
 				break;
 			}
 		}
-
+		std::cout << "req.getpath: " << req.getPath()<< std::endl;
 		if (!matchedLocation)
-		{
-			// std::cout << "No matching location found" << std::endl;
 			return getErrorPage(req, 404); // Not found
-		}
-		
+
 		// if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty())
 		// 	return getErrorPage(req, 404); // Not found
 		
@@ -183,9 +157,13 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (!matchedLocation->getRoot().empty())
 			_rootDir = matchedLocation->getRoot();
 
+		// std::cout << "Root dir: " << _rootDir << std::endl;
+
 		// Override error pages if location-specific error pages are defined
 		if (!matchedLocation->getErrorPages().empty())
 			_errorPages = matchedLocation->getErrorPages();
+
+		// std::cout << "Error pages: " << std::endl;
 
 		// Handle client_max_body_size for the specific location
 		if (matchedLocation->getClientMaxBodySize() > 0)
@@ -210,7 +188,7 @@ Response	HttpHandler::handleRequest(const Request &req)
 			// return response.toString();
 		}
 
-		
+		std::cout << "Upload path: " << matchedLocation->getUploadPath() << std::endl;		
 
 		if (!matchedLocation->getUploadPath().empty())
 		{
@@ -238,6 +216,7 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (!matchedLocation->getCgiPath().empty())
 			return handleCGI(req);
 		// std::cout << "Method: " << req.getMethod() << std::endl;
+		// std::cout << "before switch" << std::endl;
 		if (req.getMethod() == "GET")
 			return handleGET(req);
 		else if (req.getMethod() == "POST")
@@ -394,8 +373,23 @@ Response	HttpHandler::handleFileRequest(const Request &req, const std::string &f
 
 Response	HttpHandler::handlePOST(const Request &req)
 {
+	std::cout << "Handling POST" << std::endl;
 	std::string	contentType = req.getHeader("Content-Type");
 	Response	response;
+
+	std::shared_ptr<LocationBlock> matchedLocation;
+
+	for (const auto &location : _serverBlock.getLocations())
+	{
+		if (req.getPath() == location->getLocation())
+		{
+			matchedLocation = location;
+			break;
+		}
+	}
+
+	if (!matchedLocation)
+		return getErrorPage(req, 404); // Not found
 
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
@@ -427,20 +421,21 @@ Response	HttpHandler::handlePOST(const Request &req)
 				if (isFileUpload)
 				{
 					std::string	filename = extractFilename(disposition);
-
+					filename = matchedLocation->getUploadPath() + "/" + filename;
 					saveFile(filename, partData.str());
 				}
 				else
 					response.setBody(partData.str());
 			}
 		}
-
+		std::cout << "File uploaded successfully" << std::endl;
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setHeader("Content-Type", "multipart/form-data");
 		response.setHeader("Content-Length", std::to_string(response.getBody().size()) + "\r\n");
 	}
 	else if (!req.getBody().empty())
 	{
+		std::cout << "second state" << std::endl;
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody(req.getBody());
 		response.setHeader("Content-Length", std::to_string(req.getBody().size()) + "\r\n");
@@ -448,6 +443,7 @@ Response	HttpHandler::handlePOST(const Request &req)
 	}
 	else
 	{
+		std::cout << "Empty body in POST request" << std::endl;
 		response.setStatusLine("HTTP/1.1 400 " + getStatusMessage(400) + "\r\n");
 		response.setBody("Empty body in POST request\n");
 	}

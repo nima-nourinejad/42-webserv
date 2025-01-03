@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/03 17:18:14 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 17:44:33 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,7 @@ int Server::findAvailableSlot() const
 
 void Server::occupyClientSlot(int availableSlot, int fd)
 {
-	printMessage("Accepted client " + std::to_string(availableSlot + 1) + ". Waiting for the rquest");
+	printMessage("Accepted client " + std::to_string(availableSlot + 1) + ". Waiting for the request");
 	_clients[availableSlot].fd = fd;
 	_clients[availableSlot].index = availableSlot;
 	_clients[availableSlot].status = WAITFORREQUEST;

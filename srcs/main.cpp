@@ -6,11 +6,12 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 19:23:05 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 17:21:51 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 //replace plain with html
+//if node script run with pdf after stucking in the middle of the pdf if close the script the server will shutdown
 
 
 

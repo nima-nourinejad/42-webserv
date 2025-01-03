@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:33 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/02 13:59:22 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/03 18:01:01 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,6 +63,12 @@ std::string	Response::getRawHeader() const
 		if (pair.first != "Content-Length")
 			header << pair.first << ": " << pair.second << "\r\n";
 	}
+	header << "Access-Control-Allow-Credentials: *" << "\r\n";
+	header << "Access-Control-Allow-Origin: *" << "\r\n";
+	header << "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS" << "\r\n";
+	header << "Access-Control-Allow-Headers: Content-Type, Authorization" << "\r\n";
+	header << "Access-Control-Max-Age: 86400" << "\r\n";
+	
 	return header.str();
 }
 
