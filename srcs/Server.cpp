@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/03 14:37:18 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 17:18:14 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,8 +297,7 @@ void Server::handleTimeout(int index)
 	printMessage("Client " + std::to_string(index + 1) + " timed out");
 	if (_clients[index].request.empty() == false)
 	{
-		_clients[index].status = RECEIVED;
-		_clients[index].createResponseParts();
+		_clients[index].changeRequestToBadRequest();
 	}
 	else
 		closeClientSocket(index);
