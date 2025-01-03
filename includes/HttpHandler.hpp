@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/02 15:01:56 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 13:33:04 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,8 @@ class HttpHandler
 		void						saveFile(const std::string &filename, const std::string &fileData);
 		std::string					readFileError(std::string const& path);
 		std::string					getStatusMessage(int statusCode);
-		size_t						getMaxBodySize(const std::string &request);
+		size_t						getMaxBodySize(const std::string &request, int errorStatus);
+		ServerBlock					getServerBlock() const { return _serverBlock; } // maybe not needed
 };
 
 #endif

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 15:21:57 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/03 14:00:19 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,16 +14,47 @@
 
 Request::Request() : _method(""), _path(""), _httpVersion(""), _headers(), _body("") {}
 
-Request::Request(const std::string &rawRequest)
+// Request::Request(const std::string &rawRequest)
+// {
+// 	try
+// 	{
+// 		parse(rawRequest);
+// 	}
+// 	catch(const SystemCallError &e)
+// 	{
+// 		std::cerr << " " << e.what() << std::endl;
+// 		// throw;
+// 	}
+// }
+
+Request::Request(const std::string &rawRequest, int errorStatus)
 {
-	try
+	if (!errorStatus)
 	{
-		parse(rawRequest);
+		try
+		{
+			parse(rawRequest);
+		}
+		catch(const SystemCallError &e)
+		{
+			std::cerr << " " << e.what() << std::endl;
+			// throw;
+		}
 	}
-	catch(const SystemCallError &e)
+	else
 	{
-		std::cerr << "Error while parsing request: " << e.what() << std::endl;
-		throw;
+		std::istringstream	stream(rawRequest);
+		std::string			line;
+
+		if (!std::getline(stream, line))
+			handleError("Failed to read request line");
+
+		std::istringstream	requestLine(rawRequest);
+		
+		if (!(requestLine >> _method >> _path >> _httpVersion))
+			handleError("Invalid request format");
+		_headers["Content-Length"] = "0";
+		_body = "";
 	}
 }
 

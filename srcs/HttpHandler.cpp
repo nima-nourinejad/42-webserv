@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/02 18:15:28 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 14:01:12 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig)
 	, _serverBlock(serverConfig), _maxBodySize(serverConfig.getClientMaxBodySize())
 {
 	//creating a default state of map
-	_errorPages[404]="default_404.html";
-	_errorPages[500]="default_500.html";
+	_errorPages[404] = "html/default_404.html";
+	_errorPages[500] = "html/default_500.html";
 
 	//filling the map with the error pages from the server block
 	for (const auto &errorPage : serverConfig.getErrorPages())
@@ -62,7 +62,12 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 	if (matchedLocation && matchedLocation->getErrorPages().count(statusCode))
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-		response.setBody(readFileError(matchedLocation->getRoot() + "/" + matchedLocation->getErrorPages().at(statusCode)));
+		response.setHeader("Content-Type", "text/html");
+
+		if (matchedLocation->getRoot().empty())
+			response.setBody(readFileError(_rootDir + "/" + matchedLocation->getErrorPages().at(statusCode)));
+		else
+			response.setBody(readFileError(matchedLocation->getRoot() + "/" + matchedLocation->getErrorPages().at(statusCode)));
 		return response;
 	}
 
@@ -70,7 +75,8 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 	if (_serverBlock.getErrorPages().count(statusCode))
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
-		response.setBody(readFileError(_rootDir + "/" + _serverBlock.getErrorPages().at(statusCode)));
+		response.setHeader("Content-Type", "text/html");
+		response.setBody(readFileError(_serverBlock.getErrorPages().at(statusCode)));
 		return response;
 	}
 
@@ -78,12 +84,14 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 	if (_errorPages.count(statusCode))
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
+		response.setHeader("Content-Type", "text/html");
 		response.setBody(readFileError(_errorPages.at(statusCode)));
 		return response;
 	}
 
 	// If no error page is found, return a generic error response
 	response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
+	response.setHeader("Content-Type", "text/html");
 	response.setBody("<html><body><h1>Error " + std::to_string(statusCode) + ": " + getStatusMessage(statusCode) + "</h1></body></html>");
 	return response;
 
@@ -127,7 +135,7 @@ std::string	HttpHandler::_validateRequest(const Request &req)
 
 Response	HttpHandler::createResponse(const std::string &request)
 {
-	Request	req(request);
+	Request	req(request, 0);
 
 	return handleRequest(req);
 }
@@ -258,7 +266,10 @@ std::string HttpHandler::readFileError(std::string const &path)
 	std::ifstream	file(path.c_str());
 
 	if (!file.is_open())
+	{
+		std::cout << "Path: " << path << std::endl;
 		throw SystemCallError("Failed to open file"); //
+	}
 	std::stringstream	read;
 
 	read << file.rdbuf();
@@ -494,7 +505,17 @@ Response	HttpHandler::handleDELETE(const Request &req)
 Response HttpHandler::handleCGI(const Request &req)
 {
 	// std::cout << "Handling CGI" << std::endl;
-	return _cgiHandler.execute(req);
+	try
+	{
+		return _cgiHandler.execute(req);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return getErrorPage(req, 500);
+	}
+	
+	// return _cgiHandler.execute(req);
 }
 
 std::string	HttpHandler::getStatusMessage(int statusCode)
@@ -558,10 +579,10 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
     return "Unknown Status Code";
 }
 
-size_t	HttpHandler::getMaxBodySize(const std::string &request)
+size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)
 {
 	// std::cout << "Max body size in Http Handler own method: " << _maxBodySize << std::endl;
-	Request							req(request);
+	Request							req(request, errorStatus);
 	std::shared_ptr<LocationBlock>	matchedLocation;
 
 	for (const auto &location : _serverBlock.getLocations())

@@ -6,25 +6,12 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 18:08:58 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/02 19:23:05 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// (done) Ali: Handle alias and return
+//replace plain with html
 
-// (done) Ali: If no root in server block and a location block has no root, return 404
-
-// Ali: for any "throw"s , return 500 (for each status code catch block in client connection)
-// (done) Ali : size_t		maxBodySize = responseMaker->getMaxBodySize(); should become size_t maxBodySize = response.getMaxBodySize();
-// Andrey : add root directive to the server block
-// (done) Nima: create a method for chunking the body
-// (done) Nima: added errorStatus to clientConnection initialized to 0
-// (done) Nima: used errorStatus in createResponse to determine if the response should based on the error status or normal body
-// Alireza : make the method pubilc to triger an error based on client error status. For now I added these three commented lines in client connection inside createResponse 
-// body = response.getErrorBody(errorStatus);
-				// statusLine = response.getErrorStatusLine(errorStatus);
-					// rawHeader = response.getErrorRawHeader(errorStatus);
-// Nima: close pipe in case of fork failure 
 
 
 #include "Server.hpp"

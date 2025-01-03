@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:09 by asohrabi          #+#    #+#             */
-/*   Updated: 2024/12/04 15:16:50 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/03 13:31:28 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ class Request
 
 	public:
 		Request();
-		Request(const std::string &rawRequest);
+		Request(const std::string &rawRequest, int errorStatus);
 		~Request();
 
 		const std::string					&getMethod() const;

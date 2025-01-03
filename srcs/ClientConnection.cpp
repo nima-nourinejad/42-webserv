@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 18:18:01 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/03 14:01:29 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,16 +25,13 @@ ClientConnection::ClientConnection()
 
 void ClientConnection::changeRequestToBadRequest()
 {
-	// request.clear();
-	// request = "Get /400 HTTP/1.1\r\n";
+	// std::cout << "request : " << request << std::endl;
 	errorStatus = 400;
 	status = RECEIVED;
 }
 
 void ClientConnection::changeRequestToServerError()
 {
-	// request.clear();
-	// request = "Get /500 HTTP/1.1\r\n";
 	errorStatus = 500;
 	status = RECEIVED;
 }
@@ -106,7 +103,7 @@ void ClientConnection::findRequestType()
 	{
 		if (request.size() > MAX_HEADER_SIZE)
 		{
-			std::cout << "Header size exceeded the limit" << std::endl;
+			logError("Header size exceeded the limit");
 			changeRequestToBadRequest();
 		}
 	}
@@ -158,6 +155,7 @@ void ClientConnection::grabChunkedData(std::string & unProcessed, size_t chunked
 
 void ClientConnection::grabChunkedHeader(std::string & unProcessed, std::string & header)
 {
+	
 	header = unProcessed.substr(0, unProcessed.find("\r\n\r\n") + 4);
 	unProcessed = unProcessed.substr(unProcessed.find("\r\n\r\n") + 4);
 	request = header;
@@ -166,11 +164,12 @@ void ClientConnection::grabChunkedHeader(std::string & unProcessed, std::string 
 void ClientConnection::handleChunkedEncoding()
 {
 	std::string unProcessed = request;
-	request.clear();
+	
 	if (unProcessed.find("Transfer-Encoding: chunked") == std::string::npos)
 		return(changeRequestToServerError());
-	if (unProcessed.find("\r\n0\r\n\r\n") != std::string::npos)
+	if (unProcessed.find("\r\n0\r\n\r\n") == std::string::npos)
 		return(changeRequestToBadRequest());
+	request.clear();
 	std::string header = "";
 	grabChunkedHeader(unProcessed, header);
 
@@ -187,181 +186,11 @@ void ClientConnection::handleChunkedEncoding()
 	}
 }
 
-std::string findPath(std::string const & method, std::string const & uri)
-{
-	std::string path;
-	if (method == "GET" && uri == "/")
-		path = "html/index.html";
-	else if (method == "GET" && uri == "/about")
-		path = "html/about.html";
-	else if (method == "GET" && uri == "/long")
-		path = "html/long.html";
-	else if (method == "GET" && uri == "/400")
-		path = "html/400.html";
-	else if (method == "GET" && uri == "/500")
-		path = "html/500.html";
-	else
-		path = "html/404.html";
-	return path;
-}
-
-std::string createStatusLine(std::string const & method, std::string const & uri)
-{
-	std::string statusLine;
-	if (method == "GET" &&(uri == "/" || uri == "/about" || uri == "/long"))
-		statusLine = "HTTP/1.1 200 OK\r\n";
-	else if (method == "GET" &&(uri == "/500"))
-		statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-	else if (method == "GET" &&(uri == "/400"))
-		statusLine = "HTTP/1.1 400 Bad Request\r\n";
-	else
-		statusLine = "HTTP/1.1 404 Not Found\r\n";
-	return statusLine;
-}
-
-std::string requestURI(std::string const & request)
-{
-	std::istringstream stream(request);
-	std::string method;
-	std::string uri;
-	stream >> method >> uri;
-	return uri;
-}
-
-std::string requestmethod(std::string const & request)
-{
-	std::istringstream stream(request);
-	std::string method;
-	stream >> method;
-	return method;
-}
-
-std::string readFile(std::string const & path)
-{
-	std::ifstream file(path.c_str());
-	if (!file.is_open())
-		throw SocketException("Failed to open file");
-	std::stringstream read;
-	read << file.rdbuf();
-	file.close();
-	return read.str();
-}
-
-void ClientConnection::sendServiceUnavailable(int socket_fd, size_t maxBodySize)
-{
-	int temp_fd = accept(socket_fd, nullptr, nullptr);
-	if (temp_fd == -1)
-		return;
-
-	std::string statusLine = "HTTP/1.1 503 Service Unavailable\r\n";
-	std::string contentType = "Content-Type: text/html\r\n";
-	std::string connection = "Connection: close\r\n";
-	std::string body = readFile("html/503.html");
-	std::string header;
-	std::vector<std::string> response;
-	
-	if (body.size() > maxBodySize)
-	{
-		std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
-		header = statusLine + contentType + transferEncoding + connection;
-		response.push_back(header + "\r\n");
-		size_t chunkSize;
-		std::string chunk;
-		std::stringstream sstream;
-		while (body.size() > 0)
-		{
-			chunkSize = std::min(body.size(), maxBodySize);
-			chunk = body.substr(0, chunkSize);
-			sstream.str("");
-			sstream << std::hex << chunkSize << "\r\n";
-			sstream << chunk << "\r\n";
-			response.push_back(sstream.str());
-			body = body.substr(chunkSize);
-		}
-		response.push_back("0\r\n\r\n");
-	}
-	else
-	{
-		std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
-		header = statusLine + contentType + contentLength + connection;
-		response.push_back(header + "\r\n" + body);
-	}
-
-	while (response.size() > 0)
-	{
-		ssize_t bytes_sent;
-		bytes_sent = send(temp_fd, response[0].c_str(), response[0].size(), MSG_DONTWAIT);
-		if (bytes_sent <= 0)
-			break;
-		if (bytes_sent < static_cast<ssize_t>(response[0].size()))
-		{
-			std::string remainPart = response[0].substr(bytes_sent);
-			response[0] = remainPart;
-		}
-		else
-			response.erase(response.begin());
-	}
-	close(temp_fd);
-}
-
-void ClientConnection::sendServerError(int fd, size_t maxBodySize)
-{
-	std::string statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-	std::string contentType = "Content-Type: text/html\r\n";
-	std::string connection = "Connection: close\r\n";
-	std::string body = readFile("html/500.html");
-	std::string header;
-	std::vector<std::string> response;
-	
-	if (body.size() > maxBodySize)
-	{
-		std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
-		header = statusLine + contentType + transferEncoding + connection;
-		response.push_back(header + "\r\n");
-		size_t chunkSize;
-		std::string chunk;
-		std::stringstream sstream;
-		while (body.size() > 0)
-		{
-			chunkSize = std::min(body.size(), maxBodySize);
-			chunk = body.substr(0, chunkSize);
-			sstream.str("");
-			sstream << std::hex << chunkSize << "\r\n";
-			sstream << chunk << "\r\n";
-			response.push_back(sstream.str());
-			body = body.substr(chunkSize);
-		}
-		response.push_back("0\r\n\r\n");
-	}
-	else
-	{
-		std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
-		header = statusLine + contentType + contentLength + connection;
-		response.push_back(header + "\r\n" + body);
-	}
-
-	while (response.size() > 0)
-	{
-		ssize_t bytes_sent;
-		bytes_sent = send(fd, response[0].c_str(), response[0].size(), MSG_DONTWAIT);
-		if (bytes_sent <= 0)
-			break;
-		if (bytes_sent < static_cast<ssize_t>(response[0].size()))
-		{
-			std::string remainPart = response[0].substr(bytes_sent);
-			response[0] = remainPart;
-		}
-		else
-			response.erase(response.begin());
-	}
-	close(fd);
-}
-
 void ClientConnection::setPlain500Response()
 {
 	size_t		maxBodySize;
 	std::string statusLine, rawHeader, connection;
-	maxBodySize = responseMaker->getMaxBodySize(request);
+	maxBodySize = responseMaker->getMaxBodySize(request, 500);
 	statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
 	rawHeader = "Content-Type: text/plain\r\n";
 	body = "500 Internal Server Error";
@@ -376,9 +205,10 @@ void ClientConnection::setPlain500Response()
 void ClientConnection::createResponseParts()
 {
 	try{
-		
+		// std::cout << "received request: " << request << std::endl;
 		if (status == RECEIVED)
 		{
+			// std::cout << "Creating response" << std::endl;
 			responseParts.clear();
 			status = PREPARINGRESPONSE;
 			pid = fork();
@@ -391,18 +221,20 @@ void ClientConnection::createResponseParts()
 			}
 			if (pid == 0)
 			{
-				close(pipe[0]);
-				size_t		maxBodySize = responseMaker->getMaxBodySize(request);
-				std::string	maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
-				std::string body, statusLine, rawHeader;
+				std::string body, statusLine, rawHeader, maxBodySizeString;
 				try
-				{						
+				{
+					close(pipe[0]);
+					size_t		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
+					
+					maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
+					
 					Response	response;
 					if (!errorStatus)
 						response = responseMaker->createResponse(request);
 					else
 					{
-						Request		req(request);
+						Request		req(request, errorStatus);
 						
 						response = responseMaker->getErrorPage(req, errorStatus);
 					}
@@ -415,6 +247,7 @@ void ClientConnection::createResponseParts()
 					statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
 					rawHeader = "Content-Type: text/plain\r\n";
 					body = "500 Internal Server Error";
+					maxBodySizeString = std::to_string(body.size()) + "\r\n";
 					std::string errorMessage = e.what();
 					logError("Child process for creating response failed: " + errorMessage);
 				}
@@ -531,6 +364,7 @@ void ClientConnection::accumulateResponseParts()
 	std::string statusLine, rawHeader, connection;
 	processInforamtionAfterFork(statusLine, rawHeader,connection, maxBodySize);
 	chunckBody(statusLine, rawHeader, connection, maxBodySize);
+	errorStatus = 0;
 	status = READYTOSEND;
 }
 
