@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/03 18:25:35 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 16:27:59 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,24 @@
 //if node script run with pdf after stucking in the middle of the pdf if close the script the server will shutdown
 
 //for downloading files. first read the subject if we need to handle downloads, if not, try to somehow show and delete a file
+
+//check fore accetable MIME types
+// {".pdf", "application/pdf"},
+// {".zip", "application/zip"},
+// {".jpg", "image/jpeg"},
+// {".jpeg", "image/jpeg"},
+// {".png", "image/png"},
+// {".txt", "text/plain"},
+// {".html", "text/html"},
+// {".css", "text/css"},
+// {".js", "application/javascript"},
+// {".json", "application/json"}
+// reject the upload and return a 400 Bad Request or 415 Unsupported Media Type response
+
+//for downloads we need to check if the file exists. Then find the MIME type and send the file with the correct MIME type with this header:
+// Content-Type: application/MIME_type
+
+//Make sure css is working properly since static website is mandatory
 
 
 

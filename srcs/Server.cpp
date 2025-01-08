@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 14:55:51 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 16:28:09 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -438,10 +438,7 @@ void Server::handleClientEvents(struct epoll_event const & event)
 			sendResponseParts(getClientIndex(event));
 		}
 		else if (getClientStatus(event) == FAILSENDING &&(event.events & EPOLLOUT))
-		{
-			int index = getClientIndex(event);
-			sendResponseParts(index);
-		}
+			sendResponseParts(getClientIndex(event));
 	}
 }
 
