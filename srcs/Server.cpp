@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 14:49:00 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 14:55:51 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -596,6 +596,10 @@ void Server::handleEvents()
 		std::string error2 = e.what();
 		logError(error1 + error2);
 	}
+	catch(...)
+	{
+		logError("Failed to prepare responses");
+	}
 	
 	try
 	{
@@ -607,6 +611,10 @@ void Server::handleEvents()
 		std::string error2 = e.what();
 		logError(error1 + error2);
 	}
+	catch(...)
+	{
+		logError("Failed to handle socket events");
+	}
 	
 	try
 	{
@@ -617,6 +625,10 @@ void Server::handleEvents()
 		std::string error1 = "Failed to handle timeouts: ";
 		std::string error2 = e.what();
 		logError(error1 + error2);
+	}
+	catch(...)
+	{
+		logError("Failed to handle timeouts");
 	}
 }
 
