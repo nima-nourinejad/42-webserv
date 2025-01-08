@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/03 14:36:53 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 13:07:36 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -333,29 +333,30 @@ void ClientConnection::processInforamtionAfterFork(std::string &statusLine, std:
 		connection = "Connection: close\r\n";
 }
 
-void ClientConnection::accumulateResponseParts()
+void ClientConnection::readFromPipe()
 {
-	close(pipe[1]);
-	pipe[1] = -1;
 	body.clear();
 	char buffer[16384] = {};
 	ssize_t bytes_received;
-	if (pid != -1)
-		waitpid(pid, 0, 0);
-	pid = -1;
 	while (true)
 	{
 		std::memset(buffer, 0, sizeof(buffer));
 		bytes_received = read(pipe[0], buffer, sizeof(buffer));
 		if (bytes_received > 0)
-		{
-			std::string stringBuffer = buffer;
-			body += stringBuffer;
-		}
+			body.append(buffer, bytes_received);
 		else if (bytes_received == 0)
 			break;
-		
 	}
+}
+
+void ClientConnection::accumulateResponseParts()
+{
+	close(pipe[1]);
+	pipe[1] = -1;
+	if (pid != -1)
+		waitpid(pid, 0, 0);
+	pid = -1;
+	readFromPipe();
 	connectionType();
 	size_t		maxBodySize;
 	std::string statusLine, rawHeader, connection;

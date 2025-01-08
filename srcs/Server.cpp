@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/03 17:44:33 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 12:56:03 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -239,7 +239,6 @@ void Server::receiveMessage(int index)
 	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
 		return;
 	char buffer[16384] = {};
-	std::string stringBuffer;
 	ssize_t bytes_received;
 	bytes_received = recv(_clients[index].fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 	if (bytes_received == 0)
@@ -253,8 +252,7 @@ void Server::receiveMessage(int index)
 		_clients[index].setCurrentTime();
 		if (_clients[index].status == WAITFORREQUEST)
 			_clients[index].status = RECEIVINGUNKOWNTYPE;
-		stringBuffer = buffer;
-		_clients[index].request += stringBuffer;
+		_clients[index].request.append(buffer, bytes_received);
 		_clients[index].checkRequestSize();
 		if (_clients[index].status == RECEIVINGUNKOWNTYPE)
 			_clients[index].findRequestType();

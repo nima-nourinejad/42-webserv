@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/02 19:16:23 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 12:58:23 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,18 +42,6 @@ enum ClientStatus
 	READYTOSEND
 };
 
-// enum ClientStatus
-// {
-// 	DISCONNECTED,
-// 	WAITFORREQUEST,
-// 	RECEIVINGUNKOWNTYPE,
-// 	RECEIVINGNONCHUNKED,
-// 	RECEIVINGCHUNKED,
-// 	RECEIVED,
-// 	PREPARINGRESPONSE_OneTime,
-// 	PREPARINGRESPONSE_TakeTime,
-// 	READYTOSEND
-// };
 
 class ClientConnection
 {
@@ -106,6 +94,7 @@ class ClientConnection
 	void						setPlain500Response();
 	void 						logError(std::string const & message);
 	void						checkRequestSize();
+	void						readFromPipe();
 };
 
 #endif

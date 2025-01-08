@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/03 14:00:19 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 13:29:51 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,30 +29,58 @@ Request::Request() : _method(""), _path(""), _httpVersion(""), _headers(), _body
 
 Request::Request(const std::string &rawRequest, int errorStatus)
 {
-	if (!errorStatus)
+	try
 	{
-		try
+		if (!errorStatus)
 		{
-			parse(rawRequest);
+			try
+			{
+				parse(rawRequest);
+			}
+			catch(const SystemCallError &e)
+			{
+				// std::cerr << " " << e.what() << std::endl;
+				// // throw;
+
+				//This part added by nnourine
+				//////
+				std::istringstream	stream(rawRequest);
+				std::string			line;
+
+				if (!std::getline(stream, line))
+					handleError("Failed to read request line");
+
+				std::istringstream	requestLine(rawRequest);
+				
+				if (!(requestLine >> _method >> _path >> _httpVersion))
+					handleError("Invalid request format");
+				_headers["Content-Length"] = "0";
+				_body = "";
+				////////
+			}
 		}
-		catch(const SystemCallError &e)
+		else
 		{
-			std::cerr << " " << e.what() << std::endl;
-			// throw;
+			std::istringstream	stream(rawRequest);
+			std::string			line;
+
+			if (!std::getline(stream, line))
+				handleError("Failed to read request line");
+
+			std::istringstream	requestLine(rawRequest);
+			
+			if (!(requestLine >> _method >> _path >> _httpVersion))
+				handleError("Invalid request format");
+			_headers["Content-Length"] = "0";
+			_body = "";
 		}
 	}
-	else
+	catch(const std::exception& e)
 	{
-		std::istringstream	stream(rawRequest);
-		std::string			line;
-
-		if (!std::getline(stream, line))
-			handleError("Failed to read request line");
-
-		std::istringstream	requestLine(rawRequest);
-		
-		if (!(requestLine >> _method >> _path >> _httpVersion))
-			handleError("Invalid request format");
+		//This part added by nnourine
+		_method = "UNKNOWN";
+		_path = "/";
+		_httpVersion = "HTTP/1.1";
 		_headers["Content-Length"] = "0";
 		_body = "";
 	}
