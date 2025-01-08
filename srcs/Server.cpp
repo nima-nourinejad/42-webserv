@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 12:56:03 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 14:01:13 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,40 +136,49 @@ void Server::closeSocket()
 
 void Server::closeClientSocket(int index)
 {
-	if (_clients[index].fd != -1 && index < MAX_CONNECTIONS && index >= 0)
+	try
 	{
-		removeEpoll(_clients[index].fd);
-		close(_clients[index].fd);
-		_clients[index].fd = -1;
-		if (_clients[index].pid != -1)
+		if (_clients[index].fd != -1 && index < MAX_CONNECTIONS && index >= 0)
 		{
-			waitpid(_clients[index].pid, 0, 0);
-			_clients[index].pid = -1;
+			removeEpoll(_clients[index].fd);
+			close(_clients[index].fd);
+			_clients[index].fd = -1;
+			if (_clients[index].pid != -1)
+			{
+				waitpid(_clients[index].pid, 0, 0);
+				_clients[index].pid = -1;
+			}
+			if (_clients[index].pipe[0] != -1)
+			{
+				removeEpoll(_clients[index].pipe[0]);
+				close(_clients[index].pipe[0]);
+				_clients[index].pipe[0] = -1;
+			}
+			if (_clients[index].pipe[1] != -1)
+			{
+				close(_clients[index].pipe[1]);
+				_clients[index].pipe[1] = -1;
+			}
+			_clients[index].keepAlive = true;
+			_clients[index].connectTime = 0;
+			_clients[index].request.clear();
+			_clients[index].responseParts.clear();
+			_clients[index].body.clear();
+			_clients[index].index = -1;
+			_clients[index].eventData.fd = -1;
+			_clients[index].eventData.index = -1;
+			_clients[index].pipeEventData.fd = -1;
+			_clients[index].pipeEventData.index = -1;
+			_clients[index].errorStatus = 0;
+			--_num_clients;
+			_clients[index].status = DISCONNECTED;
 		}
-		if (_clients[index].pipe[0] != -1)
-		{
-			removeEpoll(_clients[index].pipe[0]);
-			close(_clients[index].pipe[0]);
-			_clients[index].pipe[0] = -1;
-		}
-		if (_clients[index].pipe[1] != -1)
-		{
-			close(_clients[index].pipe[1]);
-			_clients[index].pipe[1] = -1;
-		}
-		_clients[index].status = DISCONNECTED;
-		_clients[index].keepAlive = true;
-		_clients[index].connectTime = 0;
-		_clients[index].request.clear();
-		_clients[index].responseParts.clear();
-		_clients[index].body.clear();
-		_clients[index].index = -1;
-		_clients[index].eventData.fd = -1;
-		_clients[index].eventData.index = -1;
-		_clients[index].pipeEventData.fd = -1;
-		_clients[index].pipeEventData.index = -1;
-		_clients[index].errorStatus = 0;
-		--_num_clients;
+	}
+	catch(const std::exception& e)
+	{
+		std::string error1 = "Failed to close and clean client " + std::to_string(index + 1) + " : ";
+		std::string error2 = e.what();
+		_clients[index].logError(error1 + error2);
 	}
 }
 
@@ -179,7 +188,7 @@ void Server::closeClientSockets()
 		closeClientSocket(i);
 }
 
-int Server::waitForEvents()
+int Server::waitForEvents() ///////////////////////////////////////////// throw
 {
 	int n_ready_fds = epoll_wait(_fd_epoll, _ready, TOTAL_EVENTS, 0);
 	if (n_ready_fds == -1)
@@ -192,7 +201,7 @@ int Server::waitForEvents()
 	return n_ready_fds;
 }
 
-void Server::sendResponseParts(int index)
+void Server::sendResponseParts(int index) ////////////////////////////////// throw
 {
 	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
 		return;
@@ -234,7 +243,7 @@ void Server::sendResponseParts(int index)
 	}
 }
 
-void Server::receiveMessage(int index)
+void Server::receiveMessage(int index) ////////////////////////////////// throw
 {
 	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
 		return;
@@ -424,10 +433,62 @@ void Server::handlePipeEvents(struct epoll_event const & event)
 			return;
 		if (_clients[index].status == PREPARINGRESPONSE)
 		{
-			_clients[index].accumulateResponseParts();
-			
+			try
+			{
+				_clients[index].accumulateResponseParts();
+			}
+			catch(const std::exception& e)
+			{
+				_clients[index].setPlain500Response();
+				std::string errorMessage = e.what();
+				_clients[index].logError("Accumulating response failed: " + errorMessage);
+				try
+				{
+					if (_clients[index].pid != -1)
+					{
+						waitpid(_clients[index].pid, 0, 0);
+						_clients[index].pid = -1;
+					}
+				}
+				catch(const std::exception& e)
+				{
+					std::string error1 = "Failed to wait for child process: ";
+					std::string error2 = e.what();
+					_clients[index].logError(error1 + error2);
+				}
+				try 
+				{
+					if (_clients[index].pipe[0] != -1)
+					{
+						removeEpoll(_clients[index].pipe[0]);
+						close(_clients[index].pipe[0]);
+						_clients[index].pipe[0] = -1;
+					}
+				}
+				catch(const std::exception& e)
+				{
+					std::string error1 = "Failed to close and remove pipe: ";
+					std::string error2 = e.what();
+					_clients[index].logError(error1 + error2);
+					
+				}
+				
+				try
+				{
+					if (_clients[index].pipe[1] != -1)
+					{
+						close(_clients[index].pipe[1]);
+						_clients[index].pipe[1] = -1;
+					}
+				}
+				catch(const std::exception& e)
+				{
+					std::string error1 = "Failed to close pipe: ";
+					std::string error2 = e.what();
+					_clients[index].logError(error1 + error2);
+				}
+			}
 		}
-		
 	}
 }
 
@@ -463,30 +524,69 @@ int getIndex(struct epoll_event const & event)
 
 void Server::handleSocketEvents()
 {
-	int n_ready_fds = waitForEvents();
-	for (int i = 0; i < n_ready_fds; i++)
+	try
 	{
-		if (eventType(_ready[i]) == LISTENING)
+		int n_ready_fds = waitForEvents();
+		for (int i = 0; i < n_ready_fds; i++)
 		{
-			handleListeningEvents(_ready[i]);
-		}
-		else if (eventType(_ready[i]) == CLIENT)
-		{
-			handleClientEvents(_ready[i]);
-		}
-		else if (eventType(_ready[i]) == PIPE)
-		{
-			handlePipeEvents(_ready[i]);
+			if (eventType(_ready[i]) == LISTENING)
+			{
+				handleListeningEvents(_ready[i]);
+			}
+			else if (eventType(_ready[i]) == CLIENT)
+			{
+				handleClientEvents(_ready[i]);
+			}
+			else if (eventType(_ready[i]) == PIPE)
+			{
+				handlePipeEvents(_ready[i]);
+			}
 		}
 	}
+	catch(const std::exception& e)
+	{
+		std::string error1 = "Failed to handle socket events: ";
+		std::string error2 = e.what();
+		printMessage(error1 + error2);
+	}
+	
+	
 }
 
 void Server::handleEvents()
 {
-	prepareResponses();
-	handleSocketEvents();
-	handleTimeouts();
+	try
+	{
+		prepareResponses();
+	}
+	catch(const std::exception& e)
+	{
+		std::string error1 = "Failed to prepare responses: ";
+		std::string error2 = e.what();
+		printMessage(error1 + error2);
+	}
 	
+	try
+	{
+		handleSocketEvents();
+	}
+	catch(const std::exception& e)
+	{
+		std::string error1 = "Failed to handle socket events: ";
+		std::string error2 = e.what();
+		printMessage(error1 + error2);
+	}
+	
+	try
+	{
+		handleTimeouts();
+	}
+	catch(const std::exception& e)
+	{
+		std::string error1 = "Failed to handle timeouts: ";
+		std::string error2 = e.what();
+		printMessage(error1 + error2);
+	}
 }
 
 void Server::addEpoll(int fd, int index)
