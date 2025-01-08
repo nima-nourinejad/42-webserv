@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 12:58:23 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 14:37:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,8 @@ enum ClientStatus
 	RECEIVINGCHUNKED,
 	RECEIVED,
 	PREPARINGRESPONSE,
-	READYTOSEND
+	READYTOSEND,
+	FAILSENDING,
 };
 
 

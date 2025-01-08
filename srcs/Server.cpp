@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 14:01:13 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/08 14:49:00 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,89 +188,112 @@ void Server::closeClientSockets()
 		closeClientSocket(i);
 }
 
-int Server::waitForEvents() ///////////////////////////////////////////// throw
+int Server::waitForEvents()
 {
 	int n_ready_fds = epoll_wait(_fd_epoll, _ready, TOTAL_EVENTS, 0);
 	if (n_ready_fds == -1)
 	{
-		if (errno == EINTR)
-			return 0;
-		else
-			throw SocketException("Failed to wait for events");
+		if (errno != EINTR)
+			logError("Failed to wait for events");
+		return 0;
 	}
 	return n_ready_fds;
 }
 
-void Server::sendResponseParts(int index) ////////////////////////////////// throw
+void Server::sendResponseParts(int index)
 {
-	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
-		return;
-	ssize_t bytes_sent;
-	bytes_sent = send(_clients[index].fd, _clients[index].responseParts[0].c_str(), _clients[index].responseParts[0].size(), MSG_DONTWAIT);
-	if (bytes_sent == 0)
+	try
 	{
-		printMessage("Client " + std::to_string(index + 1) + " disconnected");
-		closeClientSocket(index);
-		return;
-	}
-	else if (bytes_sent > 0)
-	{
-		if (bytes_sent < static_cast<ssize_t>(_clients[index].responseParts[0].size()))
+		if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
+			return;
+		ssize_t bytes_sent;
+		bytes_sent = send(_clients[index].fd, _clients[index].responseParts[0].c_str(), _clients[index].responseParts[0].size(), MSG_DONTWAIT);
+		if (bytes_sent == 0)
 		{
-			std::string remainPart = _clients[index].responseParts[0].substr(bytes_sent);
-			_clients[index].responseParts[0] = remainPart;
+			printMessage("Client " + std::to_string(index + 1) + " disconnected");
+			closeClientSocket(index);
 			return;
 		}
-		else
+		else if (bytes_sent > 0)
 		{
-			_clients[index].responseParts.erase(_clients[index].responseParts.begin());
-			if (_clients[index].responseParts.empty())
+			if (bytes_sent < static_cast<ssize_t>(_clients[index].responseParts[0].size()))
 			{
-				if (_clients[index].keepAlive == false)
+				std::string remainPart = _clients[index].responseParts[0].substr(bytes_sent);
+				_clients[index].responseParts[0] = remainPart;
+				return;
+			}
+			else
+			{
+				_clients[index].responseParts.erase(_clients[index].responseParts.begin());
+				if (_clients[index].responseParts.empty())
 				{
-					printMessage("Client " + std::to_string(index + 1) + " requested to close connection");
-					closeClientSocket(index);
-				}
-				else
-				{
-					printMessage("Client " + std::to_string(index + 1) + " requested to keep connection alive. Waiting for a new request");
-					_clients[index].request.clear();
-					_clients[index].status = WAITFORREQUEST;
-					_clients[index].setCurrentTime();
+					if (_clients[index].keepAlive == false)
+					{
+						printMessage("Client " + std::to_string(index + 1) + " requested to close connection");
+						closeClientSocket(index);
+					}
+					else
+					{
+						printMessage("Client " + std::to_string(index + 1) + " requested to keep connection alive. Waiting for a new request");
+						_clients[index].request.clear();
+						_clients[index].status = WAITFORREQUEST;
+						_clients[index].setCurrentTime();
+					}
 				}
 			}
 		}
 	}
+	catch(const std::exception& e)
+	{
+		std::string error1 = "Failed to send response to client " + std::to_string(index + 1) + " : ";
+		std::string error2 = e.what();
+		_clients[index].logError(error1 + error2);
+		if (_clients[index].status != FAILSENDING)
+		{
+			_clients[index].setCurrentTime();
+			_clients[index].status = FAILSENDING;
+		}
+	}
 }
 
-void Server::receiveMessage(int index) ////////////////////////////////// throw
+void Server::receiveMessage(int index)
 {
-	if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
-		return;
-	char buffer[16384] = {};
-	ssize_t bytes_received;
-	bytes_received = recv(_clients[index].fd, buffer, sizeof(buffer), MSG_DONTWAIT);
-	if (bytes_received == 0)
+	try 
 	{
-		printMessage("Client " + std::to_string(index + 1) + " disconnected");
-		closeClientSocket(index);
-	}
-	else if (bytes_received > 0)
-	{
-		printMessage("Received message from client " + std::to_string(index + 1));
-		_clients[index].setCurrentTime();
-		if (_clients[index].status == WAITFORREQUEST)
-			_clients[index].status = RECEIVINGUNKOWNTYPE;
-		_clients[index].request.append(buffer, bytes_received);
-		_clients[index].checkRequestSize();
-		if (_clients[index].status == RECEIVINGUNKOWNTYPE)
-			_clients[index].findRequestType();
-		if (_clients[index].finishedReceiving())
+		if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
+			return;
+		char buffer[16384] = {};
+		ssize_t bytes_received;
+		bytes_received = recv(_clients[index].fd, buffer, sizeof(buffer), MSG_DONTWAIT);
+		if (bytes_received == 0)
 		{
-			if (_clients[index].status == RECEIVINGCHUNKED)
-				_clients[index].handleChunkedEncoding();
-			_clients[index].status = RECEIVED;
+			printMessage("Client " + std::to_string(index + 1) + " disconnected");
+			closeClientSocket(index);
 		}
+		else if (bytes_received > 0)
+		{
+			printMessage("Received message from client " + std::to_string(index + 1));
+			_clients[index].setCurrentTime();
+			if (_clients[index].status == WAITFORREQUEST)
+				_clients[index].status = RECEIVINGUNKOWNTYPE;
+			_clients[index].request.append(buffer, bytes_received);
+			_clients[index].checkRequestSize();
+			if (_clients[index].status == RECEIVINGUNKOWNTYPE)
+				_clients[index].findRequestType();
+			if (_clients[index].finishedReceiving())
+			{
+				if (_clients[index].status == RECEIVINGCHUNKED)
+					_clients[index].handleChunkedEncoding();
+				_clients[index].status = RECEIVED;
+			}
+		}
+	}
+	catch(const std::exception& e)
+	{
+		std::string error1 = "Failed to receive message from client " + std::to_string(index + 1) + " : ";
+		std::string error2 = e.what();
+		_clients[index].logError(error1 + error2);
+		_clients[index].changeRequestToServerError();
 	}
 }
 
@@ -302,10 +325,10 @@ int Server::eventType(struct epoll_event const & event) const
 void Server::handleTimeout(int index)
 {
 	printMessage("Client " + std::to_string(index + 1) + " timed out");
-	if (_clients[index].request.empty() == false)
-	{
+	if (_clients[index].status == FAILSENDING)
+		closeClientSocket(index);
+	else if (_clients[index].request.empty() == false)
 		_clients[index].changeRequestToBadRequest();
-	}
 	else
 		closeClientSocket(index);
 }
@@ -314,8 +337,11 @@ void Server::handleTimeouts()
 {
 	for (int i = 0; i < MAX_CONNECTIONS; ++i)
 	{
-		if (_clients[i].status > DISCONNECTED && _clients[i].status < RECEIVED && _clients[i].getPassedTime() > TIMEOUT)
-			handleTimeout(i);
+		if ((_clients[i].status > DISCONNECTED && _clients[i].status < RECEIVED) || _clients[i].status == FAILSENDING)
+		{
+			if (_clients[i].getPassedTime() > TIMEOUT)
+				handleTimeout(i);
+		}
 	}
 }
 
@@ -410,6 +436,11 @@ void Server::handleClientEvents(struct epoll_event const & event)
 				_clients[index].pipe[0] = -1;
 			}
 			sendResponseParts(getClientIndex(event));
+		}
+		else if (getClientStatus(event) == FAILSENDING &&(event.events & EPOLLOUT))
+		{
+			int index = getClientIndex(event);
+			sendResponseParts(index);
 		}
 	}
 }
@@ -547,7 +578,7 @@ void Server::handleSocketEvents()
 	{
 		std::string error1 = "Failed to handle socket events: ";
 		std::string error2 = e.what();
-		printMessage(error1 + error2);
+		logError(error1 + error2);
 	}
 	
 	
@@ -563,7 +594,7 @@ void Server::handleEvents()
 	{
 		std::string error1 = "Failed to prepare responses: ";
 		std::string error2 = e.what();
-		printMessage(error1 + error2);
+		logError(error1 + error2);
 	}
 	
 	try
@@ -574,7 +605,7 @@ void Server::handleEvents()
 	{
 		std::string error1 = "Failed to handle socket events: ";
 		std::string error2 = e.what();
-		printMessage(error1 + error2);
+		logError(error1 + error2);
 	}
 	
 	try
@@ -585,7 +616,7 @@ void Server::handleEvents()
 	{
 		std::string error1 = "Failed to handle timeouts: ";
 		std::string error2 = e.what();
-		printMessage(error1 + error2);
+		logError(error1 + error2);
 	}
 }
 
