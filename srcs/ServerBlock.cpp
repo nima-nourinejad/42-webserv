@@ -3,18 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   ServerBlock.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2025/01/02 18:03:26 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/09 18:49:47 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerBlock.hpp"
 
 ServerBlock::ServerBlock(/* args */)
-{
-	_listen = 0;
+{;
 	_client_max_body_size = 0;
 }
 
@@ -51,7 +50,7 @@ std::string ServerBlock::getServerName() const
 	return _server_name;
 }
 
-int ServerBlock::getListen() const
+std::vector<uint16_t> ServerBlock::getListen() const
 {
 	return _listen;
 }
@@ -87,10 +86,17 @@ void ServerBlock::setServerName(const std::string& server_name)
 	_server_name = server_name;
 }
 
-void ServerBlock::setListen(int listen)
+void ServerBlock::setListen(const std::vector<uint16_t>& listen)
 {
-	if (listen < 1 || listen > 65535)
-		throw std::invalid_argument("Listen port is out of range");
+	if (_listen.size() != 0 && listen.size() != 0)
+		throw std::invalid_argument("Listen is already set");
+	if (listen.empty())
+		throw std::invalid_argument("Listen is empty");
+	for (const uint16_t& port : listen)
+	{
+		if (port < 1 || port > 65535)
+			throw std::invalid_argument("Port is out of range (1-65535)");
+	}
 	_listen = listen;
 }
 

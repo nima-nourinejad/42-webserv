@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2025/01/02 18:08:51 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/09 18:47:42 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,12 +102,6 @@ void ConfigParser::parseServerBlock(size_t& index)
 		{
 			_server_blocks[_server_blocks.size() - 1].setRoot(_tokens[index].values[0]);
 		}
-		else if (_tokens[index].key == "listen")
-		{
-			if (!std::all_of(_tokens[index].values[0].begin(), _tokens[index].values[0].end(), ::isdigit))
-				throw std::invalid_argument("Listen port is not a number");
-			_server_blocks[_server_blocks.size() - 1].setListen(std::stoi(_tokens[index].values[0]));
-		}
 		else if (_tokens[index].key == "client_max_body_size")
 		{
 			_server_blocks[_server_blocks.size() - 1].setClientMaxBodySize(_tokens[index].values[0]);
@@ -121,6 +115,19 @@ void ConfigParser::parseServerBlock(size_t& index)
 			if (_tokens[index].values[0].empty() || !std::all_of(_tokens[index].values[0].begin(), _tokens[index].values[0].end(), ::isdigit))
 				throw std::invalid_argument("Error code is not a number");
 			_server_blocks[_server_blocks.size() - 1].setErrorPage(std::stoi(_tokens[index].values[0]), _tokens[index].values[1]);
+		}
+		else if (_tokens[index].key == "listen")
+		{
+			std::vector<uint16_t> ports;
+			for (const std::string& port : _tokens[index].values)
+			{
+				if (port.empty() || !std::all_of(port.begin(), port.end(), ::isdigit))
+					throw std::invalid_argument("Port is not a number");
+				if (*port.begin() == '0')
+					throw std::invalid_argument("Port starts with 0");
+				ports.push_back(std::stoi(port));
+			}
+			_server_blocks[_server_blocks.size() - 1].setListen(ports);
 		}
 		else if (_tokens[index].key == "location")
 		{
@@ -149,11 +156,11 @@ void ConfigParser::parseLocationBlock(size_t& index)
 		std::cout << "Location block is empty" << std::endl;
 		unexpectedToken(index);
 	}
-	else if (_tokens[index].values[0].back() != '/')
-	{
-		std::cout << "Location block does not end with /" << std::endl;
-		unexpectedToken(index);
-	}
+	// else if (_tokens[index].values[0].back() != '/')
+	// {
+	// 	std::cout << "Location block does not end with /" << std::endl;
+	// 	unexpectedToken(index);
+	// }
 
 	index++;
 	if (_tokens[index].type != TokenType::OPEN)
@@ -212,13 +219,13 @@ void ConfigParser::parseLocationBlock(size_t& index)
 void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 {
 	std::vector<std::string> singleValueKeys = {
-		"server_name", "location", "listen", "client_max_body_size", "proxy_pass", 
+		"server_name", "location", "client_max_body_size", "proxy_pass", 
 		"root", "index", "autoindex", "cgi_pass", "upload_path", 
 		"upload_store", "upload_max_file_size", "server", "host", "alias", "root"
 	};
 
 	std::vector<std::string> multiValueKeys = {
-		"limit_except", "cgi_ext", "error_page", "return"
+		"limit_except", "cgi_ext", "error_page", "return", "listen"
 	};
 
 	std::string word;
@@ -343,7 +350,11 @@ void ConfigParser::printServerConfig()
 		std::cout << server.getServerName() << std::endl;			
 		std::cout << std::endl;
 		std::cout << "Root: " << server.getRoot() << std::endl;
-		std::cout << "Listen: " << server.getListen() << std::endl;
+		std::cout << "Listen: " << std::endl;
+		for (const uint16_t& port : server.getListen())
+		{
+			std::cout << port << " ";
+		}
 		std::cout << "Client max body size: " << server.getClientMaxBodySize() << std::endl;
 		std::cout << "Host: " << server.getHost() << std::endl;
 		std::cout << "Error pages: " << std::endl;

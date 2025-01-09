@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 14:56:20 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/09 18:27:38 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,7 +99,8 @@ class Server
 	
     public:
 		// Main Methods
-		Server(ServerBlock & serverBlock);
+		// Server(ServerBlock & serverBlock);
+		Server(ServerBlock & serverBlock, int port);
 		void							handleEvents();
 		~Server();
 

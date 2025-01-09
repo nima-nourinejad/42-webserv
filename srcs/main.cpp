@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 17:27:04 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/09 18:30:55 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,27 @@ int main(int argc, char **argv)
 	{
 		try
 		{
-			servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i)));
+			// servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i)));
+			for (unsigned int j = 0; j < config.getServerBlocks().at(i).getListen().size(); j++)
+			{
+				try
+				{
+					servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i), config.getServerBlocks().at(i).getListen().at(j)));
+				}
+				catch(SocketException const & e)
+				{
+					e.log();
+				}
+				catch(std::exception const & e)
+				{
+					Server::logError(e.what());
+				}
+				catch(...)
+				{
+					Server::logError("Unknown exception during server creation for config block " + std::to_string(i + 1) + " and port " + std::to_string(config.getServerBlocks().at(i).getListen().at(j)));
+				}
+				
+			}
 		}
 		catch(SocketException const & e)
 		{

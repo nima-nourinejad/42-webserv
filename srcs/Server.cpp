@@ -3,18 +3,33 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 18:31:59 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/09 18:28:00 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(ServerBlock & serverBlock)
-    : _socket_fd(-1), _fd_epoll(-1), _config(serverBlock.getListen(),
-	serverBlock.getHost(), serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
+// Server::Server(ServerBlock & serverBlock)
+//     : _socket_fd(-1), _fd_epoll(-1), _config(serverBlock.getListen(),
+// 	serverBlock.getHost(), serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
+// 	, _responseMaker(serverBlock)
+// {
+	
+// 	applyCustomSignal();
+// 	createEpoll();
+// 	startListeningSocket();
+// 	eventData.type = LISTENING;
+// 	eventData.index = MAX_CONNECTIONS;
+// 	eventData.fd = -1;
+	
+// 	createClientConnections(serverBlock);
+// };
+
+Server::Server(ServerBlock & serverBlock, int port)
+    : _socket_fd(-1), _fd_epoll(-1), _config(port, serverBlock.getHost(), serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
 	, _responseMaker(serverBlock)
 {
 	
