@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/27 13:18:16 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 13:35:29 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,13 @@
 // Access-Control-Max-Age: 86400
 
 // for uploads/downloads we should do prefix match
+
+//maybe we should do this to prevent the 404 error of favicon.ico
+// if (request == "/favicon.ico") {
+//     std::string blankFaviconResponse = 
+//         "HTTP/1.1 200 OK\r\n"
+//         "Content-Type: image/x-icon\r\n"
+//         "Content-Length: 0\r\n\r\n";}
 
 
 
