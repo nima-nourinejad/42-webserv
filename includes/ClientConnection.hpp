@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 14:37:16 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 19:42:07 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,8 +49,8 @@ class ClientConnection
 	private:
 
 	// Constants
-	const size_t				MAX_HEADER_SIZE = 32768;
-	const size_t				MAX_REQUEST_SIZE = 1048576;
+	const size_t				MAX_HEADER_SIZE = 3200768;
+	const size_t				MAX_REQUEST_SIZE = 100048576;
 	
     public:
 

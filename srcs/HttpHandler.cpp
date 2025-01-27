@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 19:29:40 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 19:54:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,10 +36,7 @@ std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &
 	for (const auto &location : _serverBlock.getLocations())
 	{
 		if (!location->getUploadPath().empty() && (req.getPath().length() > location->getLocation().length() && req.getPath().substr(0, location->getLocation().length()) == location->getLocation()))
-		{
-			std::cout << "god loves us" << std::endl;	
 			path = location->getLocation();
-		}
 		else
 			path = req.getPath();
 		if (path == location->getLocation())
@@ -63,12 +60,10 @@ std::string	HttpHandler::_getFileName(const Request &req)
 
 bool HttpHandler::_isDownload(const Request &req)
 {
-	std::cout << "let's decide whehter it is download or not" << std::endl;
 	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 	std::string location_uri = matchedLocation->getLocation();
 	if (location_uri != req.getPath())
 		return true;
-	std::cout << "it is not download" << std::endl;
 	return false;
 }
 
