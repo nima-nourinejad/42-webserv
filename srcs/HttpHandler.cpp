@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 18:15:02 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 18:51:53 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,7 +198,13 @@ Response	HttpHandler::handleRequest(const Request &req)
 			// _rootDir = matchedLocation->getAlias();
 			_filePath = matchedLocation->getAlias();
 		else
-			_filePath = _rootDir + req.getPath();
+		{
+			///Nima changed this part. i added this eles: _filePath = matchedLocation->getUploadPath();
+			if (matchedLocation->getUploadPath().empty())
+				_filePath = _rootDir + req.getPath();
+			else
+				_filePath = matchedLocation->getUploadPath();
+		}
 		
 		if (!matchedLocation->getRoot().empty())
 			_rootDir = matchedLocation->getRoot();
@@ -341,7 +347,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 		contentType = "text/plain";
 
 	// std::string filePath = _uploadPath.c_str() + fileName;
-	std::string filePath = "var/www/uploads" + fileName;
+	std::string filePath = "var/www/andrey" + fileName;
 	std::cout << "File path: " << filePath << std::endl;
 	Response	response;
 	int fd = open(filePath.c_str(), O_RDONLY);
@@ -412,9 +418,11 @@ Response	HttpHandler::handleGET(const Request &req)
 	// std::cout << "File path: " << _filePath << std::endl;
 	Response	response;
 
+	std::cout << "File path: " << _filePath << std::endl;
 	// Check if the path is a directory
 	if (std::filesystem::is_directory(_filePath))
 	{
+		std::cout << "It is a directory" << std::endl;
 		// std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 
 		// for (const auto &location : _serverBlock.getLocations())
@@ -428,6 +436,7 @@ Response	HttpHandler::handleGET(const Request &req)
 
 		if (matchedLocation->getAutoindex())
 		{
+			std::cout << "Autoindex is on" << std::endl;
 			std::ostringstream	directoryListing;
 
 			directoryListing << "<html><body><h1>Index of " << req.getPath() << "</h1><ul>";
