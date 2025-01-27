@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 17:36:33 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 17:42:47 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,52 +29,21 @@ HttpHandler::~HttpHandler() {}
 
 std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &req)
 {
-	// std::string downlaod = "/downloads/";
-	// std::string upload = "/uploads/";
-	// std::string path;
-	
-	// std::shared_ptr<LocationBlock> matchedLocation;
-
-	// if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
-	// 	path = downlaod;
-	// else if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
-	// 	path = upload;
-	// else
-	// 	path = req.getPath();
-	
-	// for (const auto &location : _serverBlock.getLocations())
-	// {
-	// 	if (path == location->getLocation())
-	// 	{
-	// 		matchedLocation = location;
-	// 		break;
-	// 	}
-	// }
-	// return matchedLocation;
-
-
-	std::string upload;
+	std::string downlaod = "/downloads/";
+	std::string upload = "/uploads/";
 	std::string path;
 	
 	std::shared_ptr<LocationBlock> matchedLocation;
 
-	// else if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
-	// 	path = upload;
-	// else
-	// 	path = req.getPath();
+	if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
+		path = downlaod;
+	else if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
+		path = upload;
+	else
+		path = req.getPath();
 	
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		if (!location->getUploadPath().empty())
-		{
-			upload = location->getUploadPath();
-			if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
-				path = upload;
-			else
-				path = req.getPath();
-		}
-		else
-			path = req.getPath();
 		if (path == location->getLocation())
 		{
 			matchedLocation = location;
@@ -86,26 +55,27 @@ std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &
 
 std::string	HttpHandler::_getFileName(const Request &req)
 {
-	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
-	std::string location_uri = matchedLocation->getLocation();
-	if (location_uri != req.getPath())
-		return req.getPath().substr(location_uri.length());
-	return "";
+	std::string downlaod = "/downloads/";
+	std::string upload = "/uploads/";
+	std::string path;
+	
+	if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
+		return req.getPath().substr(downlaod.length());
+	else if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
+		return req.getPath().substr(upload.length());
+	else
+		return "";
 	
 }
 
 bool HttpHandler::_isDownload(const Request &req)
 {
-	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
-	std::string location_uri = matchedLocation->getLocation();
-	if (location_uri != req.getPath())
-		return true;
-	return false;
+	std::string downlaod = "/downloads/";
 	
-	// if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
-	// 	return true;
-	// else
-	// 	return false;
+	if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
+		return true;
+	else
+		return false;
 }
 
 bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
@@ -425,7 +395,7 @@ Response	HttpHandler::handleGET(const Request &req)
 	// 		break;
 	// 	}
 	// }
-	std::cout << "i am in simple get" << std::endl;
+
 	if (!matchedLocation->getIndex().empty())
 	{
 		// std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation->getIndex();
@@ -436,7 +406,7 @@ Response	HttpHandler::handleGET(const Request &req)
 			&& std::filesystem::is_regular_file(indexFilePath))
 			return handleFileRequest(req, indexFilePath); //maybe just in index requested location
 	}
-	std::cout << "after if" << std::endl;
+
 	// std::string	filePath = _rootDir + req.getPath();
 	// std::string	filePath;
 
@@ -460,7 +430,7 @@ Response	HttpHandler::handleGET(const Request &req)
 		// 		break;
 		// 	}
 		// }
-		std::cout << "after if2" << std::endl;
+
 		if (matchedLocation->getAutoindex())
 		{
 			std::ostringstream	directoryListing;
@@ -491,7 +461,6 @@ Response	HttpHandler::handleFileRequest(const Request &req, const std::string &f
 	Response	response;
 
 	int fd = open(filePath.c_str(), O_RDONLY);
-	std::cout << "File path: " << filePath << std::endl;
 
 	if (fd == -1)
 	{
