@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/09 18:28:00 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/01/27 13:53:24 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -300,6 +300,8 @@ void Server::receiveMessage(int index)
 				if (_clients[index].status == RECEIVINGCHUNKED)
 					_clients[index].handleChunkedEncoding();
 				_clients[index].status = RECEIVED;
+				std::cout << "Request received from client " << index + 1 << std::endl;
+				std::cout << _clients[index].request << std::endl;
 			}
 		}
 	}

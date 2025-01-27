@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/03 18:17:48 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 17:36:33 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,11 +27,92 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig)
 
 HttpHandler::~HttpHandler() {}
 
+std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &req)
+{
+	// std::string downlaod = "/downloads/";
+	// std::string upload = "/uploads/";
+	// std::string path;
+	
+	// std::shared_ptr<LocationBlock> matchedLocation;
+
+	// if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
+	// 	path = downlaod;
+	// else if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
+	// 	path = upload;
+	// else
+	// 	path = req.getPath();
+	
+	// for (const auto &location : _serverBlock.getLocations())
+	// {
+	// 	if (path == location->getLocation())
+	// 	{
+	// 		matchedLocation = location;
+	// 		break;
+	// 	}
+	// }
+	// return matchedLocation;
+
+
+	std::string upload;
+	std::string path;
+	
+	std::shared_ptr<LocationBlock> matchedLocation;
+
+	// else if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
+	// 	path = upload;
+	// else
+	// 	path = req.getPath();
+	
+	for (const auto &location : _serverBlock.getLocations())
+	{
+		if (!location->getUploadPath().empty())
+		{
+			upload = location->getUploadPath();
+			if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
+				path = upload;
+			else
+				path = req.getPath();
+		}
+		else
+			path = req.getPath();
+		if (path == location->getLocation())
+		{
+			matchedLocation = location;
+			break;
+		}
+	}
+	return matchedLocation;
+}
+
+std::string	HttpHandler::_getFileName(const Request &req)
+{
+	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
+	std::string location_uri = matchedLocation->getLocation();
+	if (location_uri != req.getPath())
+		return req.getPath().substr(location_uri.length());
+	return "";
+	
+}
+
+bool HttpHandler::_isDownload(const Request &req)
+{
+	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
+	std::string location_uri = matchedLocation->getLocation();
+	if (location_uri != req.getPath())
+		return true;
+	return false;
+	
+	// if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
+	// 	return true;
+	// else
+	// 	return false;
+}
+
 bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
 {
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		if (path.find(location->getLocation()) == 0) // Match location prefix
+		if (path == location->getLocation()) // Match location prefix
 		{
 			const auto	&allowedMethods = location->getLimitExcept();
 			bool		isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end();
@@ -45,16 +126,16 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 {
 	Response						response;
-	std::shared_ptr<LocationBlock>	matchedLocation;
+	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
 
-	for (const auto &location : _serverBlock.getLocations())
-	{
-		if (req.getPath() == location->getLocation())
-		{
-			matchedLocation = location;
-			break;
-		}
-	}
+	// for (const auto &location : _serverBlock.getLocations())
+	// {
+	// 	if (req.getPath() == location->getLocation())
+	// 	{
+	// 		matchedLocation = location;
+	// 		break;
+	// 	}
+	// }
 
 	// Use location-specific error pages if available
 	if (matchedLocation && matchedLocation->getErrorPages().count(statusCode))
@@ -103,7 +184,7 @@ std::string	HttpHandler::_validateRequest(const Request &req)
 		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		if (req.getPath().find(location->getLocation()) == 0)
+		if (req.getPath() == location->getLocation())
 		{
 			if (!location->getCgiPath().empty() && !std::filesystem::exists(location->getCgiPath()))
 				return "Invalid CGI Path"; // should be like a http response
@@ -130,16 +211,16 @@ Response	HttpHandler::handleRequest(const Request &req)
 		// if (validation != "Ok")
 		// 	return validation;
 		
-		std::shared_ptr<LocationBlock> matchedLocation;
+		std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 
-		for (const auto &location : _serverBlock.getLocations())
-		{
-			if (req.getPath() == location->getLocation())
-			{
-				matchedLocation = location;
-				break;
-			}
-		}
+		// for (const auto &location : _serverBlock.getLocations())
+		// {
+		// 	if (req.getPath() == location->getLocation())
+		// 	{
+		// 		matchedLocation = location;
+		// 		break;
+		// 	}
+		// }
 		std::cout << "req.getpath: " << req.getPath()<< std::endl;
 		if (!matchedLocation)
 			return getErrorPage(req, 404); // Not found
@@ -193,23 +274,24 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (!matchedLocation->getUploadPath().empty())
 		{
 			// Handle file uploads logic (POST requests)
-			std::filesystem::path	uploadPath = matchedLocation->getUploadPath(); // may need to be handled better
+			// std::filesystem::path	uploadPath = matchedLocation->getUploadPath(); // may need to be handled better
+			_uploadPath = matchedLocation->getUploadPath();
+			
+			if (!std::filesystem::exists(_uploadPath))
+				std::filesystem::create_directories(_uploadPath);
 
-			if (!std::filesystem::exists(uploadPath))
-				std::filesystem::create_directories(uploadPath);
-
-			if (!std::filesystem::is_directory(uploadPath))
+			if (!std::filesystem::is_directory(_uploadPath))
 				return getErrorPage(req, 500); // Internal server error
 
 			// Test write by attempting to create a temporary file
-			std::ofstream	testFile((uploadPath / "test.tmp").string());
+			std::ofstream	testFile((_uploadPath / "test.tmp").string());
 
 			if (!testFile.is_open())
 				// throw std::runtime_error("Upload path is not writable");
 				return getErrorPage(req, 500); // Internal server error
 
 			testFile.close();
-			std::filesystem::remove(uploadPath / "test.tmp");
+			std::filesystem::remove(_uploadPath / "test.tmp");
 		}
 		// std::cout << "Path: " << req.getPath() << std::endl;
 		// std::cout << "CGI Path: " << matchedLocation->getCgiPath() << std::endl;
@@ -217,10 +299,14 @@ Response	HttpHandler::handleRequest(const Request &req)
 			return handleCGI(req);
 		// std::cout << "Method: " << req.getMethod() << std::endl;
 		// std::cout << "before switch" << std::endl;
-		if (req.getMethod() == "GET")
+		if (req.getMethod() == "GET" && _isDownload(req))
+			return handleDownload(req);
+		else if (req.getMethod() == "GET")
 			return handleGET(req);
 		else if (req.getMethod() == "POST")
 			return handlePOST(req);
+		else if (req.getMethod() == "OPTIONS")
+			return handleOPTIONS(req);
 		else if (req.getMethod() == "DELETE")
 			return handleDELETE(req);
 
@@ -236,10 +322,8 @@ Response	HttpHandler::handleRequest(const Request &req)
 		return getErrorPage(req, 405); // Method not allowed
 		// return e.what(); // Handle runtime errors (e.g., method not allowed)
 	}
-	
-	
-	
 }
+
 std::string HttpHandler::readFileError(std::string const &path)
 {
 	std::ifstream	file(path.c_str());
@@ -255,19 +339,93 @@ std::string HttpHandler::readFileError(std::string const &path)
 	file.close();
 	return read.str();
 }
-Response	HttpHandler::handleGET(const Request &req)
-{
-	std::shared_ptr<LocationBlock> matchedLocation;
 
-	for (const auto &location : _serverBlock.getLocations())
+std::string getFileextention(std::string const &filename)
+{
+	std::string extention = filename.substr(filename.find_last_of(".") + 1);
+	return extention;
+}
+
+Response	HttpHandler::handleDownload(const Request &req)
+{
+	std::cout << "i am in download" << std::endl;
+	std::string fileName = "/" + _getFileName(req);
+	std::string extention = getFileextention(fileName);
+	std::string contentType;
+	if (extention == "html")
+		contentType = "text/html";
+	else if (extention == "jpg")
+		contentType = "image/jpeg";
+	else if (extention == "jpeg")
+		contentType = "image/jpeg";
+	else if (extention == "png")
+		contentType = "image/png";
+	else if (extention == "pdf")
+		contentType = "application/pdf";
+	else if (extention == "zip")
+		contentType = "application/zip";
+	else if (extention == "txt")
+		contentType = "text/plain";
+	else if (extention == "css")
+		contentType = "text/css";
+	else if (extention == "js")
+		contentType = "application/javascript";
+	else if (extention == "json")
+		contentType = "application/json";
+	else
+		contentType = "text/plain";
+
+	// std::string filePath = _uploadPath.c_str() + fileName;
+	std::string filePath = "var/www/uploads" + fileName;
+	std::cout << "File path: " << filePath << std::endl;
+	Response	response;
+	int fd = open(filePath.c_str(), O_RDONLY);
+
+	if (fd == -1)
 	{
-		if (req.getPath() == location->getLocation())
-		{
-			matchedLocation = location;
-			break;
-		}
+		int			statusCode = (errno == EACCES) ? 403 : 404;
+		std::string	errorPage = _errorPages.at(statusCode);
+
+		fd = open((_rootDir + "/" + errorPage).c_str(), O_RDONLY);
 	}
 
+	try
+	{
+		char		buffer[1024];
+		std::string	content;
+		ssize_t		bytesRead;
+	
+
+		while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+			content.append(buffer, bytesRead);
+
+		if (close(fd) == -1)
+			handleError("close file descriptor");
+
+		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
+		response.setBody(content);
+		response.setHeader("Content-Type", contentType);
+	}
+	catch (const SystemCallError &e)
+	{
+		return getErrorPage(req, 500); // Internal server error
+	}
+	return response;
+}
+
+Response	HttpHandler::handleGET(const Request &req)
+{
+	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
+
+	// for (const auto &location : _serverBlock.getLocations())
+	// {
+	// 	if (req.getPath() == location->getLocation())
+	// 	{
+	// 		matchedLocation = location;
+	// 		break;
+	// 	}
+	// }
+	std::cout << "i am in simple get" << std::endl;
 	if (!matchedLocation->getIndex().empty())
 	{
 		// std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation->getIndex();
@@ -278,7 +436,7 @@ Response	HttpHandler::handleGET(const Request &req)
 			&& std::filesystem::is_regular_file(indexFilePath))
 			return handleFileRequest(req, indexFilePath); //maybe just in index requested location
 	}
-
+	std::cout << "after if" << std::endl;
 	// std::string	filePath = _rootDir + req.getPath();
 	// std::string	filePath;
 
@@ -292,17 +450,17 @@ Response	HttpHandler::handleGET(const Request &req)
 	// Check if the path is a directory
 	if (std::filesystem::is_directory(_filePath))
 	{
-		std::shared_ptr<LocationBlock> matchedLocation;
+		// std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 
-		for (const auto &location : _serverBlock.getLocations())
-		{
-			if (req.getPath() == location->getLocation())
-			{
-				matchedLocation = location;
-				break;
-			}
-		}
-
+		// for (const auto &location : _serverBlock.getLocations())
+		// {
+		// 	if (req.getPath() == location->getLocation())
+		// 	{
+		// 		matchedLocation = location;
+		// 		break;
+		// 	}
+		// }
+		std::cout << "after if2" << std::endl;
 		if (matchedLocation->getAutoindex())
 		{
 			std::ostringstream	directoryListing;
@@ -333,6 +491,7 @@ Response	HttpHandler::handleFileRequest(const Request &req, const std::string &f
 	Response	response;
 
 	int fd = open(filePath.c_str(), O_RDONLY);
+	std::cout << "File path: " << filePath << std::endl;
 
 	if (fd == -1)
 	{
@@ -377,16 +536,16 @@ Response	HttpHandler::handlePOST(const Request &req)
 	std::string	contentType = req.getHeader("Content-Type");
 	Response	response;
 
-	std::shared_ptr<LocationBlock> matchedLocation;
+	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 
-	for (const auto &location : _serverBlock.getLocations())
-	{
-		if (req.getPath() == location->getLocation())
-		{
-			matchedLocation = location;
-			break;
-		}
-	}
+	// for (const auto &location : _serverBlock.getLocations())
+	// {
+	// 	if (req.getPath() == location->getLocation())
+	// 	{
+	// 		matchedLocation = location;
+	// 		break;
+	// 	}
+	// }
 
 	if (!matchedLocation)
 		return getErrorPage(req, 404); // Not found
@@ -394,14 +553,14 @@ Response	HttpHandler::handlePOST(const Request &req)
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
 		// Extract the boundary parameter
-		std::string			boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
+		// std::string			boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
 		std::istringstream	bodyStream(req.getBody());
 		std::string			line;
 
 		while (std::getline(bodyStream, line))
 		{
-			if (line == boundary)
-			{
+			// if (line == boundary)
+			// {
 				std::string	disposition, partContentType;
 
 				std::getline(bodyStream, disposition);
@@ -414,8 +573,9 @@ Response	HttpHandler::handlePOST(const Request &req)
 				std::ostringstream	partData;
 
 				// Read part data until boundary is reached
-				while (std::getline(bodyStream, line)
-						&& line != boundary && line != boundary + "--")
+				// while (std::getline(bodyStream, line)
+				// 		&& line != boundary && line != boundary + "--")
+				while (std::getline(bodyStream, line))
 					partData << line << "\n";
 
 				if (isFileUpload)
@@ -426,12 +586,12 @@ Response	HttpHandler::handlePOST(const Request &req)
 				}
 				else
 					response.setBody(partData.str());
-			}
+			// }
 		}
 		std::cout << "File uploaded successfully" << std::endl;
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setHeader("Content-Type", "multipart/form-data");
-		response.setHeader("Content-Length", std::to_string(response.getBody().size()) + "\r\n");
+		// response.setHeader("Content-Length", std::to_string(response.getBody().size()) + "\r\n");
 	}
 	else if (!req.getBody().empty())
 	{
@@ -473,25 +633,56 @@ void	HttpHandler::saveFile(const std::string &filename, const std::string &fileD
 	file.close();
 }
 
-Response	HttpHandler::handleDELETE(const Request &req)
+Response	HttpHandler::handleOPTIONS(const Request &req)
 {
-	// std::string filePath = _rootDir + req.getPath();
 	(void)req;
 	Response	response;
 
-	if (unlink(_filePath.c_str()) == 0)
+	response.setStatusLine("HTTP/1.1 204 " + getStatusMessage(204) + "\r\n");
+	// response.setHeader("Access-Control-Allow-Origin", "*");
+	// response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+	// response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+	// response.setHeader("Access-Control-Max-Age", "86400");
+	// response.setHeader("Content-Length", "0\r\n");
+	return response;
+}
+
+
+
+Response	HttpHandler::handleDELETE(const Request &req)
+{
+	// std::string filePath = _uploadPath.c_str() + req.getPath();
+	std::string fileName = "/" + _getFileName(req);
+	if (fileName.empty())
+		return getErrorPage(req, 404);
+	std::string filePath = _uploadPath.c_str() + fileName;
+	std::cout << "File name: " << fileName << std::endl;
+	std::cout << "File path: " << filePath << std::endl;
+	// _uploadPath = filePath;
+	std::filesystem::path path(filePath);
+	(void)req;
+	Response	response;
+
+	std::cout << "Handling DELETE" << std::endl;
+	// _filePath = _uploadPath + req.getPath(); // make it correct so does not needed to be here
+	std::cout << "File path: " << filePath << std::endl;
+	
+	if (std::filesystem::remove(path) == 0)
 	{
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
+		// response.setHeader("Content-Length", "0\r\n");
 		response.setBody("File deleted successfully\n");
 	}
 	else if (errno == EACCES)
 	{
 		response.setStatusLine("HTTP/1.1 403 " + getStatusMessage(403) + "\r\n");
+		// response.setHeader("Content-Length", "0\r\n");
 		response.setBody("Permission denied\n");
 	}
 	else if (errno == ENOENT)
 	{
 		response.setStatusLine("HTTP/1.1 404 " + getStatusMessage(404) + "\r\n");
+		// response.setHeader("Content-Length", "0\r\n");
 		response.setBody("File not found\n");
 	}
 	return response;
@@ -579,17 +770,17 @@ size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)
 {
 	// std::cout << "Max body size in Http Handler own method: " << _maxBodySize << std::endl;
 	Request							req(request, errorStatus);
-	std::shared_ptr<LocationBlock>	matchedLocation;
+	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
 
-	for (const auto &location : _serverBlock.getLocations())
-	{
-		// if (req.getPath().find(location->getLocation()) == 0)
-		if (req.getPath() == location->getLocation())
-		{
-			matchedLocation = location;
-			break;
-		}
-	}
+	// for (const auto &location : _serverBlock.getLocations())
+	// {
+	// 	// if (req.getPath().find(location->getLocation()) == 0)
+	// 	if (req.getPath() == location->getLocation())
+	// 	{
+	// 		matchedLocation = location;
+	// 		break;
+	// 	}
+	// }
 
 	if (!matchedLocation)
 	{
