@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 18:51:53 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 19:10:31 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -347,7 +347,10 @@ Response	HttpHandler::handleDownload(const Request &req)
 		contentType = "text/plain";
 
 	// std::string filePath = _uploadPath.c_str() + fileName;
-	std::string filePath = "var/www/andrey" + fileName;
+
+	// std::string filePath = "var/www/andrey" + fileName;
+	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
+	std::string filePath = matchedLocation->getUploadPath() + fileName;
 	std::cout << "File path: " << filePath << std::endl;
 	Response	response;
 	int fd = open(filePath.c_str(), O_RDONLY);

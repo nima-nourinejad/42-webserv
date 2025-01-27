@@ -6,7 +6,7 @@
     <title>File Upload and Download</title>
 </head>
 <body>
-    <h1>Upload and Download Files</h1>
+    <h1>Nima</h1>
 
     <!-- Form to upload a file -->
     <form id="uploadForm" enctype="multipart/form-data" method="POST">
@@ -30,7 +30,7 @@
         // Fetch and display available files
         async function fetchFiles() {
             try {
-                const response = await fetch('http://127.1.0.0:4242/downloads/');
+                const response = await fetch('http://127.1.0.0:4242/nima/');
                 if (response.ok) {
                     const text = await response.text();
                     const parser = new DOMParser();
@@ -43,7 +43,7 @@
                         if (href !== '../') { // Skip parent directory link
                             const listItem = document.createElement('li');
                             const anchor = document.createElement('a');
-                            anchor.href = `http://127.1.0.0:4242/downloads/${href}`;
+                            anchor.href = `http://127.1.0.0:4242/nima/${href}`;
                             anchor.textContent = href;
                             anchor.target = '_blank';
 
@@ -74,7 +74,7 @@
         // Handle file deletion
         async function deleteFile(filename) {
             try {
-                const response = await fetch(`http://127.1.0.0:4242/uploads/${filename}`, {
+                const response = await fetch(`http://127.1.0.0:4242/nima/${filename}`, {
                     method: 'DELETE'
                 });
 
@@ -96,7 +96,7 @@
             const formData = new FormData(uploadForm);
 
             try {
-                const response = await fetch('http://127.1.0.0:4242/uploads/', {
+                const response = await fetch('http://127.1.0.0:4242/nima/', {
                     method: 'POST',
                     body: formData
                 });
@@ -118,5 +118,3 @@
     </script>
 </body>
 </html>
-
------------------------------273627546118123425674060196968--
