@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/09 18:30:55 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/01/27 13:18:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,23 +15,34 @@
 
 //for downloading files. first read the subject if we need to handle downloads, if not, try to somehow show and delete a file
 
-//check fore accetable MIME types
-// {".pdf", "application/pdf"},
-// {".zip", "application/zip"},
-// {".jpg", "image/jpeg"},
-// {".jpeg", "image/jpeg"},
-// {".png", "image/png"},
-// {".txt", "text/plain"},
-// {".html", "text/html"},
-// {".css", "text/css"},
-// {".js", "application/javascript"},
-// {".json", "application/json"}
-// reject the upload and return a 400 Bad Request or 415 Unsupported Media Type response
 
 //for downloads we need to check if the file exists. Then find the MIME type and send the file with the correct MIME type with this header:
 // Content-Type: application/MIME_type
 
-//Make sure css is working properly since static website is mandatory
+//OPTIONS method is mandatory for deleting files
+// before the actual DELETE we receive an OPTIONS request for CORS
+// OPTIONS /uploads/map HTTP/1.1
+// Host: 127.1.0.0:4242
+// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0
+// Accept: */*
+// Accept-Language: en-US,en;q=0.5
+// Accept-Encoding: gzip, deflate, br, zstd
+// Access-Control-Request-Method: DELETE
+// Origin: https://nima-nourinejad.github.io
+// Connection: keep-alive
+// Sec-Fetch-Dest: empty
+// Sec-Fetch-Mode: cors
+// Sec-Fetch-Site: cross-site
+// Priority: u=4
+//
+// we should respond with somthing like this:
+// HTTP/1.1 204 No Content
+// Access-Control-Allow-Origin: *
+// Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS
+// Access-Control-Allow-Headers: Content-Type
+// Access-Control-Max-Age: 86400
+
+// for uploads/downloads we should do prefix match
 
 
 
