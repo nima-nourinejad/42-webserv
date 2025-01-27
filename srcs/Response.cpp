@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:33 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/03 18:01:01 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 14:34:08 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ void	Response::setBody(const std::string body)
 	_headers["Content-Length"] = std::to_string(body.size());
 }
 
-std::string	Response::getStatusLine() const { return _statusLine; }
+std::string	Response::getStatusLine() const { return (_statusLine); }
 
 std::string	Response::getRawHeader() const
 {
@@ -65,7 +65,7 @@ std::string	Response::getRawHeader() const
 	}
 	header << "Access-Control-Allow-Credentials: *" << "\r\n";
 	header << "Access-Control-Allow-Origin: *" << "\r\n";
-	header << "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS" << "\r\n";
+	header << "Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS" << "\r\n";
 	header << "Access-Control-Allow-Headers: Content-Type, Authorization" << "\r\n";
 	header << "Access-Control-Max-Age: 86400" << "\r\n";
 	

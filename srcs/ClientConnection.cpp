@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/08 14:33:57 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 15:17:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -361,7 +361,10 @@ void ClientConnection::accumulateResponseParts()
 	size_t		maxBodySize;
 	std::string statusLine, rawHeader, connection;
 	processInforamtionAfterFork(statusLine, rawHeader,connection, maxBodySize);
+	// std::cout << "StatusLine: " << std::endl << statusLine << std::endl;
+	// std::cout << "body before chuncking: " << std::endl << body << std::endl;
 	chunckBody(statusLine, rawHeader, connection, maxBodySize);
+	
 	errorStatus = 0;
 	status = READYTOSEND;
 }
