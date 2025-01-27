@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload and Download</title>
+</head>
+<body>
+    <h1>Upload and Download Files</h1>
+
+    <!-- Form to upload a file -->
+    <form id="uploadForm" enctype="multipart/form-data" method="POST">
+        <label for="file">Choose a file:</label>
+        <input type="file" id="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    <hr>
+
+    <!-- List of available files -->
+    <h2>Available Files for Download</h2>
+    <ul id="fileList">
+        <li>Loading...</li>
+    </ul>
+
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        const fileList = document.getElementById('fileList');
+
+        // Fetch and display available files
+        async function fetchFiles() {
+            try {
+                const response = await fetch('http://127.1.0.0:4242/downloads/');
+                if (response.ok) {
+                    const text = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(text, 'text/html');
+                    const links = doc.querySelectorAll('a[href]');
+
+                    fileList.innerHTML = ''; // Clear the existing list
+                    links.forEach(link => {
+                        const href = link.getAttribute('href');
+                        if (href !== '../') { // Skip parent directory link
+                            const listItem = document.createElement('li');
+                            const anchor = document.createElement('a');
+                            anchor.href = `http://127.1.0.0:4242/downloads/${href}`;
+                            anchor.textContent = href;
+                            anchor.target = '_blank';
+
+                            // Delete button
+                            const deleteButton = document.createElement('button');
+                            deleteButton.textContent = 'Delete';
+                            deleteButton.style.marginLeft = '10px';
+                            deleteButton.onclick = async () => {
+                                if (confirm(`Are you sure you want to delete ${href}?`)) {
+                                    await deleteFile(href);
+                                }
+                            };
+
+                            listItem.appendChild(anchor);
+                            listItem.appendChild(deleteButton);
+                            fileList.appendChild(listItem);
+                        }
+                    });
+                } else {
+                    fileList.innerHTML = '<li>Error loading files</li>';
+                }
+            } catch (error) {
+                console.error('Error fetching files:', error);
+                fileList.innerHTML = '<li>Error loading files</li>';
+            }
+        }
+
+        // Handle file deletion
+        async function deleteFile(filename) {
+            try {
+                const response = await fetch(`http://127.1.0.0:4242/uploads/${filename}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.status === 200) {
+                    alert('File deleted successfully!');
+                    fetchFiles(); // Refresh the file list
+                } else {
+                    alert('Failed to delete file.');
+                }
+            } catch (error) {
+                console.error('Error deleting file:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        // Handle form submission
+        uploadForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(uploadForm);
+
+            try {
+                const response = await fetch('http://127.1.0.0:4242/uploads/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.status === 200) {
+                    alert('File uploaded successfully!');
+                    fetchFiles(); // Refresh the file list
+                } else {
+                    alert('Failed to upload file.');
+                }
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert('An error occurred. Please try again.');
+            }
+        });
+
+        // Fetch the list of files on page load
+        window.onload = fetchFiles;
+    </script>
+</body>
+</html>
