@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/27 15:17:16 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 19:40:17 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -221,6 +221,7 @@ void ClientConnection::createResponseParts()
 				std::string body, statusLine, rawHeader, maxBodySizeString;
 				try
 				{
+					std::cout << "child process started" << std::endl;
 					close(pipe[0]);
 					size_t		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
 					
@@ -236,6 +237,7 @@ void ClientConnection::createResponseParts()
 						response = responseMaker->getErrorPage(req, errorStatus);
 					}
 					body = response.getBody();
+					std::cout << "body is prepared" << std::endl;
 					statusLine = response.getStatusLine();
 					rawHeader = response.getRawHeader();
 				}
@@ -249,8 +251,10 @@ void ClientConnection::createResponseParts()
 					logError("Child process for creating response failed: " + errorMessage);
 				}
 				std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
+				std::cout << "full message is prepared try to send to pipe" << std::endl;
 				write(pipe[1], fullMessage.c_str(), fullMessage.size());
 				close(pipe[1]);
+				std::cout<< "child process finished" << std::endl;
 				exit(0);
 			}
 		}
@@ -351,12 +355,17 @@ void ClientConnection::readFromPipe()
 
 void ClientConnection::accumulateResponseParts()
 {
+	std::cout << "i got epollin on pipe" << std::endl;
 	close(pipe[1]);
 	pipe[1] = -1;
+	// if (pid != -1)
+	// 	waitpid(pid, 0, 0);
+	
+	std::cout << "start reading from pipe" << std::endl; 
+	readFromPipe();
 	if (pid != -1)
 		waitpid(pid, 0, 0);
 	pid = -1;
-	readFromPipe();
 	connectionType();
 	size_t		maxBodySize;
 	std::string statusLine, rawHeader, connection;

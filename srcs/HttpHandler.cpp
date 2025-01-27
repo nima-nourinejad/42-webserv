@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 19:10:31 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 19:29:40 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -365,6 +365,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 
 	try
 	{
+		std::cout << "File opened" << std::endl;
 		char		buffer[1024];
 		std::string	content;
 		ssize_t		bytesRead;
@@ -372,7 +373,8 @@ Response	HttpHandler::handleDownload(const Request &req)
 
 		while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
 			content.append(buffer, bytesRead);
-
+		
+		std::cout << "reading finished" << std::endl;
 		if (close(fd) == -1)
 			handleError("close file descriptor");
 
