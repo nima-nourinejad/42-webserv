@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationBlock.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2025/01/02 18:08:07 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 17:12:56 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -227,7 +227,7 @@ void LocationBlock::setLimitExcept(const std::vector<std::string>& values)
 {
 	if (values.empty())
 		throw std::invalid_argument("Limit except is empty");
-	std::set<std::string> valid_methods = {"GET", "POST", "DELETE", "PUT", "HEAD"};
+	std::set<std::string> valid_methods = {"GET", "POST", "DELETE", "PUT", "HEAD", "OPTIONS"};
 	for (size_t i = 0; i < values.size(); i++)
 	{
 		if (valid_methods.find(values[i]) == valid_methods.end())
