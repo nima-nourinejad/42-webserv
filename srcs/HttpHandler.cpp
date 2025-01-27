@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 18:09:37 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/27 18:15:02 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,62 +29,19 @@ HttpHandler::~HttpHandler() {}
 
 std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &req)
 {
-	// std::string downlaod = "/downloads/";
-	// std::string upload = "/uploads/";
-	// std::string path;
-	
-	// std::shared_ptr<LocationBlock> matchedLocation;
-
-	// if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
-	// 	path = downlaod;
-	// else if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
-	// 	path = upload;
-	// else
-	// 	path = req.getPath();
-	
-	// for (const auto &location : _serverBlock.getLocations())
-	// {
-	// 	if (path == location->getLocation())
-	// 	{
-	// 		matchedLocation = location;
-	// 		break;
-	// 	}
-	// }
-	// return matchedLocation;
-
-
-	std::string upload;
 	std::string path;
 	
 	std::shared_ptr<LocationBlock> matchedLocation;
-	std::cout << "req.getpath: " << req.getPath()<< std::endl;
 	
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		std::cout << "**********" << std::endl;
-		if (!location->getUploadPath().empty())
+		if (!location->getUploadPath().empty() && (req.getPath().length() > location->getLocation().length() && req.getPath().substr(0, location->getLocation().length()) == location->getLocation()))
 		{
-			upload = location->getUploadPath();
-			std::cout << "Upload path: " << upload << std::endl;
-			std::cout << "req.getpath: " << req.getPath()<< std::endl;
-			std::cout << "location: " << location->getLocation() << std::endl;
-			if (req.getPath().length() > location->getLocation().length() && req.getPath().substr(0, location->getLocation().length()) == location->getLocation())
-			{
-				std::cout << "god loves us" << std::endl;	
-				path = location->getLocation();
-			}
-			else
-			{
-				std::cout << "why??????" << std::endl;
-				path = req.getPath();
-			}
+			std::cout << "god loves us" << std::endl;	
+			path = location->getLocation();
 		}
 		else
-		{
-			std::cout << "no upload path" << std::endl;
 			path = req.getPath();
-		}
-		std::cout << "path: " << path << std::endl;
 		if (path == location->getLocation())
 		{
 			matchedLocation = location;
@@ -96,16 +53,6 @@ std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &
 
 std::string	HttpHandler::_getFileName(const Request &req)
 {
-	// std::string downlaod = "/downloads/";
-	// std::string upload = "/uploads/";
-	// std::string path;
-	
-	// if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
-	// 	return req.getPath().substr(downlaod.length());
-	// else if (req.getPath().length() > upload.length() && req.getPath().substr(0, upload.length()) == upload)
-	// 	return req.getPath().substr(upload.length());
-	// else
-	// 	return "";
 	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 	std::string location_uri = matchedLocation->getLocation();
 	if (location_uri != req.getPath())
@@ -116,12 +63,6 @@ std::string	HttpHandler::_getFileName(const Request &req)
 
 bool HttpHandler::_isDownload(const Request &req)
 {
-	// std::string downlaod = "/downloads/";
-	
-	// if (req.getPath().length() > downlaod.length() && req.getPath().substr(0, downlaod.length()) == downlaod)
-	// 	return true;
-	// else
-	// 	return false;
 	std::cout << "let's decide whehter it is download or not" << std::endl;
 	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 	std::string location_uri = matchedLocation->getLocation();
