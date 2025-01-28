@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/27 19:54:25 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 13:52:45 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -353,9 +353,6 @@ void ClientConnection::accumulateResponseParts()
 {
 	close(pipe[1]);
 	pipe[1] = -1;
-	// if (pid != -1)
-	// 	waitpid(pid, 0, 0);
-	
 	readFromPipe();
 	if (pid != -1)
 		waitpid(pid, 0, 0);
