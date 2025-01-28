@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 19:54:58 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 13:38:06 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,23 @@ std::string	HttpHandler::_getFileName(const Request &req)
 	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 	std::string location_uri = matchedLocation->getLocation();
 	if (location_uri != req.getPath())
-		return req.getPath().substr(location_uri.length());
+	{
+		std::string rawFileName = req.getPath().substr(location_uri.length());
+		std::ostringstream decoded;
+		for (size_t i = 0; i < rawFileName.length(); ++i)
+		{
+			if (rawFileName[i] == '%' && i + 2 < rawFileName.length())
+			{
+				std::string hexValue = rawFileName.substr(i + 1, 2);
+				char decodedChar = static_cast<char>(std::stoi(hexValue, nullptr, 16));
+				decoded << decodedChar;
+				i += 2;
+			}
+			else
+				decoded << rawFileName[i];
+		}
+		return decoded.str();
+	}
 	return "";
 	
 }
@@ -312,38 +328,64 @@ std::string getFileextention(std::string const &filename)
 	return extention;
 }
 
+std::string getContentType(const std::string& extension)
+{
+    if (extension == "html" || extension == "htm")
+        return "text/html";
+    else if (extension == "jpg" || extension == "jpeg")
+        return "image/jpeg";
+    else if (extension == "png")
+        return "image/png";
+    else if (extension == "gif")
+        return "image/gif";
+    else if (extension == "bmp")
+        return "image/bmp";
+    else if (extension == "svg")
+        return "image/svg+xml";
+    else if (extension == "ico")
+        return "image/vnd.microsoft.icon";
+    else if (extension == "pdf")
+        return "application/pdf";
+    else if (extension == "zip")
+        return "application/zip";
+    else if (extension == "txt")
+        return "text/plain";
+    else if (extension == "css")
+        return "text/css";
+    else if (extension == "js")
+        return "application/javascript";
+    else if (extension == "json")
+        return "application/json";
+    else if (extension == "xml")
+        return "application/xml";
+    else if (extension == "csv")
+        return "text/csv";
+    else if (extension == "mp3")
+        return "audio/mpeg";
+    else if (extension == "wav")
+        return "audio/wav";
+    else if (extension == "mp4")
+        return "video/mp4";
+    else if (extension == "webm")
+        return "video/webm";
+    else if (extension == "ogg")
+        return "application/ogg";
+    else if (extension == "woff" || extension == "woff2")
+        return "font/woff";
+    else if (extension == "ttf")
+        return "font/ttf";
+    else if (extension == "otf")
+        return "font/otf";
+    else
+        return "application/octet-stream";
+}
+
 Response	HttpHandler::handleDownload(const Request &req)
 {
 	std::cout << "i am in download" << std::endl;
 	std::string fileName = "/" + _getFileName(req);
 	std::string extention = getFileextention(fileName);
-	std::string contentType;
-	if (extention == "html")
-		contentType = "text/html";
-	else if (extention == "jpg")
-		contentType = "image/jpeg";
-	else if (extention == "jpeg")
-		contentType = "image/jpeg";
-	else if (extention == "png")
-		contentType = "image/png";
-	else if (extention == "pdf")
-		contentType = "application/pdf";
-	else if (extention == "zip")
-		contentType = "application/zip";
-	else if (extention == "txt")
-		contentType = "text/plain";
-	else if (extention == "css")
-		contentType = "text/css";
-	else if (extention == "js")
-		contentType = "application/javascript";
-	else if (extention == "json")
-		contentType = "application/json";
-	else
-		contentType = "text/plain";
-
-	// std::string filePath = _uploadPath.c_str() + fileName;
-
-	// std::string filePath = "var/www/andrey" + fileName;
+	std::string contentType = getContentType(extention);
 	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 	std::string filePath = matchedLocation->getUploadPath() + fileName;
 	std::cout << "File path: " << filePath << std::endl;
