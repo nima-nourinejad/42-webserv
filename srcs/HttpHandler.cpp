@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/28 13:51:41 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 14:09:19 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -336,11 +336,12 @@ std::string getContentType(const std::string& extension)
 
 Response	HttpHandler::handleDownload(const Request &req)
 {
-	std::string						fileName = "/" + _getFileName(req);
+	std::string						fileName = _getFileName(req);
+	std::string						finalFile = "/" + _getFileName(req);
 	std::string						extention = getFileextention(fileName);
 	std::string						contentType = getContentType(extention);
 	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
-	std::string						filePath = matchedLocation->getUploadPath() + fileName;
+	std::string						filePath = matchedLocation->getUploadPath() + finalFile;
 	Response						response;
 	int								fd = open(filePath.c_str(), O_RDONLY);
 
@@ -369,6 +370,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody(content);
 		response.setHeader("Content-Type", contentType);
+		response.setHeader("Content-Disposition", "attachment; filename=" + fileName + "\r\n");
 	}
 	catch (const SystemCallError &e)
 	{
