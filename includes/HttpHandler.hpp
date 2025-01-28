@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 16:18:08 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 18:34:49 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ class HttpHandler
 
 		bool							_isMethodAllowed(const std::string &method, const std::string &path);
 		std::string						_validateRequest(const Request &req);
-		std::shared_ptr<LocationBlock>	_findMatchedLocation(const Request &req);
+		// std::shared_ptr<LocationBlock>	_findMatchedLocation(const Request &req);
 		std::string						_getFileName(const Request &req);
 		bool							_isDownload(const Request &req);
 
@@ -67,7 +67,7 @@ class HttpHandler
 		std::string						getStatusMessage(int statusCode);
 		size_t							getMaxBodySize(const std::string &request, int errorStatus);
 		ServerBlock						getServerBlock() const { return _serverBlock; } // maybe not needed
-
+		std::shared_ptr<LocationBlock>	_findMatchedLocation(const Request &req);
 };
 
 #endif

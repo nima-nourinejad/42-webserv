@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/28 16:15:35 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 18:54:39 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -372,12 +372,13 @@ Response	HttpHandler::handleDownload(const Request &req)
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody(content);
 		response.setHeader("Content-Type", contentType);
-		// response.setHeader("Content-Disposition", "attachment; filename=" + fileName + "\r\n");
+		
 	}
 	catch (const SystemCallError &e)
 	{
 		return getErrorPage(req, 500);
 	}
+	std::cout << "done preapring" << std::endl;
 	return response;
 }
 
@@ -387,7 +388,11 @@ Response	HttpHandler::handleGET(const Request &req)
 
 	if (!matchedLocation->getIndex().empty())
 	{
-		std::string	indexFilePath = _filePath + matchedLocation->getIndex();
+		std::string	filePath = _filePath;
+		if (_filePath[filePath.size() - 1] != '/')
+			filePath += "/";
+			
+		std::string	indexFilePath = filePath + matchedLocation->getIndex();
 
 		if (std::filesystem::exists(indexFilePath)
 			&& std::filesystem::is_regular_file(indexFilePath))

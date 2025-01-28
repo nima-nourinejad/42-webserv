@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/28 13:52:45 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 19:17:59 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,24 +208,15 @@ void ClientConnection::createResponseParts()
 		{
 			responseParts.clear();
 			status = PREPARINGRESPONSE;
-			pid = fork();
-			if (pid == -1)
+			Request req(request, errorStatus);
+			bool cgi = (responseMaker->_findMatchedLocation(req) && !((responseMaker->_findMatchedLocation(req))->getCgiPath().empty()));
+			
+			if (!cgi)
 			{
-				close(pipe[1]);
-				setPlain500Response();
-				logError("Failed to fork");
-				
-			}
-			if (pid == 0)
-			{
-				std::string body, statusLine, rawHeader, maxBodySizeString;
+				std::string statusLine, rawHeader;
 				try
 				{
-					close(pipe[0]);
-					size_t		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
-					
-					maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
-					
+					maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
 					Response	response;
 					if (!errorStatus)
 						response = responseMaker->createResponse(request);
@@ -244,16 +235,72 @@ void ClientConnection::createResponseParts()
 					statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
 					rawHeader = "Content-Type: text/plain\r\n";
 					body = "500 Internal Server Error";
-					maxBodySizeString = std::to_string(body.size()) + "\r\n";
 					std::string errorMessage = e.what();
 					logError("Child process for creating response failed: " + errorMessage);
 				}
-				std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
-				write(pipe[1], fullMessage.c_str(), fullMessage.size());
 				close(pipe[1]);
-				exit(0);
+				pipe[1] = -1;
+				connectionType();
+				std::string connection;
+				if (keepAlive)
+					connection = "Connection: keep-alive\r\n";
+				else
+					connection = "Connection: close\r\n";
+				chunckBody(statusLine, rawHeader, connection, maxBodySize);
+				errorStatus = 0;
+				status = READYTOSEND;
+				
+				
 			}
-		}
+			else
+			{
+				pid = fork();
+				if (pid == -1)
+				{
+					close(pipe[1]);
+					setPlain500Response();
+					logError("Failed to fork");
+					
+				}
+				if (pid == 0)
+				{
+					std::string body, statusLine, rawHeader, maxBodySizeString;
+					try
+					{
+						close(pipe[0]);
+						size_t		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
+						
+						maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
+						
+						Response	response;
+						if (!errorStatus)
+							response = responseMaker->createResponse(request);
+						else
+						{
+							Request		req(request, errorStatus);
+							
+							response = responseMaker->getErrorPage(req, errorStatus);
+						}
+						body = response.getBody();
+						statusLine = response.getStatusLine();
+						rawHeader = response.getRawHeader();
+					}
+					catch(const std::exception& e)
+					{
+						statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
+						rawHeader = "Content-Type: text/plain\r\n";
+						body = "500 Internal Server Error";
+						maxBodySizeString = std::to_string(body.size()) + "\r\n";
+						std::string errorMessage = e.what();
+						logError("Child process for creating response failed: " + errorMessage);
+					}
+					std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
+					write(pipe[1], fullMessage.c_str(), fullMessage.size());
+					close(pipe[1]);
+					exit(0);
+				}
+			}
+	}
 	}
 	catch(const std::exception& e)
 	{
@@ -351,6 +398,7 @@ void ClientConnection::readFromPipe()
 
 void ClientConnection::accumulateResponseParts()
 {
+	std::cout << "I got epollin on pipe I am accumulating response parts" << std::endl;
 	close(pipe[1]);
 	pipe[1] = -1;
 	readFromPipe();

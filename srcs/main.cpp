@@ -6,52 +6,17 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/27 13:35:29 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 18:01:08 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-//replace plain with html
 //if node script run with pdf after stucking in the middle of the pdf if close the script the server will shutdown
 
-//for downloading files. first read the subject if we need to handle downloads, if not, try to somehow show and delete a file
+//add all the errors
+// remove all "auto"s
 
-
-//for downloads we need to check if the file exists. Then find the MIME type and send the file with the correct MIME type with this header:
-// Content-Type: application/MIME_type
-
-//OPTIONS method is mandatory for deleting files
-// before the actual DELETE we receive an OPTIONS request for CORS
-// OPTIONS /uploads/map HTTP/1.1
-// Host: 127.1.0.0:4242
-// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0
-// Accept: */*
-// Accept-Language: en-US,en;q=0.5
-// Accept-Encoding: gzip, deflate, br, zstd
-// Access-Control-Request-Method: DELETE
-// Origin: https://nima-nourinejad.github.io
-// Connection: keep-alive
-// Sec-Fetch-Dest: empty
-// Sec-Fetch-Mode: cors
-// Sec-Fetch-Site: cross-site
-// Priority: u=4
-//
-// we should respond with somthing like this:
-// HTTP/1.1 204 No Content
-// Access-Control-Allow-Origin: *
-// Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS
-// Access-Control-Allow-Headers: Content-Type
-// Access-Control-Max-Age: 86400
-
-// for uploads/downloads we should do prefix match
-
-//maybe we should do this to prevent the 404 error of favicon.ico
-// if (request == "/favicon.ico") {
-//     std::string blankFaviconResponse = 
-//         "HTTP/1.1 200 OK\r\n"
-//         "Content-Type: image/x-icon\r\n"
-//         "Content-Length: 0\r\n\r\n";}
-
-
+//nima: A request to your server should never hang forever.
+// You can’t use fork for something else than CGI (like PHP, or Python, and so forth).
 
 #include "Server.hpp"
 
