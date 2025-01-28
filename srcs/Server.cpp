@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/28 13:53:30 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 13:54:28 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,7 +287,6 @@ void Server::receiveMessage(int index)
 		}
 		else if (bytes_received > 0)
 		{
-			printMessage("Received message from client " + std::to_string(index + 1));
 			_clients[index].setCurrentTime();
 			if (_clients[index].status == WAITFORREQUEST)
 				_clients[index].status = RECEIVINGUNKOWNTYPE;
