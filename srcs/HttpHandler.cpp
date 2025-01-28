@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/28 14:09:19 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 16:15:35 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -330,6 +330,8 @@ std::string getContentType(const std::string& extension)
         return "font/ttf";
     else if (extension == "otf")
         return "font/otf";
+	else if (extension == "c" || extension == "h" || extension == "cpp" || extension == "hpp")
+		return "text/plain";
     else
         return "application/octet-stream";
 }
@@ -370,7 +372,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setBody(content);
 		response.setHeader("Content-Type", contentType);
-		response.setHeader("Content-Disposition", "attachment; filename=" + fileName + "\r\n");
+		// response.setHeader("Content-Disposition", "attachment; filename=" + fileName + "\r\n");
 	}
 	catch (const SystemCallError &e)
 	{
@@ -472,42 +474,43 @@ Response	HttpHandler::handlePOST(const Request &req)
 
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
-		// Extract the boundary parameter
-		// std::string			boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
+		std::string			boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
 		std::istringstream	bodyStream(req.getBody());
 		std::string			line;
 
 		while (std::getline(bodyStream, line))
 		{
-			// if (line == boundary)
-			// {
+			if (line == boundary)
+			{
 				std::string	disposition, partContentType;
 
 				std::getline(bodyStream, disposition);
 				std::getline(bodyStream, partContentType);
-				std::getline(bodyStream, line); // Empty line before part content
+				std::getline(bodyStream, line);
 
-				// Parse disposition to check for filename(file upload)
 				bool	isFileUpload = disposition.find("filename=") != std::string::npos;
 				
 				std::ostringstream	partData;
 
-				// Read part data until boundary is reached
-				// while (std::getline(bodyStream, line)
-				// 		&& line != boundary && line != boundary + "--")
-				while (std::getline(bodyStream, line))
+				while (std::getline(bodyStream, line) && line != boundary)
 					partData << line << "\n";
+				
+				std::string data = partData.str();
+				boundary = boundary.substr(0, boundary.length() - 1);
+				if (data.find(boundary) != std::string::npos)
+					data = data.substr(0, data.find(boundary));
 
 				if (isFileUpload)
 				{
 					std::string	filename = extractFilename(disposition);
 					filename = matchedLocation->getUploadPath() + "/" + filename;
-					saveFile(filename, partData.str());
+					saveFile(filename, data);
 				}
 				else
-					response.setBody(partData.str());
-			// }
+					response.setBody(data);
+			}
 		}
+					
 		std::cout << "File uploaded successfully" << std::endl;
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setHeader("Content-Type", "multipart/form-data");
