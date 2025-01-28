@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/28 13:38:06 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/28 13:51:41 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,8 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig)
 	//creating a default state of map
 	_errorPages[404] = "html/default_404.html";
 	_errorPages[500] = "html/default_500.html";
+	//more defaults needed
 
-	//filling the map with the error pages from the server block
 	for (const auto &errorPage : serverConfig.getErrorPages())
 		_errorPages[errorPage.first] = errorPage.second;
 }
@@ -29,9 +29,8 @@ HttpHandler::~HttpHandler() {}
 
 std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &req)
 {
-	std::string path;
-	
-	std::shared_ptr<LocationBlock> matchedLocation;
+	std::string						path;
+	std::shared_ptr<LocationBlock>	matchedLocation;
 	
 	for (const auto &location : _serverBlock.getLocations())
 	{
@@ -50,18 +49,21 @@ std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &
 
 std::string	HttpHandler::_getFileName(const Request &req)
 {
-	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
-	std::string location_uri = matchedLocation->getLocation();
+	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+	std::string						location_uri = matchedLocation->getLocation();
+	
 	if (location_uri != req.getPath())
 	{
-		std::string rawFileName = req.getPath().substr(location_uri.length());
-		std::ostringstream decoded;
+		std::string			rawFileName = req.getPath().substr(location_uri.length());
+		std::ostringstream	decoded;
+		
 		for (size_t i = 0; i < rawFileName.length(); ++i)
 		{
 			if (rawFileName[i] == '%' && i + 2 < rawFileName.length())
 			{
-				std::string hexValue = rawFileName.substr(i + 1, 2);
-				char decodedChar = static_cast<char>(std::stoi(hexValue, nullptr, 16));
+				std::string	hexValue = rawFileName.substr(i + 1, 2);
+				char		decodedChar = static_cast<char>(std::stoi(hexValue, nullptr, 16));
+				
 				decoded << decodedChar;
 				i += 2;
 			}
@@ -71,13 +73,13 @@ std::string	HttpHandler::_getFileName(const Request &req)
 		return decoded.str();
 	}
 	return "";
-	
 }
 
 bool HttpHandler::_isDownload(const Request &req)
 {
-	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
-	std::string location_uri = matchedLocation->getLocation();
+	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+	std::string						location_uri = matchedLocation->getLocation();
+	
 	if (location_uri != req.getPath())
 		return true;
 	return false;
@@ -87,7 +89,7 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 {
 	for (const auto &location : _serverBlock.getLocations())
 	{
-		if (path == location->getLocation()) // Match location prefix
+		if (path == location->getLocation())
 		{
 			const auto	&allowedMethods = location->getLimitExcept();
 			bool		isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end();
@@ -103,16 +105,6 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 	Response						response;
 	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
 
-	// for (const auto &location : _serverBlock.getLocations())
-	// {
-	// 	if (req.getPath() == location->getLocation())
-	// 	{
-	// 		matchedLocation = location;
-	// 		break;
-	// 	}
-	// }
-
-	// Use location-specific error pages if available
 	if (matchedLocation && matchedLocation->getErrorPages().count(statusCode))
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
@@ -125,7 +117,6 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 		return response;
 	}
 
-	// Use server block error pages if available
 	if (_serverBlock.getErrorPages().count(statusCode))
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
@@ -134,7 +125,6 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 		return response;
 	}
 
-	// Use default error pages as a fallback
 	if (_errorPages.count(statusCode))
 	{
 		response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
@@ -143,7 +133,6 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 		return response;
 	}
 
-	// If no error page is found, return a generic error response
 	response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " " + getStatusMessage(statusCode) + "\r\n");
 	response.setHeader("Content-Type", "text/html");
 	response.setBody("<html><body><h1>Error " + std::to_string(statusCode) + ": " + getStatusMessage(statusCode) + "</h1></body></html>");
@@ -186,31 +175,18 @@ Response	HttpHandler::handleRequest(const Request &req)
 		// if (validation != "Ok")
 		// 	return validation;
 		
-		std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
-		std::cout << "matched location: " << matchedLocation->getLocation() << std::endl;
+		std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
 
-		// for (const auto &location : _serverBlock.getLocations())
-		// {
-		// 	if (req.getPath() == location->getLocation())
-		// 	{
-		// 		matchedLocation = location;
-		// 		break;
-		// 	}
-		// }
-		std::cout << "req.getpath: " << req.getPath()<< std::endl;
 		if (!matchedLocation)
-			return getErrorPage(req, 404); // Not found
+			return getErrorPage(req, 404);
 
 		// if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty())
 		// 	return getErrorPage(req, 404); // Not found
 		
-		// Override root if location-specific root is defined
 		if (!matchedLocation->getAlias().empty())
-			// _rootDir = matchedLocation->getAlias();
 			_filePath = matchedLocation->getAlias();
 		else
 		{
-			///Nima changed this part. i added this eles: _filePath = matchedLocation->getUploadPath();
 			if (matchedLocation->getUploadPath().empty())
 				_filePath = _rootDir + req.getPath();
 			else
@@ -220,19 +196,11 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (!matchedLocation->getRoot().empty())
 			_rootDir = matchedLocation->getRoot();
 
-		// std::cout << "Root dir: " << _rootDir << std::endl;
-
-		// Override error pages if location-specific error pages are defined
 		if (!matchedLocation->getErrorPages().empty())
 			_errorPages = matchedLocation->getErrorPages();
 
-		// std::cout << "Error pages: " << std::endl;
-
-		// Handle client_max_body_size for the specific location
 		if (matchedLocation->getClientMaxBodySize() > 0)
-			_maxBodySize = matchedLocation->getClientMaxBodySize(); //maybe not needed
-		
-		// std::cout << "Max body size in Http Handler: " << _maxBodySize << std::endl;
+			_maxBodySize = matchedLocation->getClientMaxBodySize();
 
 		if (!matchedLocation->getReturn().second.empty())
 		{
@@ -244,44 +212,31 @@ Response	HttpHandler::handleRequest(const Request &req)
 			response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " Redirect" + "\r\n");
 			response.setHeader("Location", redirectPath + "\r\n");
 			response.setBody("Redirecting to " + redirectPath);
-			// response.setStatusLine("HTTP/1.1 " + std::to_string(matchedLocation->getReturn().first) + " Redirect" + "\r\n");
-			// response.setHeader("Location", matchedLocation->getReturn().second + "\r\n");
-			// response.setBody("Redirecting to " + matchedLocation->getReturn().second);
 			return response;
-			// return response.toString();
-		}
-
-		std::cout << "Upload path: " << matchedLocation->getUploadPath() << std::endl;		
+		}	
 
 		if (!matchedLocation->getUploadPath().empty())
 		{
-			// Handle file uploads logic (POST requests)
-			// std::filesystem::path	uploadPath = matchedLocation->getUploadPath(); // may need to be handled better
 			_uploadPath = matchedLocation->getUploadPath();
 			
 			if (!std::filesystem::exists(_uploadPath))
 				std::filesystem::create_directories(_uploadPath);
 
 			if (!std::filesystem::is_directory(_uploadPath))
-				return getErrorPage(req, 500); // Internal server error
+				return getErrorPage(req, 500);
 
-			// Test write by attempting to create a temporary file
 			std::ofstream	testFile((_uploadPath / "test.tmp").string());
 
 			if (!testFile.is_open())
-				// throw std::runtime_error("Upload path is not writable");
-				return getErrorPage(req, 500); // Internal server error
+				return getErrorPage(req, 500);
 
 			testFile.close();
 			std::filesystem::remove(_uploadPath / "test.tmp");
 		}
-		// std::cout << "Path: " << req.getPath() << std::endl;
-		// std::cout << "CGI Path: " << matchedLocation->getCgiPath() << std::endl;
 		if (!matchedLocation->getCgiPath().empty())
 			return handleCGI(req);
-		// std::cout << "Method: " << req.getMethod() << std::endl;
-		// std::cout << "before switch" << std::endl;
-		if (req.getMethod() == "GET" && _isDownload(req))
+
+		if (req.getMethod() == "GET" && _isDownload(req)) //adding another else if for root of uploads
 			return handleDownload(req);
 		else if (req.getMethod() == "GET")
 			return handleGET(req);
@@ -292,17 +247,16 @@ Response	HttpHandler::handleRequest(const Request &req)
 		else if (req.getMethod() == "DELETE")
 			return handleDELETE(req);
 
-		return getErrorPage(req, 405); // Method not allowed
+		return getErrorPage(req, 405);
 	}
 	catch(const SystemCallError &e)
 	{
-		return getErrorPage(req, 500); // Internal server error
+		return getErrorPage(req, 500);
 	}
 	catch (const std::runtime_error &e)
 	{
 		std::cout << "Error: " << e.what() << std::endl;
-		return getErrorPage(req, 405); // Method not allowed
-		// return e.what(); // Handle runtime errors (e.g., method not allowed)
+		return getErrorPage(req, 405);
 	}
 }
 
@@ -313,7 +267,7 @@ std::string HttpHandler::readFileError(std::string const &path)
 	if (!file.is_open())
 	{
 		std::cout << "Path: " << path << std::endl;
-		throw SystemCallError("Failed to open file"); //
+		throw SystemCallError("Failed to open file");
 	}
 	std::stringstream	read;
 
@@ -382,15 +336,13 @@ std::string getContentType(const std::string& extension)
 
 Response	HttpHandler::handleDownload(const Request &req)
 {
-	std::cout << "i am in download" << std::endl;
-	std::string fileName = "/" + _getFileName(req);
-	std::string extention = getFileextention(fileName);
-	std::string contentType = getContentType(extention);
-	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
-	std::string filePath = matchedLocation->getUploadPath() + fileName;
-	std::cout << "File path: " << filePath << std::endl;
-	Response	response;
-	int fd = open(filePath.c_str(), O_RDONLY);
+	std::string						fileName = "/" + _getFileName(req);
+	std::string						extention = getFileextention(fileName);
+	std::string						contentType = getContentType(extention);
+	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+	std::string						filePath = matchedLocation->getUploadPath() + fileName;
+	Response						response;
+	int								fd = open(filePath.c_str(), O_RDONLY);
 
 	if (fd == -1)
 	{
@@ -406,7 +358,6 @@ Response	HttpHandler::handleDownload(const Request &req)
 		char		buffer[1024];
 		std::string	content;
 		ssize_t		bytesRead;
-	
 
 		while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
 			content.append(buffer, bytesRead);
@@ -421,7 +372,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 	}
 	catch (const SystemCallError &e)
 	{
-		return getErrorPage(req, 500); // Internal server error
+		return getErrorPage(req, 500);
 	}
 	return response;
 }
@@ -430,55 +381,21 @@ Response	HttpHandler::handleGET(const Request &req)
 {
 	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 
-	// for (const auto &location : _serverBlock.getLocations())
-	// {
-	// 	if (req.getPath() == location->getLocation())
-	// 	{
-	// 		matchedLocation = location;
-	// 		break;
-	// 	}
-	// }
-
 	if (!matchedLocation->getIndex().empty())
 	{
-		// std::string	indexFilePath = _rootDir + req.getPath() + matchedLocation->getIndex();
 		std::string	indexFilePath = _filePath + matchedLocation->getIndex();
-		// std::cout << "Matchedlocation.alias: " << matchedLocation->getAlias() << std::endl;
-		// std::cout << "Index file path: " << indexFilePath << std::endl;
+
 		if (std::filesystem::exists(indexFilePath)
 			&& std::filesystem::is_regular_file(indexFilePath))
 			return handleFileRequest(req, indexFilePath); //maybe just in index requested location
 	}
 
-	// std::string	filePath = _rootDir + req.getPath();
-	// std::string	filePath;
-
-	// if (!matchedLocation->getAlias().empty())
-	// 	filePath = matchedLocation->getAlias();
-	// else
-	// 	filePath = _rootDir + req.getPath();
-	// std::cout << "File path: " << _filePath << std::endl;
 	Response	response;
 
-	std::cout << "File path: " << _filePath << std::endl;
-	// Check if the path is a directory
 	if (std::filesystem::is_directory(_filePath))
 	{
-		std::cout << "It is a directory" << std::endl;
-		// std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
-
-		// for (const auto &location : _serverBlock.getLocations())
-		// {
-		// 	if (req.getPath() == location->getLocation())
-		// 	{
-		// 		matchedLocation = location;
-		// 		break;
-		// 	}
-		// }
-
 		if (matchedLocation->getAutoindex())
 		{
-			std::cout << "Autoindex is on" << std::endl;
 			std::ostringstream	directoryListing;
 
 			directoryListing << "<html><body><h1>Index of " << req.getPath() << "</h1><ul>";
@@ -494,14 +411,12 @@ Response	HttpHandler::handleGET(const Request &req)
 			response.setHeader("Content-Type", "text/html");
 			
 			return response;
-			// return response.toString();
 		}
 	}
 
 	return handleFileRequest(req, _filePath);
 }
 
-// Adding a helper function for file requests
 Response	HttpHandler::handleFileRequest(const Request &req, const std::string &filePath)
 {
 	Response	response;
@@ -533,37 +448,25 @@ Response	HttpHandler::handleFileRequest(const Request &req, const std::string &f
 		response.setHeader("Content-Type", "text/html");
 		response.setHeader("Content-Length", std::to_string(content.size()) + "\r\n");
 		return response;
-		// return response.toString();
 	}
 
 	catch (const SystemCallError &e)
 	{
 		if (close(fd) == -1)
 			handleError("close file descriptor");
-		// throw;
-		return getErrorPage(req, 500); // Internal server error
+		return getErrorPage(req, 500);
 	}
 }
 
 Response	HttpHandler::handlePOST(const Request &req)
 {
-	std::cout << "Handling POST" << std::endl;
 	std::string	contentType = req.getHeader("Content-Type");
 	Response	response;
 
 	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
 
-	// for (const auto &location : _serverBlock.getLocations())
-	// {
-	// 	if (req.getPath() == location->getLocation())
-	// 	{
-	// 		matchedLocation = location;
-	// 		break;
-	// 	}
-	// }
-
 	if (!matchedLocation)
-		return getErrorPage(req, 404); // Not found
+		return getErrorPage(req, 404);
 
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
@@ -606,7 +509,6 @@ Response	HttpHandler::handlePOST(const Request &req)
 		std::cout << "File uploaded successfully" << std::endl;
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
 		response.setHeader("Content-Type", "multipart/form-data");
-		// response.setHeader("Content-Length", std::to_string(response.getBody().size()) + "\r\n");
 	}
 	else if (!req.getBody().empty())
 	{
@@ -623,7 +525,6 @@ Response	HttpHandler::handlePOST(const Request &req)
 		response.setBody("Empty body in POST request\n");
 	}
 	return response;
-	// return response.toString();
 }
 
 std::string	HttpHandler::extractFilename(const std::string& disposition)
@@ -632,7 +533,7 @@ std::string	HttpHandler::extractFilename(const std::string& disposition)
 
 	if (pos != std::string::npos)
 	{
-		std::string	filename = disposition.substr(pos + 10); // Skip "filename=\""
+		std::string	filename = disposition.substr(pos + 10);
 		size_t		endPos = filename.find('"');
 
 		return filename.substr(0, endPos);
@@ -654,11 +555,6 @@ Response	HttpHandler::handleOPTIONS(const Request &req)
 	Response	response;
 
 	response.setStatusLine("HTTP/1.1 204 " + getStatusMessage(204) + "\r\n");
-	// response.setHeader("Access-Control-Allow-Origin", "*");
-	// response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-	// response.setHeader("Access-Control-Allow-Headers", "Content-Type");
-	// response.setHeader("Access-Control-Max-Age", "86400");
-	// response.setHeader("Content-Length", "0\r\n");
 	return response;
 }
 
@@ -666,47 +562,33 @@ Response	HttpHandler::handleOPTIONS(const Request &req)
 
 Response	HttpHandler::handleDELETE(const Request &req)
 {
-	// std::string filePath = _uploadPath.c_str() + req.getPath();
 	std::string fileName = "/" + _getFileName(req);
 	if (fileName.empty())
 		return getErrorPage(req, 404);
-	std::string filePath = _uploadPath.c_str() + fileName;
-	std::cout << "File name: " << fileName << std::endl;
-	std::cout << "File path: " << filePath << std::endl;
-	// _uploadPath = filePath;
-	std::filesystem::path path(filePath);
-	(void)req;
-	Response	response;
-
-	std::cout << "Handling DELETE" << std::endl;
-	// _filePath = _uploadPath + req.getPath(); // make it correct so does not needed to be here
-	std::cout << "File path: " << filePath << std::endl;
+	std::string				filePath = _uploadPath.c_str() + fileName;
+	std::filesystem::path	path(filePath);
+	Response				response;
 	
 	if (std::filesystem::remove(path) == 0)
 	{
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
-		// response.setHeader("Content-Length", "0\r\n");
 		response.setBody("File deleted successfully\n");
 	}
 	else if (errno == EACCES)
 	{
 		response.setStatusLine("HTTP/1.1 403 " + getStatusMessage(403) + "\r\n");
-		// response.setHeader("Content-Length", "0\r\n");
 		response.setBody("Permission denied\n");
 	}
 	else if (errno == ENOENT)
 	{
 		response.setStatusLine("HTTP/1.1 404 " + getStatusMessage(404) + "\r\n");
-		// response.setHeader("Content-Length", "0\r\n");
 		response.setBody("File not found\n");
 	}
 	return response;
-	// return response.toString();
 }
 
 Response HttpHandler::handleCGI(const Request &req)
 {
-	// std::cout << "Handling CGI" << std::endl;
 	try
 	{
 		return _cgiHandler.execute(req);
@@ -716,13 +598,10 @@ Response HttpHandler::handleCGI(const Request &req)
 		std::cerr << e.what() << '\n';
 		return getErrorPage(req, 500);
 	}
-	
-	// return _cgiHandler.execute(req);
 }
 
 std::string	HttpHandler::getStatusMessage(int statusCode)
 {
-	    // Map of status codes to their messages
     static const std::unordered_map<int, std::string>	statusMessages = {
         {100, "Continue"},
         {101, "Switching Protocols"},
@@ -772,7 +651,6 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
         {505, "HTTP Version Not Supported"}
     };
 
-    // Find the status code in the map and return the corresponding message
     auto	it = statusMessages.find(statusCode);
 
     if (it != statusMessages.end())
@@ -783,19 +661,8 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 
 size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)
 {
-	// std::cout << "Max body size in Http Handler own method: " << _maxBodySize << std::endl;
 	Request							req(request, errorStatus);
 	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
-
-	// for (const auto &location : _serverBlock.getLocations())
-	// {
-	// 	// if (req.getPath().find(location->getLocation()) == 0)
-	// 	if (req.getPath() == location->getLocation())
-	// 	{
-	// 		matchedLocation = location;
-	// 		break;
-	// 	}
-	// }
 
 	if (!matchedLocation)
 	{
