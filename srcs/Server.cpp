@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/28 13:54:28 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/29 12:23:33 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,9 +155,24 @@ void Server::closeClientSocket(int index)
 	{
 		if (_clients[index].fd != -1 && index < MAX_CONNECTIONS && index >= 0)
 		{
-			removeEpoll(_clients[index].fd);
-			close(_clients[index].fd);
-			_clients[index].fd = -1;
+			_clients[index].status = DISCONNECTED;
+			try
+			{
+				removeEpoll(_clients[index].fd);
+			}
+			catch(const std::exception& e)
+			{
+				std::string error1 = "Failed remove client fd from epoll " + std::to_string(index + 1) + " : ";
+				std::string error2 = e.what();
+				_clients[index].logError(error1 + error2);
+			}
+			
+			
+			if (_clients[index].fd != -1)
+			{
+				close(_clients[index].fd);
+				_clients[index].fd = -1;
+			}
 			if (_clients[index].pid != -1)
 			{
 				waitpid(_clients[index].pid, 0, 0);
@@ -165,7 +180,16 @@ void Server::closeClientSocket(int index)
 			}
 			if (_clients[index].pipe[0] != -1)
 			{
-				removeEpoll(_clients[index].pipe[0]);
+				try
+				{
+					removeEpoll(_clients[index].pipe[0]);
+				}
+				catch (const std::exception& e)
+				{
+					std::string error1 = "Failed to remove pipe from epoll " + std::to_string(index + 1) + " : ";
+					std::string error2 = e.what();
+					_clients[index].logError(error1 + error2);
+				}
 				close(_clients[index].pipe[0]);
 				_clients[index].pipe[0] = -1;
 			}
@@ -186,7 +210,6 @@ void Server::closeClientSocket(int index)
 			_clients[index].pipeEventData.index = -1;
 			_clients[index].errorStatus = 0;
 			--_num_clients;
-			_clients[index].status = DISCONNECTED;
 		}
 	}
 	catch(const std::exception& e)
