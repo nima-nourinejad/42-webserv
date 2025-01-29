@@ -16,7 +16,7 @@ def wait_and_print():
     print("This is printed after 15 seconds!")
 
 # Call the function
-wait_and_print()
+# wait_and_print()
 
 # HTML Template
 HTML_TEMPLATE = """

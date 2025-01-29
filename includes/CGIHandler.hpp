@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/29 14:46:18 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/29 15:09:24 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ class HttpHandler;
 class CGIHandler
 {
 	private:
-		static constexpr int			TIMEOUT = 30;
+		static constexpr int			TIMEOUT = 60;
 		ServerBlock	_serverBlock;
 		pid_t		_pid;
 
