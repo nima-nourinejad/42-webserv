@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/28 19:17:59 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/29 13:38:49 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -209,10 +209,11 @@ void ClientConnection::createResponseParts()
 			responseParts.clear();
 			status = PREPARINGRESPONSE;
 			Request req(request, errorStatus);
-			bool cgi = (responseMaker->_findMatchedLocation(req) && !((responseMaker->_findMatchedLocation(req))->getCgiPath().empty()));
+			bool cgi = (!errorStatus && responseMaker->_findMatchedLocation(req) && !((responseMaker->_findMatchedLocation(req))->getCgiPath().empty()));
 			
 			if (!cgi)
 			{
+				std::cout << "It is not a CGI request" << std::endl;
 				std::string statusLine, rawHeader;
 				try
 				{
@@ -254,6 +255,7 @@ void ClientConnection::createResponseParts()
 			}
 			else
 			{
+				std::cout << "It is a CGI request" << std::endl;
 				pid = fork();
 				if (pid == -1)
 				{
@@ -284,6 +286,7 @@ void ClientConnection::createResponseParts()
 						body = response.getBody();
 						statusLine = response.getStatusLine();
 						rawHeader = response.getRawHeader();
+						std::cout << "This is in child process of fork which is already killed" << std::endl;
 					}
 					catch(const std::exception& e)
 					{
@@ -295,6 +298,7 @@ void ClientConnection::createResponseParts()
 						logError("Child process for creating response failed: " + errorMessage);
 					}
 					std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
+					std::cout << "I try to write to pipe" << std::endl;
 					write(pipe[1], fullMessage.c_str(), fullMessage.size());
 					close(pipe[1]);
 					exit(0);
@@ -398,7 +402,7 @@ void ClientConnection::readFromPipe()
 
 void ClientConnection::accumulateResponseParts()
 {
-	std::cout << "I got epollin on pipe I am accumulating response parts" << std::endl;
+	std::cout << "This is in accumulateResponseParts" << std::endl;
 	close(pipe[1]);
 	pipe[1] = -1;
 	readFromPipe();

@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/29 12:23:33 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/29 13:49:34 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -380,6 +380,43 @@ void Server::handleTimeouts()
 			if (_clients[i].getPassedTime() > TIMEOUT)
 				handleTimeout(i);
 		}
+		else if (_clients[i].status == PREPARINGRESPONSE)
+		{
+			if (_clients[i].getPassedTime() > PREPARE_RESPONSE_TIMEOUT)
+			{
+				std::cout << "Preparing response timeout activated" << std::endl;
+				if (_clients[i].pid != -1)
+				{
+					kill(_clients[i].pid, SIGKILL);
+					std::cout << "Killed child process" << std::endl;
+					waitpid(_clients[i].pid, 0, 0);
+					std::cout << "Waited for child process" << std::endl;
+					_clients[i].pid = -1;
+				}
+				if (_clients[i].pipe[0] != -1)
+				{
+					try
+					{
+						removeEpoll(_clients[i].pipe[0]);
+					}
+					catch (const std::exception& e)
+					{
+						std::string error1 = "Failed to remove pipe from epoll " + std::to_string(i + 1) + " : ";
+						std::string error2 = e.what();
+						_clients[i].logError(error1 + error2);
+					}
+					close(_clients[i].pipe[0]);
+					_clients[i].pipe[0] = -1;
+				}
+				if (_clients[i].pipe[1] != -1)
+				{
+					close(_clients[i].pipe[1]);
+					_clients[i].pipe[1] = -1;
+				}
+				_clients[i].errorStatus = 504;
+				_clients[i].status = RECEIVED;
+			}
+		}
 	}
 }
 
@@ -397,6 +434,7 @@ void Server::prepareResponses()
 				try
 				{
 					addEpoll(_clients[i].pipe[0], i + MAX_CONNECTIONS + 1);
+					_clients[i].setCurrentTime();
 					_clients[i].createResponseParts();
 				}
 				catch(const std::exception& e)
@@ -469,13 +507,34 @@ void Server::handleClientEvents(struct epoll_event const & event)
 			int pipe_read_fd = _clients[index].pipe[0];
 			if (pipe_read_fd != -1)
 			{
-				removeEpoll(pipe_read_fd);
-				close(pipe_read_fd);
+				try
+				{
+					removeEpoll(pipe_read_fd);
+				}
+				catch(const std::exception& e)
+				{
+					std::string error1 = "Failed to remove pipe from epoll: ";
+					std::string error2 = e.what();
+					_clients[index].logError(error1 + error2);
+				}
+				
+				try
+				{
+					close(pipe_read_fd);
+				}
+				catch(const std::exception& e)
+				{
+					std::string error1 = "Failed to close pipe: ";
+					std::string error2 = e.what();
+					_clients[index].logError(error1 + error2);
+				}
+				
+				
 				_clients[index].pipe[0] = -1;
 			}
 			sendResponseParts(getClientIndex(event));
 		}
-		else if (getClientStatus(event) == FAILSENDING &&(event.events & EPOLLOUT))
+		else if (getClientStatus(event) == FAILSENDING && (event.events & EPOLLOUT))
 			sendResponseParts(getClientIndex(event));
 	}
 }
