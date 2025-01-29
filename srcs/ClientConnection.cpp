@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/28 19:17:59 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/29 14:43:20 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -209,7 +209,7 @@ void ClientConnection::createResponseParts()
 			responseParts.clear();
 			status = PREPARINGRESPONSE;
 			Request req(request, errorStatus);
-			bool cgi = (responseMaker->_findMatchedLocation(req) && !((responseMaker->_findMatchedLocation(req))->getCgiPath().empty()));
+			bool cgi = (!errorStatus && responseMaker->_findMatchedLocation(req) && !((responseMaker->_findMatchedLocation(req))->getCgiPath().empty()));
 			
 			if (!cgi)
 			{
@@ -398,7 +398,6 @@ void ClientConnection::readFromPipe()
 
 void ClientConnection::accumulateResponseParts()
 {
-	std::cout << "I got epollin on pipe I am accumulating response parts" << std::endl;
 	close(pipe[1]);
 	pipe[1] = -1;
 	readFromPipe();

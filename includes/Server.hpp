@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/09 18:27:38 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/01/29 14:39:05 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class Server
 		// Constants
 		static constexpr int			MAX_CONNECTIONS = 5;
 		static constexpr int			BACKLOG =(2 * MAX_CONNECTIONS);
-		static constexpr int			TIMEOUT = 30;
+		static constexpr int			TIMEOUT = 10;
 		static constexpr int			MAX_RETRY = 5;
 		static constexpr int			TOTAL_EVENTS = 2 * MAX_CONNECTIONS + 1;
 
