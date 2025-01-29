@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/28 18:54:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/29 14:45:43 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -357,7 +357,6 @@ Response	HttpHandler::handleDownload(const Request &req)
 
 	try
 	{
-		std::cout << "File opened" << std::endl;
 		char		buffer[1024];
 		std::string	content;
 		ssize_t		bytesRead;
@@ -365,7 +364,6 @@ Response	HttpHandler::handleDownload(const Request &req)
 		while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
 			content.append(buffer, bytesRead);
 		
-		std::cout << "reading finished" << std::endl;
 		if (close(fd) == -1)
 			handleError("close file descriptor");
 
@@ -378,7 +376,6 @@ Response	HttpHandler::handleDownload(const Request &req)
 	{
 		return getErrorPage(req, 500);
 	}
-	std::cout << "done preapring" << std::endl;
 	return response;
 }
 
@@ -602,6 +599,11 @@ Response HttpHandler::handleCGI(const Request &req)
 	try
 	{
 		return _cgiHandler.execute(req);
+	}
+	catch (const std::runtime_error &e)
+	{
+		std::cerr << "CGI timeout error: " << e.what() << '\n';
+		return getErrorPage(req, 504);
 	}
 	catch(const std::exception& e)
 	{

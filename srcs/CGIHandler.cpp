@@ -6,11 +6,12 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/02 18:33:42 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/29 14:33:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "CGIHandler.hpp"
+#include <thread>
 
 CGIHandler::CGIHandler() : _pid(-1) {}
 
@@ -71,7 +72,7 @@ Response	CGIHandler::execute(const Request &req)
 
 		if (pipe(pipefd) == -1)
 			handleError("pipe");
-
+		std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 		// pid_t	pid = fork();
 		_pid = fork();
 		// std::cout << "pid: " << _pid << std::endl;
@@ -106,8 +107,23 @@ Response	CGIHandler::execute(const Request &req)
 
 			int	status;
 			// std::cout << "PID in parent: " << _pid << std::endl;
-			if (waitpid(_pid, &status, 0) == -1)
-				handleError("waitpid");
+			// if (waitpid(_pid, &status, 0) == -1)
+			// 	handleError("waitpid");
+			while (true)
+			{
+				pid_t result = waitpid(_pid, &status, WNOHANG);
+				if (result == _pid)
+					break;
+				std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - start_time;
+				if (std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() >= TIMEOUT) {
+					kill(_pid, SIGKILL);
+					waitpid(_pid, &status, 0);
+					close(pipefd[0]);
+					throw std::runtime_error("CGI script timed out");
+				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        	}
+			
 			// std::cout << "pid after waitpid: " << _pid << std::endl;
 
 			char				buffer[1024];

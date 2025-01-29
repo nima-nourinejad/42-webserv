@@ -12,8 +12,8 @@ cgitb.enable()
 import time
 
 def wait_and_print():
-    time.sleep(40)
-    print("This is printed after 40 seconds!")
+    time.sleep(15)
+    print("This is printed after 15 seconds!")
 
 # Call the function
 wait_and_print()
