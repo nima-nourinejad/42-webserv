@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/28 18:01:08 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/29 17:36:42 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,10 @@
 //add all the errors
 // remove all "auto"s
 
-//nima: A request to your server should never hang forever.
-// You can’t use fork for something else than CGI (like PHP, or Python, and so forth).
+// For example, check how does server_name work.
+// We’ve shared with you a small tester. It’s not mandatory to pass it
+// if everything works fine with your browser and tests, but it can help
+// you hunt some bugs.
 
 #include "Server.hpp"
 
