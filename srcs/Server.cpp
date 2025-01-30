@@ -6,27 +6,11 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/29 15:29:44 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 16:43:39 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
-
-// Server::Server(ServerBlock & serverBlock)
-//     : _socket_fd(-1), _fd_epoll(-1), _config(serverBlock.getListen(),
-// 	serverBlock.getHost(), serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
-// 	, _responseMaker(serverBlock)
-// {
-	
-// 	applyCustomSignal();
-// 	createEpoll();
-// 	startListeningSocket();
-// 	eventData.type = LISTENING;
-// 	eventData.index = MAX_CONNECTIONS;
-// 	eventData.fd = -1;
-	
-// 	createClientConnections(serverBlock);
-// };
 
 Server::Server(ServerBlock & serverBlock, int port)
     : _socket_fd(-1), _fd_epoll(-1), _config(port, serverBlock.getHost(), serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
@@ -274,6 +258,7 @@ void Server::sendResponseParts(int index)
 					{
 						printMessage("Client " + std::to_string(index + 1) + " requested to keep connection alive. Waiting for a new request");
 						_clients[index].request.clear();
+						_clients[index].isCGI = false;
 						_clients[index].status = WAITFORREQUEST;
 						_clients[index].setCurrentTime();
 					}
@@ -389,22 +374,72 @@ void Server::prepareResponses()
 	{
 		if (_clients[i].status == RECEIVED)
 		{
-			int result = pipe(_clients[i].pipe);
-			if (result == -1)
-				_clients[i].setPlain500Response();
-			else
+			_clients[i].setCGI();
+			if (_clients[i].isCGI == false)
 			{
 				try
 				{
-					addEpoll(_clients[i].pipe[0], i + MAX_CONNECTIONS + 1);
-					_clients[i].setCurrentTime();
+					_clients[i].pipe[0] = -1;
+					_clients[i].pipe[1] = -1;
 					_clients[i].createResponseParts();
 				}
 				catch(const std::exception& e)
 				{
-					_clients[i].setPlain500Response();
-					close(_clients[i].pipe[0]);
-					close(_clients[i].pipe[1]);
+					_clients[i].errorStatus = 500;
+					_clients[i].status = RECEIVED;
+					_clients[i].logError("Failed to create non CGI response parts: " + std::string(e.what()));
+				}
+				
+				
+			}
+			else
+			{
+				int result = pipe(_clients[i].pipe);
+				if (result == -1)
+				{
+					_clients[i].errorStatus = 500;
+					_clients[i].status = RECEIVED;
+					_clients[i].pipe[0] = -1;
+					_clients[i].pipe[1] = -1;
+					_clients[i].logError("Failed to create pipe");
+				}
+				else
+				{
+					try
+					{
+						addEpoll(_clients[i].pipe[0], i + MAX_CONNECTIONS + 1);
+						_clients[i].createResponseParts();
+					}
+					catch(const std::exception& e)
+					{
+						_clients[i].logError("Failed to create CGI response parts or add the pipe to epoll: " + std::string(e.what()));
+						_clients[i].errorStatus = 500;
+						_clients[i].status = RECEIVED;
+						if (_clients[i].pipe[0] != -1)
+						{
+							try
+							{
+								removeEpoll(_clients[i].pipe[0]);
+							}
+							catch(const std::exception& e)
+							{
+								_clients[i].logError("Failed to remove pipe from epoll after failure of creating CGI response: " + std::string(e.what()));
+							}
+							close(_clients[i].pipe[0]);
+							_clients[i].pipe[0] = -1;
+						}
+						if (_clients[i].pipe[1] != -1)
+						{
+							close(_clients[i].pipe[1]);
+							_clients[i].pipe[1] = -1;
+						}
+						if(_clients[i].pid != -1)
+						{
+							kill(_clients[i].pid, SIGKILL);
+							waitpid(_clients[i].pid, 0, 0);
+							_clients[i].pid = -1;
+						}
+					}
 				}
 			}
 		}
@@ -981,3 +1016,5 @@ void Server::sendServerError(int fd)
 	}
 	close(fd);
 }
+
+

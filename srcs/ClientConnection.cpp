@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 13:27:07 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/30 16:20:12 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
 
 ClientConnection::ClientConnection()
-    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(0),responseMaker(nullptr), pid(-1), errorStatus(0)
+    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(0),responseMaker(nullptr), pipe{ -1, -1 }, pid(-1), errorStatus(0), isCGI(false)
 	{
 		eventData.type = CLIENT;
 		eventData.fd = -1;
@@ -207,11 +207,8 @@ void ClientConnection::createResponseParts()
 		if (status == RECEIVED)
 		{
 			responseParts.clear();
-			status = PREPARINGRESPONSE;
-			Request req(request, errorStatus);
-			bool cgi = (!errorStatus && responseMaker->findMatchedLocation(req) && !((responseMaker->findMatchedLocation(req))->getCgiPath().empty()));
-			
-			if (!cgi)
+			status = PREPARINGRESPONSE;			
+			if (!isCGI)
 			{
 				std::string statusLine, rawHeader;
 				try
@@ -238,8 +235,6 @@ void ClientConnection::createResponseParts()
 					std::string errorMessage = e.what();
 					logError("Child process for creating response failed: " + errorMessage);
 				}
-				close(pipe[1]);
-				pipe[1] = -1;
 				connectionType();
 				std::string connection;
 				if (keepAlive)
@@ -273,14 +268,7 @@ void ClientConnection::createResponseParts()
 						maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
 						
 						Response	response;
-						if (!errorStatus)
-							response = responseMaker->createResponse(request);
-						else
-						{
-							Request		req(request, errorStatus);
-							
-							response = responseMaker->getErrorPage(req, errorStatus);
-						}
+						response = responseMaker->createResponse(request);
 						body = response.getBody();
 						statusLine = response.getStatusLine();
 						rawHeader = response.getRawHeader();
@@ -459,4 +447,10 @@ void ClientConnection::checkRequestSize()
 {
 	if (request.size() > MAX_REQUEST_SIZE)
 		changeRequestToBadRequest();
+}
+
+void ClientConnection::setCGI()
+{
+	Request req(request, errorStatus);
+	isCGI= (!errorStatus && responseMaker->findMatchedLocation(req) && !((responseMaker->findMatchedLocation(req))->getCgiPath().empty()));
 }
