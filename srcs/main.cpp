@@ -3,16 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/29 17:36:42 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 14:13:51 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 //if node script run with pdf after stucking in the middle of the pdf if close the script the server will shutdown
 
-//add all the errors
 // remove all "auto"s
 
 // For example, check how does server_name work.
@@ -35,22 +34,22 @@ bool sigInt(std::vector<std::unique_ptr<Server>> const & servers)
 int main(int argc, char **argv)
 {
 	
-	std::string configPath;
+	std::string	configPath;
+
 	if (argc > 2)
 	{
 		std::cerr << "Error: too many arguments" << std::endl;
 		return 1;
 	}
-	//Double check below with the subject
+
 	if (argc ==1)
 		configPath = "config/config.conf";
 	else
 		configPath = argv[1];
 	
-	ConfigParser config;
+	ConfigParser 	config;
+	std::ifstream	file(configPath.c_str());
 
-	// std::ifstream file("config/webserv.conf");
-	std::ifstream file(configPath.c_str());
 	if (!file.is_open())
 	{
 		std::cerr << "Error: could not open file" << std::endl;
@@ -68,17 +67,12 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	// std::cout << "Successfully parsed config" << std::endl;
-	// config.printServerConfig();
-
-	// Creating servers
 	std::vector<std::unique_ptr<Server>>	servers;
 
 	for(std::size_t i = 0; (i < config.getServerBlocks().size() && !sigInt(servers)); i++)
 	{
 		try
 		{
-			// servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i)));
 			for (unsigned int j = 0; j < config.getServerBlocks().at(i).getListen().size(); j++)
 			{
 				try
@@ -96,10 +90,10 @@ int main(int argc, char **argv)
 				catch(...)
 				{
 					Server::logError("Unknown exception during server creation for config block " + std::to_string(i + 1) + " and port " + std::to_string(config.getServerBlocks().at(i).getListen().at(j)));
-				}
-				
+				}				
 			}
 		}
+
 		catch(SocketException const & e)
 		{
 			e.log();
@@ -113,7 +107,7 @@ int main(int argc, char **argv)
 			Server::logError("Unknown exception during server creation for config block " + std::to_string(i + 1));
 		}
 	}
-	// Handling events
+
 	std::size_t	serverNum;
 
 	while (!sigInt(servers))
