@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/30 13:52:34 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/30 14:58:16 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig)
 	_errorPages[504] = "html/default_504.html";
 	_errorPages[505] = "html/default_505.html";
 
-	for (const auto &errorPage : serverConfig.getErrorPages())
+	for (const std::pair<const int, std::string> &errorPage : serverConfig.getErrorPages())
 		_errorPages[errorPage.first] = errorPage.second;
 }
 
@@ -55,7 +55,7 @@ std::shared_ptr<LocationBlock>	HttpHandler::findMatchedLocation(const Request &r
 	std::string						path;
 	std::shared_ptr<LocationBlock>	matchedLocation;
 	
-	for (const auto &location : _serverBlock.getLocations())
+	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
 	{
 		if (!location->getUploadPath().empty() && (req.getPath().length() > location->getLocation().length() && req.getPath().substr(0, location->getLocation().length()) == location->getLocation()))
 			path = location->getLocation();
@@ -110,14 +110,16 @@ bool HttpHandler::_isDownload(const Request &req)
 
 bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
 {
-	for (const auto &location : _serverBlock.getLocations())
+	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
 	{
 		if (path == location->getLocation())
 		{
-			const auto	&allowedMethods = location->getLimitExcept();
-			bool		isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method) != allowedMethods.end();
+			const std::vector<std::string>	&allowedMethods = location->getLimitExcept();
+			bool							isMethodAllowed = std::find(allowedMethods.begin(),
+																allowedMethods.end(), method)
+																!= allowedMethods.end();
 			
-			return (isMethodAllowed);
+			return isMethodAllowed;
 		}
 	}
 	return false;
@@ -169,7 +171,8 @@ std::string	HttpHandler::_validateRequest(const Request &req)
 
 	if (!_isMethodAllowed(method, path))
 		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
-	for (const auto &location : _serverBlock.getLocations())
+
+	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
 	{
 		if (req.getPath() == location->getLocation())
 		{
@@ -227,10 +230,10 @@ Response	HttpHandler::handleRequest(const Request &req)
 
 		if (!matchedLocation->getReturn().second.empty())
 		{
-			Response			response;
-			const auto			&redirectInfo = matchedLocation->getReturn();
-			int					statusCode = redirectInfo.first;
-			const std::string	&redirectPath = redirectInfo.second;
+			Response							response;
+			const std::pair<int, std::string>	&redirectInfo = matchedLocation->getReturn();
+			int									statusCode = redirectInfo.first;
+			const std::string					&redirectPath = redirectInfo.second;
 
 			response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " Redirect" + "\r\n");
 			response.setHeader("Location", redirectPath + "\r\n");
@@ -428,7 +431,7 @@ Response	HttpHandler::handleGET(const Request &req)
 			std::ostringstream	directoryListing;
 
 			directoryListing << "<html><body><h1>Index of " << req.getPath() << "</h1><ul>";
-			for (const auto &entry : std::filesystem::directory_iterator(_filePath))
+			for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(_filePath))
 			{
 				directoryListing << "<li><a href=\"" << entry.path().filename().string() << "\">";
 				directoryListing << entry.path().filename().string() << "</a></li>";
@@ -686,7 +689,7 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 		{505, "HTTP Version Not Supported"}
     };
 
-    auto	it = statusMessages.find(statusCode);
+	std::unordered_map<int, std::string>::const_iterator	it = statusMessages.find(statusCode);
 
     if (it != statusMessages.end())
         return it->second;

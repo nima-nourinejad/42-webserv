@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/08 13:29:51 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 15:01:27 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,8 +96,7 @@ const std::string	&Request::getHttpVersion() const { return _httpVersion; }
 
 const std::string	&Request::getHeader(const std::string &key) const
 {
-	// std::map<std::string, std::string>::const_iterator	it = _headers.find(key);
-	auto	it = _headers.find(key);
+	std::map<std::string, std::string>::const_iterator	it = _headers.find(key);
 	
 	static const std::string empty_str = "";
 	return (it != _headers.end() ? it->second : empty_str);

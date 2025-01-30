@@ -295,3 +295,4 @@ void LocationBlock::printLocationBlock()
 		}
 	}
 }
+

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2025/01/09 18:47:42 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/01/30 15:07:10 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,12 +165,12 @@ void ConfigParser::parseLocationBlock(size_t& index)
 	index++;
 	if (_tokens[index].type != TokenType::OPEN)
 		unexpectedToken(index);
-	auto location_block = std::make_shared<LocationBlock>(_tokens[index - 1].values[0]);
+	std::shared_ptr<LocationBlock>	location_block = std::make_shared<LocationBlock>(_tokens[index - 1].values[0]);
     _server_blocks.back().getLocations().push_back(location_block);
-	auto& current_location = *_server_blocks.back().getLocations().back();
+	LocationBlock& current_location = *_server_blocks.back().getLocations().back();
 	
     while (index < _tokens.size()) {
-        const auto& token = _tokens[index];
+		const Token& token = _tokens[index];
 
         if (token.type == TokenType::OPEN) {
             if (locationBlockOpened)
@@ -358,7 +358,7 @@ void ConfigParser::printServerConfig()
 		std::cout << "Client max body size: " << server.getClientMaxBodySize() << std::endl;
 		std::cout << "Host: " << server.getHost() << std::endl;
 		std::cout << "Error pages: " << std::endl;
-		for (const auto& page : server.getErrorPages())
+		for (const std::pair<const int, std::string>& page : server.getErrorPages())
 		{
 			std::cout << page.first << " " << page.second << " " << std::endl;
 		}

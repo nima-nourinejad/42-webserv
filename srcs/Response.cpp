@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:26:33 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/27 14:34:08 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 15:00:35 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,10 +58,10 @@ std::string	Response::getRawHeader() const
 {
 	std::ostringstream	header;
 
-	for (const auto &pair : _headers)
+	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 	{
-		if (pair.first != "Content-Length")
-			header << pair.first << ": " << pair.second << "\r\n";
+		if (it->first != "Content-Length")
+			header << it->first << ": " << it->second << "\r\n";
 	}
 	header << "Access-Control-Allow-Credentials: *" << "\r\n";
 	header << "Access-Control-Allow-Origin: *" << "\r\n";
@@ -74,15 +74,13 @@ std::string	Response::getRawHeader() const
 
 std::string	Response::getBody() const { return _body; }
 
-// size_t	Response::getMaxBodySize() const { return _maxBodySize; }
-
 std::string	Response::toString() const
 {
 	std::ostringstream	response;
 
 	response << _statusLine << "\r\n";
-	for (const auto &header : _headers)
-		response << header.first << ": " << header.second << "\r\n";
+	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+		response << it->first << ": " << it->second << "\r\n";
 	response << "\r\n" << _body;
 	return response.str();
 }

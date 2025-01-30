@@ -6,13 +6,12 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 14:13:51 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/30 15:10:28 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-//if node script run with pdf after stucking in the middle of the pdf if close the script the server will shutdown
-
-// remove all "auto"s
+// if node script run with pdf after stucking in the middle of the pdf,
+// if close the script the server will shutdown
 
 // For example, check how does server_name work.
 // We’ve shared with you a small tester. It’s not mandatory to pass it
