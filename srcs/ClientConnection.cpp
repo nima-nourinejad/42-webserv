@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 16:20:12 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 17:00:31 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -252,7 +252,8 @@ void ClientConnection::createResponseParts()
 				pid = fork();
 				if (pid == -1)
 				{
-					close(pipe[1]);
+					if (pipe[1] != -1)
+						close(pipe[1]);
 					setPlain500Response();
 					logError("Failed to fork");
 					
@@ -262,7 +263,8 @@ void ClientConnection::createResponseParts()
 					std::string body, statusLine, rawHeader, maxBodySizeString;
 					try
 					{
-						close(pipe[0]);
+						if (pipe[0] != -1)
+							close(pipe[0]);
 						size_t		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
 						
 						maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
@@ -292,7 +294,8 @@ void ClientConnection::createResponseParts()
 	}
 	catch(const std::exception& e)
 	{
-		close(pipe[1]);
+		if (pipe[1] != -1)
+			close(pipe[1]);
 		setPlain500Response();
 		std::string errorMessage = e.what();
 		logError("Creating response failed: " + errorMessage);	
@@ -386,7 +389,8 @@ void ClientConnection::readFromPipe()
 
 void ClientConnection::accumulateResponseParts()
 {
-	close(pipe[1]);
+	if (pipe[1] != -1)
+		close(pipe[1]);
 	pipe[1] = -1;
 	readFromPipe();
 	if (pid != -1)

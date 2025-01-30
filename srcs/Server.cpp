@@ -6,20 +6,22 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 16:43:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 18:40:33 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
 Server::Server(ServerBlock & serverBlock, int port)
-    : _socket_fd(-1), _fd_epoll(-1), _config(port, serverBlock.getHost(), serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
-	, _responseMaker(serverBlock)
+    : _socket_fd(-1), _fd_epoll(-1), _config(port, serverBlock.getHost(),
+	serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
+	, _responseMaker(serverBlock), fd_num(0)
 {
 	
 	applyCustomSignal();
 	createEpoll();
 	startListeningSocket();
+	fd_num++;
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
@@ -79,6 +81,8 @@ void Server::handlePendingConnections()
 		int availableSlot = findAvailableSlot();
 		if (availableSlot == -1)
 			throw SocketException("Failed to find available slot for client");
+		if ((fd_num + 1) > MAX_FD)
+			return;
 		int fd = accept(_socket_fd, nullptr, nullptr);
 		if (fd == -1)
 		{
@@ -91,6 +95,7 @@ void Server::handlePendingConnections()
 		}
 		else
 		{
+			fd_num++;
 			addEpoll(fd, availableSlot);
 			++_num_clients;
 			occupyClientSlot(availableSlot, fd);
@@ -100,7 +105,7 @@ void Server::handlePendingConnections()
 
 void Server::acceptClient()
 {
-	if (serverFull())
+	if ((fd_num + 1) >= MAX_FD || serverFull())
 	{
 		sendServiceUnavailable(_socket_fd);
 		return;
@@ -129,8 +134,10 @@ void Server::closeSocket()
 	eventData.fd = -1;
 	if (_fd_epoll != -1)
 		close(_fd_epoll);
+	fd_num--;
 	if (_socket_fd != -1)
 		close(_socket_fd);
+	fd_num--;
 }
 
 void Server::closeClientSocket(int index)
@@ -155,10 +162,12 @@ void Server::closeClientSocket(int index)
 			if (_clients[index].fd != -1)
 			{
 				close(_clients[index].fd);
+				fd_num--;
 				_clients[index].fd = -1;
 			}
 			if (_clients[index].pid != -1)
 			{
+				kill(_clients[index].pid, SIGKILL);
 				waitpid(_clients[index].pid, 0, 0);
 				_clients[index].pid = -1;
 			}
@@ -175,11 +184,13 @@ void Server::closeClientSocket(int index)
 					_clients[index].logError(error1 + error2);
 				}
 				close(_clients[index].pipe[0]);
+				fd_num--;
 				_clients[index].pipe[0] = -1;
 			}
 			if (_clients[index].pipe[1] != -1)
 			{
 				close(_clients[index].pipe[1]);
+				fd_num--;
 				_clients[index].pipe[1] = -1;
 			}
 			_clients[index].keepAlive = true;
@@ -394,6 +405,8 @@ void Server::prepareResponses()
 			}
 			else
 			{
+				if ((fd_num + 2) >= MAX_FD)
+					return;
 				int result = pipe(_clients[i].pipe);
 				if (result == -1)
 				{
@@ -401,10 +414,13 @@ void Server::prepareResponses()
 					_clients[i].status = RECEIVED;
 					_clients[i].pipe[0] = -1;
 					_clients[i].pipe[1] = -1;
-					_clients[i].logError("Failed to create pipe");
+					std::string error = "Failed to create pipe at fd_num: " + std::to_string(fd_num);
+					// std::string error = &"Failed to create pipe at fe_num: " + [fd_num];
+					_clients[i].logError(error);
 				}
 				else
 				{
+					fd_num+=2;
 					try
 					{
 						addEpoll(_clients[i].pipe[0], i + MAX_CONNECTIONS + 1);
@@ -426,11 +442,13 @@ void Server::prepareResponses()
 								_clients[i].logError("Failed to remove pipe from epoll after failure of creating CGI response: " + std::string(e.what()));
 							}
 							close(_clients[i].pipe[0]);
+							fd_num--;
 							_clients[i].pipe[0] = -1;
 						}
 						if (_clients[i].pipe[1] != -1)
 						{
 							close(_clients[i].pipe[1]);
+							fd_num--;
 							_clients[i].pipe[1] = -1;
 						}
 						if(_clients[i].pid != -1)
@@ -454,6 +472,7 @@ void Server::handleErr(struct epoll_event const & event)
 		removeEpoll(_socket_fd);
 		eventData.fd = -1;
 		close(_socket_fd);
+		fd_num--;
 		startListeningSocket();
 	}
 	else if (eventType(event) == CLIENT)
@@ -480,11 +499,13 @@ void Server::handleErr(struct epoll_event const & event)
 		{
 			removeEpoll(_clients[index].pipe[0]);
 			close(_clients[index].pipe[0]);
+			fd_num--;
 			_clients[index].pipe[0] = -1;
 		}
 		if (_clients[index].pipe[1] != -1)
 		{
 			close(_clients[index].pipe[1]);
+			fd_num--;
 			_clients[index].pipe[1] = -1;
 		}
 		
@@ -519,6 +540,7 @@ void Server::handleClientEvents(struct epoll_event const & event)
 				try
 				{
 					close(pipe_read_fd);
+					fd_num=-2;
 				}
 				catch(const std::exception& e)
 				{
@@ -585,6 +607,7 @@ void Server::handlePipeEvents(struct epoll_event const & event)
 					{
 						removeEpoll(_clients[index].pipe[0]);
 						close(_clients[index].pipe[0]);
+						fd_num--;
 						_clients[index].pipe[0] = -1;
 					}
 				}
@@ -601,6 +624,7 @@ void Server::handlePipeEvents(struct epoll_event const & event)
 					if (_clients[index].pipe[1] != -1)
 					{
 						close(_clients[index].pipe[1]);
+						fd_num--;
 						_clients[index].pipe[1] = -1;
 					}
 				}
@@ -809,6 +833,7 @@ volatile sig_atomic_t Server::signal_status = 0;
 void Server::createEpoll()
 {
 	_fd_epoll = epoll_create1(0);
+	fd_num++;
 	if (_fd_epoll == -1)
 		throw SocketException("Failed to create epoll");
 }
@@ -859,6 +884,7 @@ void Server::startListeningSocket()
 			if (_socket_fd != -1)
 			{
 				close(_socket_fd);
+				fd_num--;
 				_socket_fd = -1;
 			}
 			++_retry;
@@ -869,6 +895,7 @@ void Server::startListeningSocket()
 		if (_socket_fd != -1)
 		{
 			close(_socket_fd);
+			fd_num--;
 			_socket_fd = -1;
 		}
 		throw SocketException("Failed to start listening socket");
@@ -908,8 +935,14 @@ void Server::printMessage(std::string const & message) const
 void Server::sendServiceUnavailable(int socket_fd)
 {
 	int temp_fd = accept(socket_fd, nullptr, nullptr);
+	fd_num++;
 	if (temp_fd == -1)
 		return;
+	if (fd_num > MAX_FD)
+	{
+		close(temp_fd);
+		return;
+	}
 	std::string statusLine = "HTTP/1.1 503 Service Unavailable\r\n";
 	std::string contentType = "Content-Type: text/plain\r\n";
 	std::string connection = "Connection: close\r\n";
@@ -960,6 +993,7 @@ void Server::sendServiceUnavailable(int socket_fd)
 			response.erase(response.begin());
 	}
 	close(temp_fd);
+	fd_num--;
 }
 
 
@@ -1015,6 +1049,7 @@ void Server::sendServerError(int fd)
 			response.erase(response.begin());
 	}
 	close(fd);
+	fd_num--;
 }
 
 
