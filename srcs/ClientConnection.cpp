@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/29 14:43:20 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 13:27:07 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -209,7 +209,7 @@ void ClientConnection::createResponseParts()
 			responseParts.clear();
 			status = PREPARINGRESPONSE;
 			Request req(request, errorStatus);
-			bool cgi = (!errorStatus && responseMaker->_findMatchedLocation(req) && !((responseMaker->_findMatchedLocation(req))->getCgiPath().empty()));
+			bool cgi = (!errorStatus && responseMaker->findMatchedLocation(req) && !((responseMaker->findMatchedLocation(req))->getCgiPath().empty()));
 			
 			if (!cgi)
 			{

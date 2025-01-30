@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/29 14:45:43 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 13:52:34 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,33 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig)
 	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0]->getRoot())
 	, _serverBlock(serverConfig), _maxBodySize(serverConfig.getClientMaxBodySize())
 {
-	//creating a default state of map
+	_errorPages[400] = "html/default_400.html";
+	_errorPages[401] = "html/default_401.html";
+	_errorPages[402] = "html/default_402.html";
+	_errorPages[403] = "html/default_403.html";
 	_errorPages[404] = "html/default_404.html";
+	_errorPages[405] = "html/default_405.html";
+	_errorPages[406] = "html/default_406.html";
+	_errorPages[407] = "html/default_407.html";
+	_errorPages[408] = "html/default_408.html";
+	_errorPages[409] = "html/default_409.html";
+	_errorPages[410] = "html/default_410.html";
+	_errorPages[411] = "html/default_411.html";
+	_errorPages[412] = "html/default_412.html";
+	_errorPages[413] = "html/default_413.html";
+	_errorPages[414] = "html/default_414.html";
+	_errorPages[415] = "html/default_415.html";
+	_errorPages[416] = "html/default_416.html";
+	_errorPages[417] = "html/default_417.html";
+	_errorPages[418] = "html/default_418.html";
+	_errorPages[422] = "html/default_422.html";
+	_errorPages[426] = "html/default_426.html";
 	_errorPages[500] = "html/default_500.html";
-	//more defaults needed
+	_errorPages[501] = "html/default_501.html";
+	_errorPages[502] = "html/default_502.html";
+	_errorPages[503] = "html/default_503.html";
+	_errorPages[504] = "html/default_504.html";
+	_errorPages[505] = "html/default_505.html";
 
 	for (const auto &errorPage : serverConfig.getErrorPages())
 		_errorPages[errorPage.first] = errorPage.second;
@@ -27,7 +50,7 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig)
 
 HttpHandler::~HttpHandler() {}
 
-std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &req)
+std::shared_ptr<LocationBlock>	HttpHandler::findMatchedLocation(const Request &req)
 {
 	std::string						path;
 	std::shared_ptr<LocationBlock>	matchedLocation;
@@ -49,7 +72,7 @@ std::shared_ptr<LocationBlock>	HttpHandler::_findMatchedLocation(const Request &
 
 std::string	HttpHandler::_getFileName(const Request &req)
 {
-	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 	std::string						location_uri = matchedLocation->getLocation();
 	
 	if (location_uri != req.getPath())
@@ -77,7 +100,7 @@ std::string	HttpHandler::_getFileName(const Request &req)
 
 bool HttpHandler::_isDownload(const Request &req)
 {
-	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 	std::string						location_uri = matchedLocation->getLocation();
 	
 	if (location_uri != req.getPath())
@@ -103,7 +126,7 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 {
 	Response						response;
-	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
 	if (matchedLocation && matchedLocation->getErrorPages().count(statusCode))
 	{
@@ -175,7 +198,7 @@ Response	HttpHandler::handleRequest(const Request &req)
 		// if (validation != "Ok")
 		// 	return validation;
 		
-		std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+		std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
 		if (!matchedLocation)
 			return getErrorPage(req, 404);
@@ -342,7 +365,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 	std::string						finalFile = "/" + _getFileName(req);
 	std::string						extention = getFileextention(fileName);
 	std::string						contentType = getContentType(extention);
-	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 	std::string						filePath = matchedLocation->getUploadPath() + finalFile;
 	Response						response;
 	int								fd = open(filePath.c_str(), O_RDONLY);
@@ -381,7 +404,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 
 Response	HttpHandler::handleGET(const Request &req)
 {
-	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
+	std::shared_ptr<LocationBlock> matchedLocation = findMatchedLocation(req);
 
 	if (!matchedLocation->getIndex().empty())
 	{
@@ -469,7 +492,7 @@ Response	HttpHandler::handlePOST(const Request &req)
 	std::string	contentType = req.getHeader("Content-Type");
 	Response	response;
 
-	std::shared_ptr<LocationBlock> matchedLocation = _findMatchedLocation(req);
+	std::shared_ptr<LocationBlock> matchedLocation = findMatchedLocation(req);
 
 	if (!matchedLocation)
 		return getErrorPage(req, 404);
@@ -614,53 +637,53 @@ Response HttpHandler::handleCGI(const Request &req)
 
 std::string	HttpHandler::getStatusMessage(int statusCode)
 {
-    static const std::unordered_map<int, std::string>	statusMessages = {
-        {100, "Continue"},
-        {101, "Switching Protocols"},
-        {102, "Processing"},
-        {200, "OK"},
-        {201, "Created"},
-        {202, "Accepted"},
-        {203, "Non-Authoritative Information"},
-        {204, "No Content"},
-        {205, "Reset Content"},
-        {206, "Partial Content"},
-        {207, "Multi-Status"},
-        {300, "Multiple Choices"},
-        {301, "Moved Permanently"},
-        {302, "Found"},
-        {303, "See Other"},
-        {304, "Not Modified"},
-        {305, "Use Proxy"},
-        {307, "Temporary Redirect"},
-        {308, "Permanent Redirect"},
-        {400, "Bad Request"},
-        {401, "Unauthorized"},
-        {402, "Payment Required"},
-        {403, "Forbidden"},
-        {404, "Not Found"},
-        {405, "Method Not Allowed"},
-        {406, "Not Acceptable"},
-        {407, "Proxy Authentication Required"},
-        {408, "Request Timeout"},
-        {409, "Conflict"},
-        {410, "Gone"},
-        {411, "Length Required"},
-        {412, "Precondition Failed"},
-        {413, "Payload Too Large"},
-        {414, "URI Too Long"},
-        {415, "Unsupported Media Type"},
-        {416, "Range Not Satisfiable"},
-        {417, "Expectation Failed"},
-        {418, "I'm a teapot"}, // Easter egg from RFC 2324
-        {422, "Unprocessable Entity"},
-        {426, "Upgrade Required"},
-        {500, "Internal Server Error"},
-        {501, "Not Implemented"},
-        {502, "Bad Gateway"},
-        {503, "Service Unavailable"},
-        {504, "Gateway Timeout"},
-        {505, "HTTP Version Not Supported"}
+	static const std::unordered_map<int, std::string>	statusMessages = {
+		{100, "Continue"},
+		{101, "Switching Protocols"},
+		{102, "Processing"},
+		{200, "OK"},
+		{201, "Created"},
+		{202, "Accepted"},
+		{203, "Non-Authoritative Information"},
+		{204, "No Content"},
+		{205, "Reset Content"},
+		{206, "Partial Content"},
+		{207, "Multi-Status"},
+		{300, "Multiple Choices"},
+		{301, "Moved Permanently"},
+		{302, "Found"},
+		{303, "See Other"},
+		{304, "Not Modified"},
+		{305, "Use Proxy"},
+		{307, "Temporary Redirect"},
+		{308, "Permanent Redirect"},
+		{400, "Bad Request"},
+		{401, "Unauthorized"},
+		{402, "Payment Required"},
+		{403, "Forbidden"},
+		{404, "Not Found"},
+		{405, "Method Not Allowed"},
+		{406, "Not Acceptable"},
+		{407, "Proxy Authentication Required"},
+		{408, "Request Timeout"},
+		{409, "Conflict"},
+		{410, "Gone"},
+		{411, "Length Required"},
+		{412, "Precondition Failed"},
+		{413, "Payload Too Large"},
+		{414, "URI Too Long"},
+		{415, "Unsupported Media Type"},
+		{416, "Range Not Satisfiable"},
+		{417, "Expectation Failed"},
+		{418, "I'm a teapot"}, // Easter egg from RFC 2324
+		{422, "Unprocessable Entity"},
+		{426, "Upgrade Required"},
+		{500, "Internal Server Error"},
+		{501, "Not Implemented"},
+		{502, "Bad Gateway"},
+		{503, "Service Unavailable"},
+		{504, "Gateway Timeout"},
+		{505, "HTTP Version Not Supported"}
     };
 
     auto	it = statusMessages.find(statusCode);
@@ -674,7 +697,7 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)
 {
 	Request							req(request, errorStatus);
-	std::shared_ptr<LocationBlock>	matchedLocation = _findMatchedLocation(req);
+	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
 	if (!matchedLocation)
 	{

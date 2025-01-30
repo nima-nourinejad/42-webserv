@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/28 18:34:49 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 13:51:45 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,21 +32,18 @@ class HttpHandler
 		CGIHandler						_cgiHandler;
 		std::string						_rootDir;
 		ServerBlock						_serverBlock;
-		// last one might be better to be const, then
-		// getlocations function in serverblock needs to change too
 		std::map<int, std::string>		_errorPages;
-		size_t							_maxBodySize; // maybe not needed
+		size_t							_maxBodySize;
 		std::string						_filePath;
 		std::filesystem::path			_uploadPath;
 
 		bool							_isMethodAllowed(const std::string &method, const std::string &path);
 		std::string						_validateRequest(const Request &req);
-		// std::shared_ptr<LocationBlock>	_findMatchedLocation(const Request &req);
 		std::string						_getFileName(const Request &req);
 		bool							_isDownload(const Request &req);
 
 	public:
-		HttpHandler(ServerBlock &serverConfig); //if serverblock became const, here too
+		HttpHandler(ServerBlock &serverConfig);
 		~HttpHandler();
 
 		Response						createResponse(const std::string &request);
@@ -67,7 +64,7 @@ class HttpHandler
 		std::string						getStatusMessage(int statusCode);
 		size_t							getMaxBodySize(const std::string &request, int errorStatus);
 		ServerBlock						getServerBlock() const { return _serverBlock; } // maybe not needed
-		std::shared_ptr<LocationBlock>	_findMatchedLocation(const Request &req);
+		std::shared_ptr<LocationBlock>	findMatchedLocation(const Request &req);
 };
 
 #endif

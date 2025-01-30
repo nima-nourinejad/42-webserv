@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:52:42 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/29 15:09:24 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 13:30:47 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,23 +24,24 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <sstream>
+#include <thread>
 
 class HttpHandler;
 
 class CGIHandler
 {
 	private:
-		static constexpr int			TIMEOUT = 60;
-		ServerBlock	_serverBlock;
-		pid_t		_pid;
+		static constexpr int	TIMEOUT = 60;
+		ServerBlock				_serverBlock;
+		pid_t					_pid;
 
 	public:
 		CGIHandler();
 		CGIHandler(ServerBlock &serverConfig);
 		~CGIHandler();
 
-		pid_t		getPid() const { return _pid; } // maybe not needed
-		Response	execute(const Request &req);
+		pid_t					getPid() const;
+		Response				execute(const Request &req);
 };
 
 
