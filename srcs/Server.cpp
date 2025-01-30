@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 18:40:33 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 19:15:24 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,11 +78,16 @@ void Server::handlePendingConnections()
 {
 	while (true)
 	{
+		if ((fd_num + 1) > MAX_FD)
+			return;
+		if (serverFull())
+		{
+			sendServiceUnavailable(_socket_fd);
+			return;
+		}
 		int availableSlot = findAvailableSlot();
 		if (availableSlot == -1)
 			throw SocketException("Failed to find available slot for client");
-		if ((fd_num + 1) > MAX_FD)
-			return;
 		int fd = accept(_socket_fd, nullptr, nullptr);
 		if (fd == -1)
 		{
@@ -105,7 +110,10 @@ void Server::handlePendingConnections()
 
 void Server::acceptClient()
 {
-	if ((fd_num + 1) >= MAX_FD || serverFull())
+
+	if ((fd_num + 1) > MAX_FD)
+		return;
+	if (serverFull())
 	{
 		sendServiceUnavailable(_socket_fd);
 		return;
@@ -138,6 +146,7 @@ void Server::closeSocket()
 	if (_socket_fd != -1)
 		close(_socket_fd);
 	fd_num--;
+	printMessage("FD NUM: " + std::to_string(fd_num));
 }
 
 void Server::closeClientSocket(int index)
@@ -405,7 +414,7 @@ void Server::prepareResponses()
 			}
 			else
 			{
-				if ((fd_num + 2) >= MAX_FD)
+				if ((fd_num + 2) > MAX_FD)
 					return;
 				int result = pipe(_clients[i].pipe);
 				if (result == -1)
@@ -415,7 +424,6 @@ void Server::prepareResponses()
 					_clients[i].pipe[0] = -1;
 					_clients[i].pipe[1] = -1;
 					std::string error = "Failed to create pipe at fd_num: " + std::to_string(fd_num);
-					// std::string error = &"Failed to create pipe at fe_num: " + [fd_num];
 					_clients[i].logError(error);
 				}
 				else
@@ -938,11 +946,6 @@ void Server::sendServiceUnavailable(int socket_fd)
 	fd_num++;
 	if (temp_fd == -1)
 		return;
-	if (fd_num > MAX_FD)
-	{
-		close(temp_fd);
-		return;
-	}
 	std::string statusLine = "HTTP/1.1 503 Service Unavailable\r\n";
 	std::string contentType = "Content-Type: text/plain\r\n";
 	std::string connection = "Connection: close\r\n";

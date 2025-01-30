@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 17:57:16 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/30 19:07:14 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ class Server
 		static constexpr int			TIMEOUT = 30;
 		static constexpr int			MAX_RETRY = 5;
 		static constexpr int			TOTAL_EVENTS = 2 * MAX_CONNECTIONS + 1;
-		static constexpr int			MAX_FD = 100;
+		static constexpr int			MAX_FD = 25;
 
 		// Private Attributes
 		int								_socket_fd;
