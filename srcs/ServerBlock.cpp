@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2025/01/09 18:49:47 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/01/31 16:07:05 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,8 @@ void ServerBlock::setListen(const std::vector<uint16_t>& listen)
 		if (port < 1 || port > 65535)
 			throw std::invalid_argument("Port is out of range (1-65535)");
 	}
-	_listen = listen;
+	std::set<uint16_t> set(listen.begin(), listen.end()); 
+	_listen.assign(set.begin(), set.end()); 
 }
 
 void ServerBlock::setLocations(const std::vector<std::shared_ptr<LocationBlock>>& locations)
