@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 18:14:10 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 11:58:40 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 // We’ve shared with you a small tester. It’s not mandatory to pass it
 // if everything works fine with your browser and tests, but it can help
 // you hunt some bugs.
+
+//if we do not cobine two forks get rid of kill
 
 #include "Server.hpp"
 
