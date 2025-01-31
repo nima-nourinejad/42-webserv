@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 19:07:14 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 12:47:59 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ class Server
 		static constexpr int			TIMEOUT = 30;
 		static constexpr int			MAX_RETRY = 5;
 		static constexpr int			TOTAL_EVENTS = 2 * MAX_CONNECTIONS + 1;
-		static constexpr int			MAX_FD = 25;
+		static constexpr int			MAX_FD = 50;
 
 		// Private Attributes
 		int								_socket_fd;
@@ -78,6 +78,7 @@ class Server
 		void							handleListeningEvents(struct epoll_event const & event);
 		void							handlePipeEvents(struct epoll_event const & event);
 		int								eventType(struct epoll_event const & event) const;
+		void							check_fd_num();
 		
 		// Signal Methods
 		void							applyCustomSignal();

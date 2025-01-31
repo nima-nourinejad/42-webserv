@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 19:15:24 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 12:49:12 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ Server::Server(ServerBlock & serverBlock, int port)
 	applyCustomSignal();
 	createEpoll();
 	startListeningSocket();
-	fd_num++;
 	eventData.type = LISTENING;
 	eventData.index = MAX_CONNECTIONS;
 	eventData.fd = -1;
@@ -141,12 +140,15 @@ void Server::closeSocket()
 	removeEpoll(_socket_fd);
 	eventData.fd = -1;
 	if (_fd_epoll != -1)
+	{
 		close(_fd_epoll);
-	fd_num--;
+		fd_num--;
+	}
 	if (_socket_fd != -1)
+	{
 		close(_socket_fd);
-	fd_num--;
-	printMessage("FD NUM: " + std::to_string(fd_num));
+		fd_num--;
+	}
 }
 
 void Server::closeClientSocket(int index)
@@ -548,7 +550,7 @@ void Server::handleClientEvents(struct epoll_event const & event)
 				try
 				{
 					close(pipe_read_fd);
-					fd_num=-2;
+					fd_num-= 2;
 				}
 				catch(const std::exception& e)
 				{
@@ -708,6 +710,12 @@ void Server::handleSocketEvents()
 	
 }
 
+void Server::check_fd_num()
+{
+	if (fd_num < 0)
+		Server::logError("fd_num is negative");
+}
+
 void Server::handleEvents()
 {
 	try
@@ -754,6 +762,7 @@ void Server::handleEvents()
 	{
 		logError("Failed to handle timeouts");
 	}
+	check_fd_num();
 }
 
 void Server::addEpoll(int fd, int index)
@@ -786,6 +795,7 @@ void Server::addEpoll(int fd, int index)
 void Server::createSocket()
 {
 	_socket_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	fd_num++;
 	if (_socket_fd == -1)
 		throw SocketException("Failed to create socket");
 }
@@ -875,7 +885,6 @@ void Server::startListeningSocket()
 {
 	_retry = 0;
 	bool success = false;
-
 	while (signal_status != SIGINT && !success && _retry < MAX_RETRY)
 	{
 		try
