@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 11:58:40 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 13:20:08 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,6 +108,20 @@ int main(int argc, char **argv)
 			Server::logError("Unknown exception during server creation for config block " + std::to_string(i + 1));
 		}
 	}
+
+	std::size_t	total_servers = servers.size();
+	if (total_servers == 0)
+	{
+		Server::logError("No servers were created");
+		return 1;
+	}
+	// static constexpr int TOTAL_FD = 100;
+	
+	// int max_fd = TOTAL_FD / total_servers;
+	// for (size_t i = 0; i < total_servers; i++)
+	// {
+	// 	servers[i]->max_fd = max_fd;
+	// }
 
 	std::size_t	serverNum = 0;
 

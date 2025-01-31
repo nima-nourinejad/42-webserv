@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 12:49:12 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 13:24:09 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ void Server::handlePendingConnections()
 {
 	while (true)
 	{
-		if ((fd_num + 1) > MAX_FD)
+		if ((fd_num + 1) > max_fd)
 			return;
 		if (serverFull())
 		{
@@ -110,7 +110,7 @@ void Server::handlePendingConnections()
 void Server::acceptClient()
 {
 
-	if ((fd_num + 1) > MAX_FD)
+	if ((fd_num + 1) > max_fd)
 		return;
 	if (serverFull())
 	{
@@ -416,7 +416,7 @@ void Server::prepareResponses()
 			}
 			else
 			{
-				if ((fd_num + 2) > MAX_FD)
+				if ((fd_num + 2) > max_fd)
 					return;
 				int result = pipe(_clients[i].pipe);
 				if (result == -1)
@@ -762,7 +762,7 @@ void Server::handleEvents()
 	{
 		logError("Failed to handle timeouts");
 	}
-	check_fd_num();
+	// check_fd_num();
 }
 
 void Server::addEpoll(int fd, int index)

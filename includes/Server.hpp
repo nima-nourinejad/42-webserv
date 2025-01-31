@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 12:47:59 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 13:25:23 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,12 +29,12 @@ class Server
     private:
 
 		// Constants
-		static constexpr int			MAX_CONNECTIONS = 1050;
+		static constexpr int			MAX_CONNECTIONS = 510;
 		static constexpr int			BACKLOG =(2 * MAX_CONNECTIONS);
 		static constexpr int			TIMEOUT = 30;
 		static constexpr int			MAX_RETRY = 5;
 		static constexpr int			TOTAL_EVENTS = 2 * MAX_CONNECTIONS + 1;
-		static constexpr int			MAX_FD = 50;
+		static constexpr int			max_fd = 1000;
 
 		// Private Attributes
 		int								_socket_fd;
@@ -112,6 +112,7 @@ class Server
 
 		// Static Attributes
 		static volatile sig_atomic_t	signal_status;
+		// int								max_fd;
 };
 
 #endif
