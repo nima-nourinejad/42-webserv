@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 15:24:49 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 15:46:03 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,6 @@ class Server
 		
 		// Utility Methods
 		void							printMessage(std::string const & message) const;
-		void							sendServiceUnavailable(int socket_fd);
 		void							sendServerError(int fd);
 
 		

@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 17:00:31 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 16:09:25 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,13 @@ ClientConnection::ClientConnection()
 
 void ClientConnection::changeRequestToBadRequest()
 {
-	errorStatus = 400;
+	errorStatus = 408;
+	status = RECEIVED;
+}
+
+void ClientConnection::changeRequestToRequestTimeout()
+{
+	errorStatus = 408;
 	status = RECEIVED;
 }
 

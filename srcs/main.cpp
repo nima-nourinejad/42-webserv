@@ -6,19 +6,18 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 15:22:15 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 16:49:28 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// if node script run with pdf after stucking in the middle of the pdf,
-// if close the script the server will shutdown
 
 // For example, check how does server_name work.
 // We’ve shared with you a small tester. It’s not mandatory to pass it
 // if everything works fine with your browser and tests, but it can help
 // you hunt some bugs.
 
-//if we do not cobine two forks get rid of kill
+
+// when a filename that existed in the upload file want to be posted again, throw 409
 
 #include "Server.hpp"
 

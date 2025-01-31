@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 15:57:30 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 16:10:06 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,7 @@ class ClientConnection
 	ClientConnection();
 
 	void						changeRequestToBadRequest();
+	void						changeRequestToRequestTimeout();
 	void						changeRequestToServerError();
 	bool						finishedReceivingNonChunked();
 	bool						finishedReceivingChunked();

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/30 14:58:16 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/31 16:00:46 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -302,10 +302,10 @@ std::string HttpHandler::readFileError(std::string const &path)
 	return read.str();
 }
 
-std::string getFileextention(std::string const &filename)
+std::string getFileExtension(std::string const &filename)
 {
-	std::string extention = filename.substr(filename.find_last_of(".") + 1);
-	return extention;
+	std::string extension = filename.substr(filename.find_last_of(".") + 1);
+	return extension;
 }
 
 std::string getContentType(const std::string& extension)
@@ -366,7 +366,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 {
 	std::string						fileName = _getFileName(req);
 	std::string						finalFile = "/" + _getFileName(req);
-	std::string						extention = getFileextention(fileName);
+	std::string						extention = getFileExtension(fileName);
 	std::string						contentType = getContentType(extention);
 	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 	std::string						filePath = matchedLocation->getUploadPath() + finalFile;

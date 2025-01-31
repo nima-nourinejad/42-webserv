@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/30 13:47:19 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/01/31 16:48:22 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,15 +30,20 @@ Response	CGIHandler::execute(const Request &req)
 
 		std::string		filePath = matchedLocation->getCgiPath();
 
-		// if (std::find(matchedLocation->getCgiExtension().begin(), matchedLocation->getCgiExtension().end(), extension)
-		// 		== matchedLocation->getCgiExtension().end())
-		// 	throw std::runtime_error("Unsupported CGI extension");
+		std::string extension = filePath.substr(filePath.find_last_of(".") + 1);
+
+		if (std::find(matchedLocation->getCgiExtension().begin(), matchedLocation->getCgiExtension().end(), extension)
+				== matchedLocation->getCgiExtension().end())
+			// throw std::runtime_error("Unsupported CGI extension");
+			return httpHandlerInstance.getErrorPage(req, 500);
 
 		if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath))
-			throw std::runtime_error("CGI file does not exist or is not a regular file");
+			// throw std::runtime_error("CGI file does not exist or is not a regular file");
+			return httpHandlerInstance.getErrorPage(req, 500);
 
 		if (access(filePath.c_str(), X_OK) != 0)
-			throw std::runtime_error("CGI file is not executable");
+			// throw std::runtime_error("CGI file is not executable");
+			return httpHandlerInstance.getErrorPage(req, 500);
 		
 		int	pipefd[2];
 

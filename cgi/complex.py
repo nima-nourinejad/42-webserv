@@ -15,7 +15,6 @@ cgitb.enable()
 #     time.sleep(15)
 #     print("This is printed after 15 seconds!")
 
-# Call the function
 # wait_and_print()
 
 # HTML Template

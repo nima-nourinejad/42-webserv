@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 15:25:23 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 16:48:04 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,7 +170,6 @@ void Server::closeClientSocket(int index)
 			}
 			if (_clients[index].pid != -1)
 			{
-				kill(_clients[index].pid, SIGKILL);
 				waitpid(_clients[index].pid, 0, 0);
 				_clients[index].pid = -1;
 			}
@@ -365,7 +364,7 @@ void Server::handleTimeout(int index)
 	if (_clients[index].status == FAILSENDING)
 		closeClientSocket(index);
 	else if (_clients[index].request.empty() == false)
-		_clients[index].changeRequestToBadRequest();
+		_clients[index].changeRequestToRequestTimeout();
 	else
 		closeClientSocket(index);
 }
@@ -934,116 +933,78 @@ void Server::printMessage(std::string const & message) const
 	std::cout << _config.name << " : " << message << std::endl;
 }
 
-void Server::sendServiceUnavailable(int socket_fd)
-{
-	int temp_fd = accept(socket_fd, nullptr, nullptr);
-	fd_num++;
-	if (temp_fd == -1)
-		return;
-	std::string statusLine = "HTTP/1.1 503 Service Unavailable\r\n";
-	std::string contentType = "Content-Type: text/plain\r\n";
-	std::string connection = "Connection: close\r\n";
-	std::string body = "503 Service Unavailable";
-	size_t maxBodySize = _responseMaker.getServerBlock().getClientMaxBodySize();
-	std::string header;
-	std::vector<std::string> response;
-	
-	if (body.size() > maxBodySize)
-	{
-		std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
-		header = statusLine + contentType + transferEncoding + connection;
-		response.push_back(header + "\r\n");
-		size_t chunkSize;
-		std::string chunk;
-		std::stringstream sstream;
-		while (body.size() > 0)
-		{
-			chunkSize = std::min(body.size(), maxBodySize);
-			chunk = body.substr(0, chunkSize);
-			sstream.str("");
-			sstream << std::hex << chunkSize << "\r\n";
-			sstream << chunk << "\r\n";
-			response.push_back(sstream.str());
-			body = body.substr(chunkSize);
-		}
-		response.push_back("0\r\n\r\n");
-	}
-	else
-	{
-		std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
-		header = statusLine + contentType + contentLength + connection;
-		response.push_back(header + "\r\n" + body);
-	}
-
-	while (response.size() > 0)
-	{
-		ssize_t bytes_sent;
-		bytes_sent = send(temp_fd, response[0].c_str(), response[0].size(), MSG_DONTWAIT);
-		if (bytes_sent <= 0)
-			break;
-		if (bytes_sent < static_cast<ssize_t>(response[0].size()))
-		{
-			std::string remainPart = response[0].substr(bytes_sent);
-			response[0] = remainPart;
-		}
-		else
-			response.erase(response.begin());
-	}
-	close(temp_fd);
-	fd_num--;
-}
-
 
 void Server::sendServerError(int fd)
 {
-	std::string statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-	std::string contentType = "Content-Type: text/plain\r\n";
-	std::string connection = "Connection: close\r\n";
-	std::string body = "500 Internal Server Error";
-	size_t maxBodySize = _responseMaker.getServerBlock().getClientMaxBodySize();
-	std::string header;
-	std::vector<std::string> response;
-	
-	if (body.size() > maxBodySize)
+	std::string body;
+	std::string statusLine;
+	std::string rawHeader;
+	size_t maxBodySize_error;
+	try
 	{
+		maxBodySize_error = _responseMaker.getMaxBodySize("", 500);
+		Request		req("", 500);
+		Response	response;
+		response = _responseMaker.getErrorPage(req, 500);
+		body = response.getBody();
+		statusLine = response.getStatusLine();
+		rawHeader = response.getRawHeader();
+	}
+	catch(const std::exception& e)
+	{
+		statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
+		rawHeader = "Content-Type: text/plain\r\n";
+		body = "500 Internal Server Error";
+		maxBodySize_error = body.size();
+		std::string errorMessage = e.what();
+		logError("Failed to create cutom error response: " + errorMessage);
+	}
+	std::string connection = "Connection: close\r\n";
+	std::string header;
+	std::vector<std::string> responseParts;
+
+	if (body.size() > maxBodySize_error)
+	{
+		responseParts.push_back(statusLine);
 		std::string transferEncoding = "Transfer-Encoding: chunked\r\n";
-		header = statusLine + contentType + transferEncoding + connection;
-		response.push_back(header + "\r\n");
-		size_t chunkSize;
-		std::string chunk;
-		std::stringstream sstream;
+		rawHeader = rawHeader + transferEncoding + connection;
+		responseParts.push_back(rawHeader + "\r\n");
+		size_t				chunkSize;
+		std::string			chunk;
+		std::stringstream	sstream;
+
 		while (body.size() > 0)
 		{
-			chunkSize = std::min(body.size(), maxBodySize);
+			chunkSize = std::min(body.size(), maxBodySize_error);
 			chunk = body.substr(0, chunkSize);
 			sstream.str("");
 			sstream << std::hex << chunkSize << "\r\n";
 			sstream << chunk << "\r\n";
-			response.push_back(sstream.str());
+			responseParts.push_back(sstream.str());
 			body = body.substr(chunkSize);
 		}
-		response.push_back("0\r\n\r\n");
+		responseParts.push_back("0\r\n\r\n");
 	}
 	else
 	{
 		std::string contentLength = "Content-Length: " + std::to_string(body.size()) + "\r\n";
-		header = statusLine + contentType + contentLength + connection;
-		response.push_back(header + "\r\n" + body);
+		header = statusLine + rawHeader + contentLength + connection;
+		responseParts.push_back(header + "\r\n" + body);
 	}
 
-	while (response.size() > 0)
+	while (responseParts.size() > 0)
 	{
 		ssize_t bytes_sent;
-		bytes_sent = send(fd, response[0].c_str(), response[0].size(), MSG_DONTWAIT);
+		bytes_sent = send(fd, responseParts[0].c_str(), responseParts[0].size(), MSG_DONTWAIT);
 		if (bytes_sent <= 0)
 			break;
-		if (bytes_sent < static_cast<ssize_t>(response[0].size()))
+		if (bytes_sent < static_cast<ssize_t>(responseParts[0].size()))
 		{
-			std::string remainPart = response[0].substr(bytes_sent);
-			response[0] = remainPart;
+			std::string remainPart = responseParts[0].substr(bytes_sent);
+			responseParts[0] = remainPart;
 		}
 		else
-			response.erase(response.begin());
+			responseParts.erase(responseParts.begin());
 	}
 	close(fd);
 	fd_num--;
