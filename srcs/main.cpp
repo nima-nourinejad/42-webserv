@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 16:49:28 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 18:32:20 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,10 @@
 
 
 // when a filename that existed in the upload file want to be posted again, throw 409
+
+// check the host from the request and compare it with the server_name in the config file
+
+// add server name with the ip to the /etc/hosts file and after exiting the server, remove it
 
 #include "Server.hpp"
 

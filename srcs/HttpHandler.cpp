@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/31 16:00:46 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 18:05:47 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -197,9 +197,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 {
 	try
 	{
-		// std::string validation = _validateRequest(req);
-		// if (validation != "Ok")
-		// 	return validation;
+		std::string validation = _validateRequest(req);
+		if (validation != "Ok")
+			return getErrorPage(req, 405);
 		
 		std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
@@ -310,56 +310,56 @@ std::string getFileExtension(std::string const &filename)
 
 std::string getContentType(const std::string& extension)
 {
-    if (extension == "html" || extension == "htm")
-        return "text/html";
-    else if (extension == "jpg" || extension == "jpeg")
-        return "image/jpeg";
-    else if (extension == "png")
-        return "image/png";
-    else if (extension == "gif")
-        return "image/gif";
-    else if (extension == "bmp")
-        return "image/bmp";
-    else if (extension == "svg")
-        return "image/svg+xml";
-    else if (extension == "ico")
-        return "image/vnd.microsoft.icon";
-    else if (extension == "pdf")
-        return "application/pdf";
-    else if (extension == "zip")
-        return "application/zip";
-    else if (extension == "txt")
-        return "text/plain";
-    else if (extension == "css")
-        return "text/css";
-    else if (extension == "js")
-        return "application/javascript";
-    else if (extension == "json")
-        return "application/json";
-    else if (extension == "xml")
-        return "application/xml";
-    else if (extension == "csv")
-        return "text/csv";
-    else if (extension == "mp3")
-        return "audio/mpeg";
-    else if (extension == "wav")
-        return "audio/wav";
-    else if (extension == "mp4")
-        return "video/mp4";
-    else if (extension == "webm")
-        return "video/webm";
-    else if (extension == "ogg")
-        return "application/ogg";
-    else if (extension == "woff" || extension == "woff2")
-        return "font/woff";
-    else if (extension == "ttf")
-        return "font/ttf";
-    else if (extension == "otf")
-        return "font/otf";
+	if (extension == "html" || extension == "htm")
+		return "text/html";
+	else if (extension == "jpg" || extension == "jpeg")
+		return "image/jpeg";
+	else if (extension == "png")
+		return "image/png";
+	else if (extension == "gif")
+		return "image/gif";
+	else if (extension == "bmp")
+		return "image/bmp";
+	else if (extension == "svg")
+		return "image/svg+xml";
+	else if (extension == "ico")
+		return "image/vnd.microsoft.icon";
+	else if (extension == "pdf")
+		return "application/pdf";
+	else if (extension == "zip")
+		return "application/zip";
+	else if (extension == "txt")
+		return "text/plain";
+	else if (extension == "css")
+		return "text/css";
+	else if (extension == "js")
+		return "application/javascript";
+	else if (extension == "json")
+		return "application/json";
+	else if (extension == "xml")
+		return "application/xml";
+	else if (extension == "csv")
+		return "text/csv";
+	else if (extension == "mp3")
+		return "audio/mpeg";
+	else if (extension == "wav")
+		return "audio/wav";
+	else if (extension == "mp4")
+		return "video/mp4";
+	else if (extension == "webm")
+		return "video/webm";
+	else if (extension == "ogg")
+		return "application/ogg";
+	else if (extension == "woff" || extension == "woff2")
+		return "font/woff";
+	else if (extension == "ttf")
+		return "font/ttf";
+	else if (extension == "otf")
+		return "font/otf";
 	else if (extension == "c" || extension == "h" || extension == "cpp" || extension == "hpp")
 		return "text/plain";
-    else
-        return "application/octet-stream";
+	else
+		return "application/octet-stream";
 }
 
 Response	HttpHandler::handleDownload(const Request &req)
@@ -490,74 +490,81 @@ Response	HttpHandler::handleFileRequest(const Request &req, const std::string &f
 	}
 }
 
-Response	HttpHandler::handlePOST(const Request &req)
+Response HttpHandler::handlePOST(const Request &req)
 {
-	std::string	contentType = req.getHeader("Content-Type");
-	Response	response;
+	std::string contentType = req.getHeader("Content-Type");
+	Response response;
 
 	std::shared_ptr<LocationBlock> matchedLocation = findMatchedLocation(req);
 
 	if (!matchedLocation)
 		return getErrorPage(req, 404);
 
+	// Handle multipart/form-data (file upload)
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
-		std::string			boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
-		std::istringstream	bodyStream(req.getBody());
-		std::string			line;
+		std::string boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
+		std::istringstream bodyStream(req.getBody());
+		std::string line;
 
 		while (std::getline(bodyStream, line))
 		{
 			if (line == boundary)
 			{
-				std::string	disposition, partContentType;
-
+				std::string disposition, partContentType;
 				std::getline(bodyStream, disposition);
 				std::getline(bodyStream, partContentType);
 				std::getline(bodyStream, line);
 
-				bool	isFileUpload = disposition.find("filename=") != std::string::npos;
-				
-				std::ostringstream	partData;
+				bool isFileUpload = disposition.find("filename=") != std::string::npos;
+				std::ostringstream partData;
 
 				while (std::getline(bodyStream, line) && line != boundary)
 					partData << line << "\n";
-				
+
 				std::string data = partData.str();
-				boundary = boundary.substr(0, boundary.length() - 1);
+
 				if (data.find(boundary) != std::string::npos)
 					data = data.substr(0, data.find(boundary));
 
 				if (isFileUpload)
 				{
-					std::string	filename = extractFilename(disposition);
+					std::string filename = extractFilename(disposition);
 					filename = matchedLocation->getUploadPath() + "/" + filename;
 					saveFile(filename, data);
+
+					response.setStatusLine("HTTP/1.1 201 " + getStatusMessage(201) +"\r\n");
+					response.setHeader("Content-Type", "text/plain");
+					response.setBody("File uploaded successfully. File URL: /uploads/" + filename);
+					return response;
 				}
 				else
-					response.setBody(data);
+				{
+					response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
+					response.setHeader("Content-Type", "text/plain");
+					response.setBody("Non-file data processed successfully.");
+					return response;
+				}
 			}
 		}
-					
-		std::cout << "File uploaded successfully" << std::endl;
-		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
-		response.setHeader("Content-Type", "multipart/form-data");
+		return response;
 	}
+
 	else if (!req.getBody().empty())
 	{
-		std::cout << "second state" << std::endl;
-		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
+		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
+		response.setHeader("Content-Type", req.getHeader("Content-Type"));
 		response.setBody(req.getBody());
-		response.setHeader("Content-Length", std::to_string(req.getBody().size()) + "\r\n");
-		response.setHeader("Content-Type", "text/plain");
+		response.setHeader("Content-Length", std::to_string(req.getBody().size()));
+		return response;
 	}
 	else
 	{
-		std::cout << "Empty body in POST request" << std::endl;
-		response.setStatusLine("HTTP/1.1 400 " + getStatusMessage(400) + "\r\n");
-		response.setBody("Empty body in POST request\n");
+		response.setStatusLine("HTTP/1.1 400 " + getStatusMessage(400) +"\r\n");
+		response.setHeader("Content-Type", "text/plain");
+		response.setBody("Empty body in POST request.");
+		return response;
 	}
-	return response;
 }
 
 std::string	HttpHandler::extractFilename(const std::string& disposition)
@@ -687,14 +694,14 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 		{503, "Service Unavailable"},
 		{504, "Gateway Timeout"},
 		{505, "HTTP Version Not Supported"}
-    };
+	};
 
 	std::unordered_map<int, std::string>::const_iterator	it = statusMessages.find(statusCode);
 
-    if (it != statusMessages.end())
-        return it->second;
+	if (it != statusMessages.end())
+		return it->second;
 
-    return "Unknown Status Code";
+	return "Unknown Status Code";
 }
 
 size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)

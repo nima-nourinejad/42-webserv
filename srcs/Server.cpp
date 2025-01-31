@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 16:48:04 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 18:20:10 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -321,6 +321,7 @@ void Server::receiveMessage(int index)
 					_clients[index].handleChunkedEncoding();
 				_clients[index].status = RECEIVED;
 				printMessage("Request fully received from client " + std::to_string(index + 1));
+				std::cout << _clients[index].request << std::endl;
 			}
 		}
 	}

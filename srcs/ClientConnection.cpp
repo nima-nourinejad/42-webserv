@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 16:09:25 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 17:32:43 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -250,6 +250,9 @@ void ClientConnection::createResponseParts()
 				chunckBody(statusLine, rawHeader, connection, maxBodySize);
 				errorStatus = 0;
 				status = READYTOSEND;
+				std::cout << "Response created" << std::endl;
+				for (size_t i = 0; i < responseParts.size(); i++)
+					std::cout << responseParts[i] << std::endl;
 				
 				
 			}
