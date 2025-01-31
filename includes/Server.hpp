@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 14:41:56 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 15:24:49 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,11 +29,8 @@ class Server
     private:
 
 		// Constants
-		// static constexpr int			MAX_CONNECTIONS = 510;
-		
 		int			TIMEOUT = 30;
-		int			MAX_RETRY = 5;
-		// int			total_events = 2 * max_connections + 1;
+		int			MAX_RETRY = 3;
 
 		// Private Attributes
 		int								_socket_fd;
@@ -76,7 +73,6 @@ class Server
 		void							handleListeningEvents(struct epoll_event const & event);
 		void							handlePipeEvents(struct epoll_event const & event);
 		int								eventType(struct epoll_event const & event) const;
-		void							check_fd_num();
 		
 		// Signal Methods
 		void							applyCustomSignal();
@@ -100,8 +96,7 @@ class Server
 	
     public:
 		// Main Methods
-		// Server(ServerBlock & serverBlock);
-		Server(ServerBlock & serverBlock, int port, int max_fd, int max_connections, int total_events);
+		Server(ServerBlock & serverBlock, int port, int max_fd);
 		void							handleEvents();
 		~Server();
 

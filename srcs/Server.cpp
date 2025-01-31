@@ -6,17 +6,17 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 15:04:22 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 15:25:23 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(ServerBlock & serverBlock, int port, int max_fd, int max_connections, int total_events)
+Server::Server(ServerBlock & serverBlock, int port, int max_fd)
     : _socket_fd(-1), _fd_epoll(-1), _config(port, serverBlock.getHost(),
 	serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
-	, _responseMaker(serverBlock), fd_num(0), max_fd(max_fd), max_connections(max_connections), total_events(total_events),
-	_events(total_events), _ready(total_events)
+	, _responseMaker(serverBlock), fd_num(0), max_fd(max_fd), max_connections((max_fd - 1) / 2), total_events(max_fd),
+	_events(max_fd), _ready(max_fd)
 {
 	
 	applyCustomSignal();
@@ -81,12 +81,6 @@ void Server::handlePendingConnections()
 	{
 		if ((fd_num + 1) > max_fd || serverFull())
 			return;
-		// if (serverFull())
-		// if ((fd_num + 1) > max_fd || serverFull())
-		// {
-		// 	sendServiceUnavailable(_socket_fd);
-		// 	return;
-		// }
 		int availableSlot = findAvailableSlot();
 		if (availableSlot == -1)
 			throw SocketException("Failed to find available slot for client");
@@ -115,11 +109,6 @@ void Server::acceptClient()
 
 	if ((fd_num + 1) > max_fd || serverFull())
 		return;
-	// if (serverFull())
-	// {
-	// 	sendServiceUnavailable(_socket_fd);
-	// 	return;
-	// }
 	try
 	{
 		handlePendingConnections();
@@ -713,12 +702,6 @@ void Server::handleSocketEvents()
 	
 }
 
-void Server::check_fd_num()
-{
-	if (fd_num < 0)
-		Server::logError("fd_num is negative");
-}
-
 void Server::handleEvents()
 {
 	try
@@ -765,7 +748,6 @@ void Server::handleEvents()
 	{
 		logError("Failed to handle timeouts");
 	}
-	// check_fd_num();
 }
 
 void Server::addEpoll(int fd, int index)

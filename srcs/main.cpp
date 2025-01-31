@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 15:17:17 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 15:22:15 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,8 +79,6 @@ int main(int argc, char **argv)
 	static constexpr int TOTAL_FD = 1000;
 	
 	int max_fd = TOTAL_FD / server_count;
-	int max_connections = (max_fd - 1) / 2;
-	int total_events = max_fd;
 
 	std::vector<std::unique_ptr<Server>>	servers;
 
@@ -92,7 +90,7 @@ int main(int argc, char **argv)
 			{
 				try
 				{
-					servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i), config.getServerBlocks().at(i).getListen().at(j), max_fd, max_connections, total_events));
+					servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i), config.getServerBlocks().at(i).getListen().at(j), max_fd));
 				}
 				catch(SocketException const & e)
 				{
