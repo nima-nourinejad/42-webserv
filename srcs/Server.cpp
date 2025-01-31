@@ -6,23 +6,25 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 13:24:09 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 15:04:22 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(ServerBlock & serverBlock, int port)
+Server::Server(ServerBlock & serverBlock, int port, int max_fd, int max_connections, int total_events)
     : _socket_fd(-1), _fd_epoll(-1), _config(port, serverBlock.getHost(),
 	serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
-	, _responseMaker(serverBlock), fd_num(0)
+	, _responseMaker(serverBlock), fd_num(0), max_fd(max_fd), max_connections(max_connections), total_events(total_events),
+	_events(total_events), _ready(total_events)
 {
 	
 	applyCustomSignal();
 	createEpoll();
 	startListeningSocket();
+	
 	eventData.type = LISTENING;
-	eventData.index = MAX_CONNECTIONS;
+	eventData.index = max_connections;
 	eventData.fd = -1;
 	
 	createClientConnections(serverBlock);
@@ -37,16 +39,16 @@ void Server::connectToSocket()
 	}
 	if (signal_status != SIGINT)
 	{
-		if (listen(_socket_fd, BACKLOG) == -1)
+		if (listen(_socket_fd, backlog) == -1)
 			throw SocketException("Failed to listen on socket");
 	}
 	printMessage("Server is listening on host " + _config.host + " and port " + std::to_string(_config.port));
-	addEpoll(_socket_fd, MAX_CONNECTIONS);
+	addEpoll(_socket_fd, max_connections);
 }
 
 bool Server::serverFull() const
 {
-	if (_num_clients >= MAX_CONNECTIONS)
+	if (_num_clients >= max_connections)
 	{
 		printMessage("Max clients reached");
 		return true;
@@ -56,7 +58,7 @@ bool Server::serverFull() const
 
 int Server::findAvailableSlot() const
 {
-	for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	for (int i = 0; i < max_connections; ++i)
 	{
 		if (_clients[i].status == DISCONNECTED && _clients[i].fd == -1 && _clients[i].index == -1)
 			return i;
@@ -77,13 +79,14 @@ void Server::handlePendingConnections()
 {
 	while (true)
 	{
-		if ((fd_num + 1) > max_fd)
+		if ((fd_num + 1) > max_fd || serverFull())
 			return;
-		if (serverFull())
-		{
-			sendServiceUnavailable(_socket_fd);
-			return;
-		}
+		// if (serverFull())
+		// if ((fd_num + 1) > max_fd || serverFull())
+		// {
+		// 	sendServiceUnavailable(_socket_fd);
+		// 	return;
+		// }
 		int availableSlot = findAvailableSlot();
 		if (availableSlot == -1)
 			throw SocketException("Failed to find available slot for client");
@@ -110,13 +113,13 @@ void Server::handlePendingConnections()
 void Server::acceptClient()
 {
 
-	if ((fd_num + 1) > max_fd)
+	if ((fd_num + 1) > max_fd || serverFull())
 		return;
-	if (serverFull())
-	{
-		sendServiceUnavailable(_socket_fd);
-		return;
-	}
+	// if (serverFull())
+	// {
+	// 	sendServiceUnavailable(_socket_fd);
+	// 	return;
+	// }
 	try
 	{
 		handlePendingConnections();
@@ -155,7 +158,7 @@ void Server::closeClientSocket(int index)
 {
 	try
 	{
-		if (_clients[index].fd != -1 && index < MAX_CONNECTIONS && index >= 0)
+		if (_clients[index].fd != -1 && index < max_connections && index >= 0)
 		{
 			_clients[index].status = DISCONNECTED;
 			try
@@ -228,13 +231,13 @@ void Server::closeClientSocket(int index)
 
 void Server::closeClientSockets()
 {
-	for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	for (int i = 0; i < max_connections; ++i)
 		closeClientSocket(i);
 }
 
 int Server::waitForEvents()
 {
-	int n_ready_fds = epoll_wait(_fd_epoll, _ready, TOTAL_EVENTS, 0);
+	int n_ready_fds = epoll_wait(_fd_epoll, _ready.data(), total_events, 0);
 	if (n_ready_fds == -1)
 	{
 		if (errno != EINTR)
@@ -248,7 +251,7 @@ void Server::sendResponseParts(int index)
 {
 	try
 	{
-		if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
+		if (_clients[index].fd == -1 || index >= max_connections || index < 0 || signal_status == SIGINT)
 			return;
 		ssize_t bytes_sent;
 		bytes_sent = send(_clients[index].fd, _clients[index].responseParts[0].c_str(), _clients[index].responseParts[0].size(), MSG_DONTWAIT);
@@ -305,7 +308,7 @@ void Server::receiveMessage(int index)
 {
 	try 
 	{
-		if (_clients[index].fd == -1 || index >= MAX_CONNECTIONS || index < 0 || signal_status == SIGINT)
+		if (_clients[index].fd == -1 || index >= max_connections || index < 0 || signal_status == SIGINT)
 			return;
 		char buffer[16384] = {};
 		ssize_t bytes_received;
@@ -380,7 +383,7 @@ void Server::handleTimeout(int index)
 
 void Server::handleTimeouts()
 {
-	for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	for (int i = 0; i < max_connections; ++i)
 	{
 		if ((_clients[i].status > DISCONNECTED && _clients[i].status < RECEIVED) || _clients[i].status == FAILSENDING)
 		{
@@ -392,7 +395,7 @@ void Server::handleTimeouts()
 
 void Server::prepareResponses()
 {
-	for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	for (int i = 0; i < max_connections; ++i)
 	{
 		if (_clients[i].status == RECEIVED)
 		{
@@ -433,7 +436,7 @@ void Server::prepareResponses()
 					fd_num+=2;
 					try
 					{
-						addEpoll(_clients[i].pipe[0], i + MAX_CONNECTIONS + 1);
+						addEpoll(_clients[i].pipe[0], i + max_connections + 1);
 						_clients[i].createResponseParts();
 					}
 					catch(const std::exception& e)
@@ -767,15 +770,15 @@ void Server::handleEvents()
 
 void Server::addEpoll(int fd, int index)
 {
-	if (index == MAX_CONNECTIONS)
+	if (index == max_connections)
 	{
 		eventData.fd = fd;
 		_events[index].data.ptr = &eventData;
 		_events[index].events = EPOLLIN | EPOLLHUP | EPOLLERR;
 	}
-	else if (index > MAX_CONNECTIONS)
+	else if (index > max_connections)
 	{
-		int clientIndex = index - MAX_CONNECTIONS - 1;
+		int clientIndex = index - max_connections - 1;
 		_clients[clientIndex].pipeEventData.fd = fd;
 		_clients[clientIndex].pipeEventData.index = clientIndex;
 		_events[index].data.ptr = &(_clients[clientIndex].pipeEventData);
@@ -788,7 +791,7 @@ void Server::addEpoll(int fd, int index)
 		_clients[index].eventData.index = index;
 		_events[index].data.ptr = &(_clients[index].eventData);
 	}
-	if (epoll_ctl(_fd_epoll, EPOLL_CTL_ADD, fd, _events + index) == -1)
+	if (epoll_ctl(_fd_epoll, EPOLL_CTL_ADD, fd, _events.data() + index) == -1)
 		throw SocketException("Failed to add to epoll", fd);
 }
 
@@ -872,7 +875,7 @@ void Server::makeSocketReusable()
 void Server::createClientConnections(ServerBlock & serverBlock)
 {
 	(void)serverBlock;
-	for (int i = 0; i < MAX_CONNECTIONS; ++i)
+	for (int i = 0; i < max_connections; ++i)
 	{
 		_clients.push_back(ClientConnection());
 		_clients[i].responseMaker = &_responseMaker;

@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 13:25:23 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 14:41:56 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,12 +29,11 @@ class Server
     private:
 
 		// Constants
-		static constexpr int			MAX_CONNECTIONS = 510;
-		static constexpr int			BACKLOG =(2 * MAX_CONNECTIONS);
-		static constexpr int			TIMEOUT = 30;
-		static constexpr int			MAX_RETRY = 5;
-		static constexpr int			TOTAL_EVENTS = 2 * MAX_CONNECTIONS + 1;
-		static constexpr int			max_fd = 1000;
+		// static constexpr int			MAX_CONNECTIONS = 510;
+		
+		int			TIMEOUT = 30;
+		int			MAX_RETRY = 5;
+		// int			total_events = 2 * max_connections + 1;
 
 		// Private Attributes
 		int								_socket_fd;
@@ -43,8 +42,7 @@ class Server
 		Configuration					_config;
 		int								_num_clients;
 		std::vector<ClientConnection>	_clients;
-		struct epoll_event				_events[TOTAL_EVENTS];
-		struct epoll_event				_ready[TOTAL_EVENTS];
+		
 		int								_retry;
 		Response						_response;
 		struct eventData 				eventData;
@@ -103,7 +101,7 @@ class Server
     public:
 		// Main Methods
 		// Server(ServerBlock & serverBlock);
-		Server(ServerBlock & serverBlock, int port);
+		Server(ServerBlock & serverBlock, int port, int max_fd, int max_connections, int total_events);
 		void							handleEvents();
 		~Server();
 
@@ -112,7 +110,12 @@ class Server
 
 		// Static Attributes
 		static volatile sig_atomic_t	signal_status;
-		// int								max_fd;
+		int								max_fd;
+		int 							max_connections;
+		const int						total_events;
+		std::vector<struct epoll_event> _events;
+    	std::vector<struct epoll_event> _ready;
+		int								backlog =(2 * max_connections);
 };
 
 #endif

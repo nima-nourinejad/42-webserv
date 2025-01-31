@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 13:20:08 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/01/31 15:17:17 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,20 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	int server_count = 0;
+	for (size_t i = 0; i < config.getServerBlocks().size(); i++)
+	{
+		server_count += config.getServerBlocks().at(i).getListen().size();
+	}
+
+	if (server_count == 0)
+		return 0;
+	static constexpr int TOTAL_FD = 1000;
+	
+	int max_fd = TOTAL_FD / server_count;
+	int max_connections = (max_fd - 1) / 2;
+	int total_events = max_fd;
+
 	std::vector<std::unique_ptr<Server>>	servers;
 
 	for(std::size_t i = 0; (i < config.getServerBlocks().size() && !sigInt(servers)); i++)
@@ -78,7 +92,7 @@ int main(int argc, char **argv)
 			{
 				try
 				{
-					servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i), config.getServerBlocks().at(i).getListen().at(j)));
+					servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i), config.getServerBlocks().at(i).getListen().at(j), max_fd, max_connections, total_events));
 				}
 				catch(SocketException const & e)
 				{
@@ -115,13 +129,6 @@ int main(int argc, char **argv)
 		Server::logError("No servers were created");
 		return 1;
 	}
-	// static constexpr int TOTAL_FD = 100;
-	
-	// int max_fd = TOTAL_FD / total_servers;
-	// for (size_t i = 0; i < total_servers; i++)
-	// {
-	// 	servers[i]->max_fd = max_fd;
-	// }
 
 	std::size_t	serverNum = 0;
 

@@ -9,11 +9,11 @@ import sys
 # Enable debugging
 cgitb.enable()
 
-import time
+# import time
 
-def wait_and_print():
-    time.sleep(15)
-    print("This is printed after 15 seconds!")
+# def wait_and_print():
+#     time.sleep(15)
+#     print("This is printed after 15 seconds!")
 
 # Call the function
 # wait_and_print()
