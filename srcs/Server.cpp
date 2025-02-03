@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 17:08:31 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 17:39:39 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -582,7 +582,7 @@ void Server::handlePipeEvents(struct epoll_event const & event)
 		{
 			try
 			{
-				_clients[index].accumulateResponseParts();
+				_clients[index].readResponseFromPipe();
 			}
 			catch(const std::exception& e)
 			{

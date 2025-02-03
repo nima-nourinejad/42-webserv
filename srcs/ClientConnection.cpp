@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 17:02:44 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 17:39:39 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -397,7 +397,7 @@ void ClientConnection::readFromPipe()
 	}
 }
 
-void ClientConnection::accumulateResponseParts()
+void ClientConnection::readResponseFromPipe()
 {
 	if (pipe[1] != -1)
 		close(pipe[1]);
