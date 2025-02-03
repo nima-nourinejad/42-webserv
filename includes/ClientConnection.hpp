@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 17:39:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 18:32:08 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,17 +87,19 @@ class ClientConnection
 	void						grabChunkedData(std::string & unProcessed, size_t chunkedSize);
 	void						grabChunkedHeader(std::string & unProcessed, std::string & header);
 	void						handleChunkedEncoding();
+	void						createResponseParts_nonCGI();
+	void						createResponseParts_CGI();
 	void						createResponseParts();
 	void						readResponseFromPipe();
 	time_t						getPassedTime() const;
 	void						setCurrentTime();
 	void						chunckBody(std::string statusLine, std::string rawHeader, std::string connection, size_t maxBodySize);
 	void 						processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, std::string &connection, size_t &maxBodySize);
-	void						setPlain500Response();
 	void 						logError(std::string const & message);
 	void						checkRequestSize();
 	void						readFromPipe();
 	void						setCGI();
+	void						CGI_child();
 };
 
 #endif

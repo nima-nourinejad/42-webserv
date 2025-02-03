@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 17:39:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 18:39:40 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -196,6 +196,7 @@ void Server::closeClientSocket(int index)
 				_clients[index].pipe[1] = -1;
 			}
 			_clients[index].keepAlive = true;
+			_clients[index].isCGI = false;
 			_clients[index].connectTime = 0;
 			_clients[index].request.clear();
 			_clients[index].responseParts.clear();
@@ -422,10 +423,12 @@ void Server::prepareResponses()
 				}
 				else
 				{
+					bool added_to_epoll = false;
 					fd_num+=2;
 					try
 					{
 						addEpoll(_clients[i].pipe[0], i + max_connections + 1);
+						added_to_epoll = true;
 						_clients[i].createResponseParts();
 					}
 					catch(const std::exception& e)
@@ -437,7 +440,8 @@ void Server::prepareResponses()
 						{
 							try
 							{
-								removeEpoll(_clients[i].pipe[0]);
+								if (added_to_epoll)
+									removeEpoll(_clients[i].pipe[0]);
 							}
 							catch(const std::exception& e)
 							{
@@ -490,8 +494,8 @@ void Server::handleErr(struct epoll_event const & event)
 		int index = getClientIndex(event);
 		if (index == -1)
 			return;
+		_clients[index].changeRequestToServerError();
 		_clients[index].logError("Pipe error");
-		_clients[index].setPlain500Response();
 		if (_clients[index].pid != -1)
 		{
 			waitpid(_clients[index].pid, 0, 0);
@@ -510,7 +514,6 @@ void Server::handleErr(struct epoll_event const & event)
 			fd_num--;
 			_clients[index].pipe[1] = -1;
 		}
-		
 	}
 }
 
@@ -586,9 +589,9 @@ void Server::handlePipeEvents(struct epoll_event const & event)
 			}
 			catch(const std::exception& e)
 			{
-				_clients[index].setPlain500Response();
+				_clients[index].changeRequestToServerError();
 				std::string errorMessage = e.what();
-				_clients[index].logError("Accumulating response failed: " + errorMessage);
+				_clients[index].logError("Reading response form pipe failed: " + errorMessage);
 				try
 				{
 					if (_clients[index].pid != -1)

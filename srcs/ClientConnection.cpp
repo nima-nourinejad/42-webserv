@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 17:39:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 18:32:29 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,126 +191,113 @@ void ClientConnection::handleChunkedEncoding()
 	}
 }
 
-void ClientConnection::setPlain500Response()
+void ClientConnection::createResponseParts_nonCGI()
 {
+	try
+	{
+		std::string statusLine, rawHeader;
+		size_t maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
+		Response	response;
+		if (!errorStatus)
+			response = responseMaker->createResponse(request);
+		else
+		{
+			Request		req(request, errorStatus);
+			response = responseMaker->getErrorPage(req, errorStatus);
+		}
+		body = response.getBody();
+		statusLine = response.getStatusLine();
+		rawHeader = response.getRawHeader();
+		connectionType();
+		std::string connection;
+		if (keepAlive)
+			connection = "Connection: keep-alive\r\n";
+		else
+			connection = "Connection: close\r\n";
+		chunckBody(statusLine, rawHeader, connection, maxBodySize);
+		errorStatus = 0;
+		status = READYTOSEND;
+	}
+	catch(const std::exception& e)
+	{
+		std::string errorMessage = e.what();
+		logError("Creating non CGI response failed: " + errorMessage);
+		changeRequestToServerError();
+	}
+}
+
+void ClientConnection::CGI_child()
+{
+	std::string body, statusLine, rawHeader, maxBodySizeString;
 	size_t		maxBodySize;
-	std::string statusLine, rawHeader, connection;
-	maxBodySize = responseMaker->getMaxBodySize(request, 500);
-	statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-	rawHeader = "Content-Type: text/plain\r\n";
-	body = "500 Internal Server Error";
-	if (keepAlive)
-		connection = "Connection: keep-alive\r\n";
-	else
-		connection = "Connection: close\r\n";
-	chunckBody(statusLine, rawHeader, connection, maxBodySize);
-	status = READYTOSEND;
+	Response	response;
+	if (pipe[0] != -1)
+		close(pipe[0]);
+	try
+	{
+		
+		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
+		maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
+		response = responseMaker->createResponse(request);
+		body = response.getBody();
+		statusLine = response.getStatusLine();
+		rawHeader = response.getRawHeader();
+	}
+	catch(const std::exception& e)
+	{
+		std::string errorMessage = e.what();
+		logError("Child process for creating response failed: " + errorMessage);
+		try
+		{
+			maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
+			maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
+			Request		req(request, errorStatus);
+			response = responseMaker->getErrorPage(req, errorStatus);
+			body = response.getBody();
+			statusLine = response.getStatusLine();
+			rawHeader = response.getRawHeader();
+		}
+		catch(const std::exception& e)
+		{
+			std::string errorMessage = e.what();
+			logError("Failed to create error response in child process: " + errorMessage);
+			statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
+			rawHeader = "Content-Type: text/plain\r\n";
+			body = "500 Internal Server Error";
+			maxBodySizeString = std::to_string(body.size()) + "\r\n";
+		}
+	}
+	std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
+	write(pipe[1], fullMessage.c_str(), fullMessage.size());
+	close(pipe[1]);
+	exit(0);
+}
+
+void ClientConnection::createResponseParts_CGI()
+{
+	pid = fork();
+	if (pid == -1)
+	{
+		if (pipe[1] != -1)
+			close(pipe[1]);
+		changeRequestToServerError();
+		logError("Failed to fork");		
+	}
+	if (pid == 0)
+		CGI_child();
+	
 }
 
 void ClientConnection::createResponseParts()
 {
-	try{
-		if (status == RECEIVED)
-		{
-			responseParts.clear();
-			status = PREPARINGRESPONSE;			
-			if (!isCGI)
-			{
-				std::string statusLine, rawHeader;
-				size_t maxBodySize;
-				try
-				{
-					maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
-					Response	response;
-					if (!errorStatus)
-						response = responseMaker->createResponse(request);
-					else
-					{
-						Request		req(request, errorStatus);
-						
-						response = responseMaker->getErrorPage(req, errorStatus);
-					}
-					body = response.getBody();
-					statusLine = response.getStatusLine();
-					rawHeader = response.getRawHeader();
-				}
-				catch(const std::exception& e)
-				{
-					statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-					rawHeader = "Content-Type: text/plain\r\n";
-					body = "500 Internal Server Error";
-					std::string errorMessage = e.what();
-					logError("Child process for creating response failed: " + errorMessage);
-				}
-				connectionType();
-				std::string connection;
-				if (keepAlive)
-					connection = "Connection: keep-alive\r\n";
-				else
-					connection = "Connection: close\r\n";
-				chunckBody(statusLine, rawHeader, connection, maxBodySize);
-				errorStatus = 0;
-				status = READYTOSEND;
-				std::cout << "Response created" << std::endl;
-				for (size_t i = 0; i < responseParts.size(); i++)
-					std::cout << responseParts[i] << std::endl;
-				
-				
-			}
-			else
-			{
-				pid = fork();
-				if (pid == -1)
-				{
-					if (pipe[1] != -1)
-						close(pipe[1]);
-					setPlain500Response();
-					logError("Failed to fork");
-					
-				}
-				if (pid == 0)
-				{
-					std::string body, statusLine, rawHeader, maxBodySizeString;
-					try
-					{
-						if (pipe[0] != -1)
-							close(pipe[0]);
-						size_t		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
-						
-						maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
-						
-						Response	response;
-						response = responseMaker->createResponse(request);
-						body = response.getBody();
-						statusLine = response.getStatusLine();
-						rawHeader = response.getRawHeader();
-					}
-					catch(const std::exception& e)
-					{
-						statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-						rawHeader = "Content-Type: text/plain\r\n";
-						body = "500 Internal Server Error";
-						maxBodySizeString = std::to_string(body.size()) + "\r\n";
-						std::string errorMessage = e.what();
-						logError("Child process for creating response failed: " + errorMessage);
-					}
-					std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
-					write(pipe[1], fullMessage.c_str(), fullMessage.size());
-					close(pipe[1]);
-					exit(0);
-				}
-			}
-	}
-	}
-	catch(const std::exception& e)
-	{
-		if (pipe[1] != -1)
-			close(pipe[1]);
-		setPlain500Response();
-		std::string errorMessage = e.what();
-		logError("Creating response failed: " + errorMessage);	
-	}
-
+	if (status != RECEIVED)
+		return;
+	responseParts.clear();
+	status = PREPARINGRESPONSE;	
+	if (!isCGI)
+		createResponseParts_nonCGI();
+	else
+		createResponseParts_CGI();
 }
 
 size_t grabMaxBodySize(std::string &response)
