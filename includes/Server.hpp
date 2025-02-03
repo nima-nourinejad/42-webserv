@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 15:46:03 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 17:07:55 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ class Server
 		struct sockaddr_in				_address;
 		Configuration					_config;
 		int								_num_clients;
-		std::vector<ClientConnection>	_clients;
+		
 		
 		int								_retry;
 		Response						_response;
@@ -110,6 +110,7 @@ class Server
 		std::vector<struct epoll_event> _events;
     	std::vector<struct epoll_event> _ready;
 		int								backlog =(2 * max_connections);
+		std::vector<ClientConnection>	_clients;
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 17:01:47 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 17:06:12 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,6 @@ class ClientConnection
 	time_t						connectTime;
 	std::string					request;
 	std::vector<std::string>	responseParts;
-	// size_t						maxBodySize;
 	struct eventData			eventData;
 	HttpHandler					*responseMaker;
 	int							pipe[2];
