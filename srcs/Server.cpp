@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 18:20:10 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 17:03:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -861,7 +861,6 @@ void Server::createClientConnections(ServerBlock & serverBlock)
 	{
 		_clients.push_back(ClientConnection());
 		_clients[i].responseMaker = &_responseMaker;
-		_clients[0].maxBodySize = _config.maxBodySize;
 	}
 	
 }

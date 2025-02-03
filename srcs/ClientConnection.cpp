@@ -6,14 +6,14 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 17:32:43 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/03 17:02:44 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
 
 ClientConnection::ClientConnection()
-    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true), maxBodySize(0),responseMaker(nullptr), pipe{ -1, -1 }, pid(-1), errorStatus(0), isCGI(false)
+    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true),responseMaker(nullptr), pipe{ -1, -1 }, pid(-1), errorStatus(0), isCGI(false)
 	{
 		eventData.type = CLIENT;
 		eventData.fd = -1;
@@ -217,6 +217,7 @@ void ClientConnection::createResponseParts()
 			if (!isCGI)
 			{
 				std::string statusLine, rawHeader;
+				size_t maxBodySize;
 				try
 				{
 					maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
