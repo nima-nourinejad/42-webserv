@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/04 13:05:18 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/04 13:20:41 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,13 @@
 // if everything works fine with your browser and tests, but it can help
 // you hunt some bugs.
 
+// delete (like post)
 
 // when a filename that existed in the upload file want to be posted again, throw 409
 
 // check the host from the request and compare it with the server_name in the config file
 
-//cgi is creating valgrind error
+//cgi is creating valgrind error (check extension function)
 
 // if post request has no multipart/form-data, save the body without parsing it and choose a name for it.
 // Nginx uses sequential numbers but maybe it is hard. Timestamp could be simpler since we have the function ready.

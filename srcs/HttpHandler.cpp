@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/31 18:05:47 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 15:00:36 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,8 +115,7 @@ bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string 
 		if (path == location->getLocation())
 		{
 			const std::vector<std::string>	&allowedMethods = location->getLimitExcept();
-			bool							isMethodAllowed = std::find(allowedMethods.begin(),
-																allowedMethods.end(), method)
+			bool	isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method)
 																!= allowedMethods.end();
 			
 			return isMethodAllowed;
@@ -164,26 +163,54 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 	return response;
 }
 
-std::string	HttpHandler::_validateRequest(const Request &req)
+int	HttpHandler::_validateRequest(const Request &req)
 {
 	std::string	method = req.getMethod();
 	std::string	path = req.getPath();
 
 	if (!_isMethodAllowed(method, path))
-		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
+		return 405;
+
+	// if (req.getHeader("Host").empty()
+	// || (req.getHeader("Host") != _serverBlock.getServerName() + ":" + std::to_string(_serverBlock.getPort())
+	// && req.getHeader("Host") != _serverBlock.getHost()) + ":" + std::to_string(_serverBlock.getPort()))
+	// 	return 400; // need to get actual port from configuration class
+
+	if ((method == "POST" || method == "DELETE") && req.getHeader("Content-Length").empty())
+		return 411;
+
+	std::cout << "Content-Length: " << req.getHeader("Content-Length") << std::endl;
+
+	size_t contentLength;
+	if (req.getHeader("Content-Length").empty())
+		contentLength = 0;
+	else
+	{
+		try
+		{
+			contentLength = (std::stoul)(req.getHeader("Content-Length"));
+		}
+		catch(...)
+		{
+			return 400;
+		}
+	}
+
+	if (contentLength > req.getBody().size()) //change it to sth else
+		return 413;
 
 	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
 	{
 		if (req.getPath() == location->getLocation())
 		{
 			if (!location->getCgiPath().empty() && !std::filesystem::exists(location->getCgiPath()))
-				return "Invalid CGI Path"; // should be like a http response
+				return 500;
 
-			if (!location->getRoot().empty() && !std::filesystem::exists(location->getRoot()))
-				return "Invalid root path"; // should be like a http response
+			if (!(location->getRoot().empty()) && !std::filesystem::exists(location->getRoot()))
+				return 500;
 		}
 	}
-	return "Ok";
+	return 200;
 }
 
 Response	HttpHandler::createResponse(const std::string &request)
@@ -197,9 +224,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 {
 	try
 	{
-		std::string validation = _validateRequest(req);
-		if (validation != "Ok")
-			return getErrorPage(req, 405);
+		int validation = _validateRequest(req);
+		if (validation != 200)
+			return getErrorPage(req, validation);
 		
 		std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
@@ -500,7 +527,9 @@ Response HttpHandler::handlePOST(const Request &req)
 	if (!matchedLocation)
 		return getErrorPage(req, 404);
 
-	// Handle multipart/form-data (file upload)
+	if (std::filesystem::exists((std::string)(_uploadPath) + _getFileName(req)))
+		return getErrorPage(req, 409);
+
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
 		std::string boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
@@ -552,9 +581,13 @@ Response HttpHandler::handlePOST(const Request &req)
 
 	else if (!req.getBody().empty())
 	{
+		std::string fileName = std::to_string(getCurrentTime()); // timestamp function
+		saveFile(matchedLocation->getUploadPath() + "/" + fileName, req.getBody()); //maybe without "/"
+
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
 		response.setHeader("Content-Type", req.getHeader("Content-Type"));
-		response.setBody(req.getBody());
+		// response.setBody(req.getBody()); 
+		response.setBody("File uploaded successfully. File URL: /uploads/" + fileName); //
 		response.setHeader("Content-Length", std::to_string(req.getBody().size()));
 		return response;
 	}
@@ -565,6 +598,16 @@ Response HttpHandler::handlePOST(const Request &req)
 		response.setBody("Empty body in POST request.");
 		return response;
 	}
+}
+
+time_t	HttpHandler::getCurrentTime()
+{
+	time_t	current_time = time(nullptr);
+
+	if (current_time == -1)
+		throw SystemCallError("Failed to get current time");
+
+	return current_time;
 }
 
 std::string	HttpHandler::extractFilename(const std::string& disposition)
@@ -585,6 +628,9 @@ void	HttpHandler::saveFile(const std::string &filename, const std::string &fileD
 {
 	std::ofstream	file(filename, std::ios::binary);
 
+	if (!file.is_open())
+		throw SystemCallError("Failed to open file");
+
 	file.write(fileData.c_str(), fileData.size());
 	file.close();
 }
@@ -603,26 +649,30 @@ Response	HttpHandler::handleOPTIONS(const Request &req)
 Response	HttpHandler::handleDELETE(const Request &req)
 {
 	std::string fileName = "/" + _getFileName(req);
+
 	if (fileName.empty())
 		return getErrorPage(req, 404);
+
 	std::string				filePath = _uploadPath.c_str() + fileName;
 	std::filesystem::path	path(filePath);
 	Response				response;
 	
-	if (std::filesystem::remove(path) == 0)
+	if (std::filesystem::remove(path))
 	{
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
-		response.setBody("File deleted successfully\n");
+		response.setBody("File deleted successfully. File URL: /uploads/" + fileName);
 	}
 	else if (errno == EACCES)
 	{
-		response.setStatusLine("HTTP/1.1 403 " + getStatusMessage(403) + "\r\n");
-		response.setBody("Permission denied\n");
+		return getErrorPage(req, 403);
+		// response.setStatusLine("HTTP/1.1 403 " + getStatusMessage(403) + "\r\n");
+		// response.setBody("Permission denied\n");
 	}
 	else if (errno == ENOENT)
 	{
-		response.setStatusLine("HTTP/1.1 404 " + getStatusMessage(404) + "\r\n");
-		response.setBody("File not found\n");
+		return getErrorPage(req, 404);
+		// response.setStatusLine("HTTP/1.1 404 " + getStatusMessage(404) + "\r\n");
+		// response.setBody("File not found\n");
 	}
 	return response;
 }

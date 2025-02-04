@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/31 16:48:22 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 15:31:03 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,21 +28,21 @@ Response	CGIHandler::execute(const Request &req)
 		HttpHandler						httpHandlerInstance(_serverBlock);
 		std::shared_ptr<LocationBlock>	matchedLocation = httpHandlerInstance.findMatchedLocation(req);
 
+		if (!matchedLocation)
+			return httpHandlerInstance.getErrorPage(req, 404);
+
 		std::string		filePath = matchedLocation->getCgiPath();
 
 		std::string extension = filePath.substr(filePath.find_last_of(".") + 1);
 
 		if (std::find(matchedLocation->getCgiExtension().begin(), matchedLocation->getCgiExtension().end(), extension)
 				== matchedLocation->getCgiExtension().end())
-			// throw std::runtime_error("Unsupported CGI extension");
 			return httpHandlerInstance.getErrorPage(req, 500);
 
 		if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath))
-			// throw std::runtime_error("CGI file does not exist or is not a regular file");
 			return httpHandlerInstance.getErrorPage(req, 500);
 
 		if (access(filePath.c_str(), X_OK) != 0)
-			// throw std::runtime_error("CGI file is not executable");
 			return httpHandlerInstance.getErrorPage(req, 500);
 		
 		int	pipefd[2];
