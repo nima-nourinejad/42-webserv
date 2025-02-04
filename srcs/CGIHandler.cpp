@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 15:32:45 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/04 16:35:53 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,12 +31,20 @@ Response	CGIHandler::execute(const Request &req)
 		if (!matchedLocation)
 			return httpHandlerInstance.getErrorPage(req, 404);
 
-		std::string		filePath = matchedLocation->getCgiPath();
-		std::string		extension = filePath.substr(filePath.find_last_of(".") + 1);
+		std::string						filePath = matchedLocation->getCgiPath();
+		std::string						extension = filePath.substr(filePath.find_last_of("."));
+		std::vector<std::string>		validExtensions = matchedLocation->getCgiExtension();
 
-		if (std::find(matchedLocation->getCgiExtension().begin(), matchedLocation->getCgiExtension().end(), extension)
-				== matchedLocation->getCgiExtension().end())
+		if (validExtensions.empty())
 			return httpHandlerInstance.getErrorPage(req, 500);
+
+		std::vector<std::string>::iterator	it = std::find(validExtensions.begin(), validExtensions.end(), extension);
+
+		if (it == validExtensions.end())
+		{
+			std::cout << "Extension not found" << std::endl;
+			return httpHandlerInstance.getErrorPage(req, 500);
+		}
 
 		if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath))
 			return httpHandlerInstance.getErrorPage(req, 500);

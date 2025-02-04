@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 15:00:36 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/04 16:36:43 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ HttpHandler::~HttpHandler() {}
 std::shared_ptr<LocationBlock>	HttpHandler::findMatchedLocation(const Request &req)
 {
 	std::string						path;
-	std::shared_ptr<LocationBlock>	matchedLocation;
+	std::shared_ptr<LocationBlock>	matchedLocation = nullptr;
 	
 	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
 	{
@@ -178,8 +178,6 @@ int	HttpHandler::_validateRequest(const Request &req)
 
 	if ((method == "POST" || method == "DELETE") && req.getHeader("Content-Length").empty())
 		return 411;
-
-	std::cout << "Content-Length: " << req.getHeader("Content-Length") << std::endl;
 
 	size_t contentLength;
 	if (req.getHeader("Content-Length").empty())
@@ -318,10 +316,8 @@ std::string HttpHandler::readFileError(std::string const &path)
 	std::ifstream	file(path.c_str());
 
 	if (!file.is_open())
-	{
-		std::cout << "Path: " << path << std::endl;
 		throw SystemCallError("Failed to open file");
-	}
+
 	std::stringstream	read;
 
 	read << file.rdbuf();
