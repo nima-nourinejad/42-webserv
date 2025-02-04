@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 18:32:08 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 12:58:55 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <future>
+#include <thread>
+#include <chrono>
 
 #include "Request.hpp"
 #include "Response.hpp"
@@ -51,6 +54,8 @@ class ClientConnection
 	// Constants
 	const size_t				MAX_HEADER_SIZE = 3200768;
 	const size_t				MAX_REQUEST_SIZE = 100048576;
+	const std::chrono::seconds NON_CGI_TIMEOUT = std::chrono::seconds(5);
+
 	
     public:
 
@@ -70,6 +75,8 @@ class ClientConnection
 	int							errorStatus;
 	struct eventData			pipeEventData;
 	bool						isCGI;
+	std::future<void>			future;
+	std::thread					thread;
 
 	// Public Methods
 	ClientConnection();

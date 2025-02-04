@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 18:32:29 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 13:15:33 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -295,7 +295,13 @@ void ClientConnection::createResponseParts()
 	responseParts.clear();
 	status = PREPARINGRESPONSE;	
 	if (!isCGI)
-		createResponseParts_nonCGI();
+	{
+		future = std::async(std::launch::async, &ClientConnection::createResponseParts_nonCGI, this);
+		if (future.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
+			changeRequestToRequestTimeout();
+		else
+			future.get();
+	}
 	else
 		createResponseParts_CGI();
 }
