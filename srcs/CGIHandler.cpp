@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 15:31:03 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/04 15:32:45 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,7 @@ Response	CGIHandler::execute(const Request &req)
 			return httpHandlerInstance.getErrorPage(req, 404);
 
 		std::string		filePath = matchedLocation->getCgiPath();
-
-		std::string extension = filePath.substr(filePath.find_last_of(".") + 1);
+		std::string		extension = filePath.substr(filePath.find_last_of(".") + 1);
 
 		if (std::find(matchedLocation->getCgiExtension().begin(), matchedLocation->getCgiExtension().end(), extension)
 				== matchedLocation->getCgiExtension().end())
