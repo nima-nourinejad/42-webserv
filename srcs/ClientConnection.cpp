@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/04 13:15:33 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 13:23:39 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -288,6 +288,15 @@ void ClientConnection::createResponseParts_CGI()
 	
 }
 
+void ClientConnection::futureThread_prepare_response()
+{
+	future = std::async(std::launch::async, &ClientConnection::createResponseParts_nonCGI, this);
+	if (future.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
+		changeRequestToRequestTimeout();
+	else
+		future.get();
+}
+
 void ClientConnection::createResponseParts()
 {
 	if (status != RECEIVED)
@@ -295,13 +304,7 @@ void ClientConnection::createResponseParts()
 	responseParts.clear();
 	status = PREPARINGRESPONSE;	
 	if (!isCGI)
-	{
-		future = std::async(std::launch::async, &ClientConnection::createResponseParts_nonCGI, this);
-		if (future.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
-			changeRequestToRequestTimeout();
-		else
-			future.get();
-	}
+		futureThread_prepare_response();
 	else
 		createResponseParts_CGI();
 }

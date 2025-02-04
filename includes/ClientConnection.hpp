@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/04 12:58:55 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 13:23:44 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,7 @@ class ClientConnection
 	void						grabChunkedData(std::string & unProcessed, size_t chunkedSize);
 	void						grabChunkedHeader(std::string & unProcessed, std::string & header);
 	void						handleChunkedEncoding();
+	void						futureThread_prepare_response();
 	void						createResponseParts_nonCGI();
 	void						createResponseParts_CGI();
 	void						createResponseParts();
