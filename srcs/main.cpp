@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/04 19:50:07 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 19:52:45 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,11 @@ int main(int argc, char **argv)
 	static constexpr int TOTAL_FD = 1000;
 	
 	int max_fd = TOTAL_FD / server_count;
+	if (max_fd < 5)
+	{
+		Server::logError("Too many servers for the number of file descriptors");
+		return 1;
+	}
 
 	std::vector<std::unique_ptr<Server>>	servers;
 

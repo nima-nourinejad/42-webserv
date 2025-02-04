@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 19:49:35 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 20:02:58 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -640,7 +640,7 @@ Response HttpHandler::handlePOST(const Request &req)
 		response.setHeader("Content-Type", req.getHeader("Content-Type"));
 		// response.setBody(req.getBody()); 
 		response.setBody("File uploaded successfully. File Name: " + fileName); //
-		response.setHeader("Content-Length", std::to_string(req.getBody().size()));
+		response.setHeader("Content-Length", std::to_string(req.getBody().size())); ///maybe this should be deleted because Nima adds it
 		return response;
 	}
 	else
@@ -718,6 +718,7 @@ Response	HttpHandler::handleDELETE(const Request &req)
 	if (std::filesystem::remove(path))
 	{
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
+		// response.setHeader("Content-Type", "text/plain"); Nima adds this but because he is not sure commented it
 		response.setBody("File deleted successfully. File URL: /uploads/" + fileName);
 	}
 	else if (errno == EACCES)
