@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 16:36:43 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/04 19:49:35 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,21 +108,33 @@ bool HttpHandler::_isDownload(const Request &req)
 	return false;
 }
 
-bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
+bool	HttpHandler::_isMethodAllowed(const Request &req)
 {
-	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
-	{
-		if (path == location->getLocation())
-		{
-			const std::vector<std::string>	&allowedMethods = location->getLimitExcept();
-			bool	isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method)
-																!= allowedMethods.end();
-			
-			return isMethodAllowed;
-		}
-	}
-	return false;
+	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
+
+	const std::vector<std::string>	&allowedMethods = matchedLocation->getLimitExcept();
+	bool							isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), req.getMethod())
+															!= allowedMethods.end();
+		
+		// std::cout << "Method: " << method << " Path: " << path << " Allowed: " << isMethodAllowed << std::endl;
+		
+		return isMethodAllowed;
 }
+	// for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
+	// {
+	// 	if (path == location->getLocation())
+	// 	{
+	// 		const std::vector<std::string>	&allowedMethods = location->getLimitExcept();
+	// 		bool	isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method)
+	// 															!= allowedMethods.end();
+			
+	// 		std::cout << "Method: " << method << " Path: " << path << " Allowed: " << isMethodAllowed << std::endl;
+			
+	// 		return isMethodAllowed;
+	// 	}
+	// }
+	// return false;
+// }
 
 Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 {
@@ -166,17 +178,20 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 int	HttpHandler::_validateRequest(const Request &req)
 {
 	std::string	method = req.getMethod();
-	std::string	path = req.getPath();
+	// std::string	path = req.getPath();
 
-	if (!_isMethodAllowed(method, path))
+	if (!_isMethodAllowed(req))
+	{
+		std::cout << "Method: " << method << " Path: " << req.getPath() << std::endl;
 		return 405;
+	}
 
 	// if (req.getHeader("Host").empty()
 	// || (req.getHeader("Host") != _serverBlock.getServerName() + ":" + std::to_string(_serverBlock.getPort())
 	// && req.getHeader("Host") != _serverBlock.getHost()) + ":" + std::to_string(_serverBlock.getPort()))
 	// 	return 400; // need to get actual port from configuration class
 
-	if ((method == "POST" || method == "DELETE") && req.getHeader("Content-Length").empty())
+	if (method == "POST" && req.getHeader("Content-Length").empty())
 		return 411;
 
 	size_t contentLength;
@@ -222,9 +237,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 {
 	try
 	{
-		int validation = _validateRequest(req);
-		if (validation != 200)
-			return getErrorPage(req, validation);
+		// int validation = _validateRequest(req);
+		// if (validation != 200)
+		// 	return getErrorPage(req, validation);
 		
 		std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
@@ -513,6 +528,17 @@ Response	HttpHandler::handleFileRequest(const Request &req, const std::string &f
 	}
 }
 
+void ensureUploadPathExists(const std::string& uploadPath)
+{
+    std::filesystem::path directory(uploadPath);
+
+    if (std::filesystem::exists(directory)) 
+		return;
+	if (std::filesystem::create_directories(directory))
+		return;
+	throw SystemCallError("Failed to create upload directory");
+}
+
 Response HttpHandler::handlePOST(const Request &req)
 {
 	std::string contentType = req.getHeader("Content-Type");
@@ -522,13 +548,32 @@ Response HttpHandler::handlePOST(const Request &req)
 
 	if (!matchedLocation)
 		return getErrorPage(req, 404);
-
-	if (std::filesystem::exists((std::string)(_uploadPath) + _getFileName(req)))
-		return getErrorPage(req, 409);
-
-	if (contentType.find("multipart/form-data") != std::string::npos)
+	
+	try
 	{
-		std::string boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
+		ensureUploadPathExists(_uploadPath);
+	}
+	catch(...)
+	{
+		return getErrorPage(req, 500);
+	}
+	
+
+	bool		isMultiPart = contentType.find("multipart/form-data") != std::string::npos;
+	std::string boundary;
+	std::string data;
+	// bool		isFileUpload = false;
+	std::string disposition;
+	std::string fileName;
+
+	if (isMultiPart)
+	{
+		size_t pos = contentType.find("boundary=");
+
+		if (pos == std::string::npos)
+			return getErrorPage(req, 400);
+		
+		boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
 		std::istringstream bodyStream(req.getBody());
 		std::string line;
 
@@ -536,54 +581,65 @@ Response HttpHandler::handlePOST(const Request &req)
 		{
 			if (line == boundary)
 			{
-				std::string disposition, partContentType;
+				std::string partContentType;
 				std::getline(bodyStream, disposition);
+				
+				fileName = extractFileName(disposition);
+				
+				if (std::filesystem::exists((std::string)(_uploadPath) + "/" + fileName))
+					return getErrorPage(req, 409);
+				
 				std::getline(bodyStream, partContentType);
 				std::getline(bodyStream, line);
 
-				bool isFileUpload = disposition.find("filename=") != std::string::npos;
+				// isFileUpload = disposition.find("filename=") != std::string::npos;
 				std::ostringstream partData;
 
 				while (std::getline(bodyStream, line) && line != boundary)
 					partData << line << "\n";
 
-				std::string data = partData.str();
+				data = partData.str();
 
 				if (data.find(boundary) != std::string::npos)
 					data = data.substr(0, data.find(boundary));
-
-				if (isFileUpload)
-				{
-					std::string filename = extractFilename(disposition);
-					filename = matchedLocation->getUploadPath() + "/" + filename;
-					saveFile(filename, data);
-
-					response.setStatusLine("HTTP/1.1 201 " + getStatusMessage(201) +"\r\n");
-					response.setHeader("Content-Type", "text/plain");
-					response.setBody("File uploaded successfully. File URL: /uploads/" + filename);
-					return response;
-				}
-				else
-				{
-					response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
-					response.setHeader("Content-Type", "text/plain");
-					response.setBody("Non-file data processed successfully.");
-					return response;
-				}
 			}
 		}
+		if (isMultiPart)
+		{
+			boundary = boundary.substr(0, boundary.length() - 1);
+			if (data.find(boundary) != std::string::npos)
+				data = data.substr(0, data.find(boundary));
+		}
+		// if (isFileUpload)
+		// {
+			// std::string filename = extractFileName(disposition);
+			std::string	filePath = matchedLocation->getUploadPath() + "/" + fileName;
+			saveFile(filePath, data);
+
+			response.setStatusLine("HTTP/1.1 201 " + getStatusMessage(201) +"\r\n");
+			response.setHeader("Content-Type", "text/plain");
+			response.setBody("File uploaded successfully. File Name: " + fileName);
+			return response;
+		// }
+		// else
+		// {
+		// 	response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
+		// 	response.setHeader("Content-Type", "text/plain");
+		// 	response.setBody("Non-file data processed successfully.");
+		// 	return response;
+		// }
 		return response;
 	}
 
 	else if (!req.getBody().empty())
 	{
-		std::string fileName = std::to_string(getCurrentTime()); // timestamp function
+		std::string fileName = getCurrentTime(); // timestamp function
 		saveFile(matchedLocation->getUploadPath() + "/" + fileName, req.getBody()); //maybe without "/"
 
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
 		response.setHeader("Content-Type", req.getHeader("Content-Type"));
 		// response.setBody(req.getBody()); 
-		response.setBody("File uploaded successfully. File URL: /uploads/" + fileName); //
+		response.setBody("File uploaded successfully. File Name: " + fileName); //
 		response.setHeader("Content-Length", std::to_string(req.getBody().size()));
 		return response;
 	}
@@ -596,17 +652,23 @@ Response HttpHandler::handlePOST(const Request &req)
 	}
 }
 
-time_t	HttpHandler::getCurrentTime()
+std::string	HttpHandler::getCurrentTime()
 {
-	time_t	current_time = time(nullptr);
+	// time_t	current_time = time(nullptr);
 
-	if (current_time == -1)
-		throw SystemCallError("Failed to get current time");
+	// if (current_time == -1)
+	// 	throw SystemCallError("Failed to get current time");
 
-	return current_time;
+	// return current_time;
+	std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now();
+	std::time_t timeInSeconds = std::chrono::system_clock::to_time_t(timePoint);
+	std::stringstream name;
+	name << std::put_time(std::localtime(&timeInSeconds), "%Y-%m-%d-%H:%M:%S");
+	return name.str();
+	
 }
 
-std::string	HttpHandler::extractFilename(const std::string& disposition)
+std::string	HttpHandler::extractFileName(const std::string& disposition)
 {
 	size_t	pos = disposition.find("filename=");
 
@@ -617,7 +679,7 @@ std::string	HttpHandler::extractFilename(const std::string& disposition)
 
 		return filename.substr(0, endPos);
 	}
-	return "uploaded_file";
+	return (getCurrentTime());
 }
 
 void	HttpHandler::saveFile(const std::string &filename, const std::string &fileData)

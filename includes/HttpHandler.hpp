@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 16:28:24 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/04 19:32:29 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ class HttpHandler
 		std::string						_filePath;
 		std::filesystem::path			_uploadPath;
 
-		bool							_isMethodAllowed(const std::string &method, const std::string &path);
+		bool							_isMethodAllowed(const Request &req);
 		int								_validateRequest(const Request &req);
 		std::string						_getFileName(const Request &req);
 		bool							_isDownload(const Request &req);
@@ -59,8 +59,8 @@ class HttpHandler
 
 		CGIHandler						getCGIHandler() const { return _cgiHandler; } // maybe not needed
 		Response						getErrorPage(const Request &req, int statusCode);
-		time_t							getCurrentTime();
-		std::string						extractFilename(const std::string &disposition);
+		std::string						getCurrentTime();
+		std::string						extractFileName(const std::string &disposition);
 		void							saveFile(const std::string &filename, const std::string &fileData);
 		std::string						readFileError(std::string const& path);
 		std::string						getStatusMessage(int statusCode);

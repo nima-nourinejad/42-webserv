@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/04 16:37:27 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/04 19:50:07 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,16 +16,7 @@
 // if everything works fine with your browser and tests, but it can help
 // you hunt some bugs.
 
-// delete (like post)
-
-// when a filename that existed in the upload file want to be posted again, throw 409
-
 // check the host from the request and compare it with the server_name in the config file
-
-// if post request has no multipart/form-data, save the body without parsing it and choose a name for it.
-// Nginx uses sequential numbers but maybe it is hard. Timestamp could be simpler since we have the function ready.
-// post (not chuncked) without content-length should retutn 411
-// if the body is too big, return 413 (the content length does not match)
 
 #include "Server.hpp"
 
