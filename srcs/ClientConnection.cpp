@@ -6,7 +6,7 @@
 /*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/05 12:17:40 by nima             ###   ########.fr       */
+/*   Updated: 2025/02/05 14:15:43 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -251,18 +251,34 @@ Response nonCGI_helper_response(HttpHandler responseMaker, std::string request, 
     }
     return response;
 }
-
+std::tuple <int, size_t, Response> future_helper_nonCGI(HttpHandler responseMaker, std::string request, int errorStatus)
+{
+    Response response;
+    std::future<size_t> future_size = std::async(std::launch::async, &nonCGI_helper_size, responseMaker, request, errorStatus);
+    std::future<Response> future_response = std::async(std::launch::async, &nonCGI_helper_response, responseMaker, request, errorStatus);
+    if (future_size.wait_for(std::chrono::seconds(5)) == std::future_status::timeout || future_response.wait_for(std::chrono::seconds(5)) == std::future_status::timeout)
+        return std::make_tuple(504, 0, response);
+    size_t maxBodySize = future_size.get();	
+    Response response = future_response.get();
+    return std::make_tuple(0, maxBodySize, response);
+    
+}
 
 void ClientConnection::createResponseParts_nonCGI()
 {
 	try
 	{
-        std::future<size_t> future_size = std::async(std::launch::async, &nonCGI_helper_size, *responseMaker, request, errorStatus);
-        std::future<Response> future_response = std::async(std::launch::async, &nonCGI_helper_response, *responseMaker, request, errorStatus);
-        if (future_size.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout || future_response.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
+        // std::future<size_t> future_size = std::async(std::launch::async, &nonCGI_helper_size, *responseMaker, request, errorStatus);
+        // std::future<Response> future_response = std::async(std::launch::async, &nonCGI_helper_response, *responseMaker, request, errorStatus);
+        // if (future_size.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout || future_response.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
+        //     return changeRequestToServerTimeout();
+        // size_t maxBodySize = future_size.get();	
+		// Response response = future_response.get();
+        std::tuple <int, size_t, Response> result = future_helper_nonCGI(*responseMaker, request, errorStatus);
+        if (std::get<0>(result) == 504)
             return changeRequestToServerTimeout();
-        size_t maxBodySize = future_size.get();	
-		Response response = future_response.get();
+        size_t maxBodySize = std::get<1>(result);
+        Response response = std::get<2>(result);
         std::string statusLine, rawHeader;
 		body = response.getBody();
 		statusLine = response.getStatusLine();
