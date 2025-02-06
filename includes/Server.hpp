@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 12:43:54 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 19:05:41 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ class Server
 		void							handleTimeout(int index);
 		void							closeClientSocket(int index);
 		void							assignResponseMakers();
+		void							assignServerNames();
 		void							receiveMessage(int index);
 		void							sendResponseParts(int index);
 

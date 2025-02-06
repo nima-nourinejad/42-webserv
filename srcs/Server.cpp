@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 17:59:30 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 19:11:47 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ Server::Server(ServerBlock & serverBlock, int port, int max_fd)
 	eventData.fd = -1;
 	
 	assignResponseMakers();
+	assignServerNames();
 };
 
 void Server::connectToSocket()
@@ -863,6 +864,13 @@ void Server::assignResponseMakers()
 	
 }
 
+void Server::assignServerNames()
+{
+	for (int i = 0; i < max_connections; ++i)
+		_clients[i].serverName = _config.name;
+	
+}
+
 void Server::startListeningSocket()
 {
 	_retry = 0;
@@ -928,7 +936,7 @@ Server::~Server()
 
 void Server::printMessage(std::string const & message) const
 {
-	std::cout << _config.name << " : " << message << std::endl;
+	std::cout << "Server " << _config.name << " : " << message << std::endl;
 }
 
 

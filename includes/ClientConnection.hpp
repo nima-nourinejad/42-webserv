@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 18:01:17 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 19:08:20 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,7 @@ class ClientConnection
 	struct eventData			pipeEventData;
 	bool						isCGI;
 	int							serverFailureRetry;
+	std::string					serverName;
 
 	// Public Methods
 	ClientConnection();
@@ -106,6 +107,7 @@ class ClientConnection
 	void						readFromPipe();
 	void						setCGI();
 	void						CGI_child();
+	void 						printMessage(std::string const & message) const;
 };
 
 #endif

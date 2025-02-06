@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 18:16:22 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 19:09:31 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
 
 ClientConnection::ClientConnection()
-    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true),responseMaker(nullptr), pipe{ -1, -1 }, pid(-1), errorStatus(0), isCGI(false)
+    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true),responseMaker(nullptr), pipe{ -1, -1 }, pid(-1), errorStatus(0), isCGI(false), serverFailureRetry(0), serverName("")
 	{
 		eventData.type = CLIENT;
 		eventData.fd = -1;
@@ -270,7 +270,6 @@ void ClientConnection::createResponseParts_nonCGI()
 		else
 			connection = "Connection: close\r\n";
 
-		std::cout << "chunking body" << std::endl;
 		chunckBody(statusLine, rawHeader, connection, maxBodySize);
 		errorStatus = 0;
 		serverFailureRetry = 0;
@@ -512,4 +511,9 @@ void ClientConnection::setCGI()
 {
 	Request req(request, errorStatus);
 	isCGI= (!errorStatus && responseMaker->findMatchedLocation(req) && !((responseMaker->findMatchedLocation(req))->getCgiPath().empty()));
+}
+
+void ClientConnection::printMessage(std::string const & message) const
+{
+	std::cout << "Server " << serverName << " : " << message << std::endl;
 }
