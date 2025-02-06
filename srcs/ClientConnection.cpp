@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/04 13:23:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/05 12:17:40 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,12 @@ void ClientConnection::changeRequestToBadRequest()
 void ClientConnection::changeRequestToRequestTimeout()
 {
 	errorStatus = 408;
+	status = RECEIVED;
+}
+
+void ClientConnection::changeRequestToServerTimeout()
+{
+	errorStatus = 504;
 	status = RECEIVED;
 }
 
@@ -191,20 +197,73 @@ void ClientConnection::handleChunkedEncoding()
 	}
 }
 
+// void ClientConnection::createResponseParts_nonCGI()
+// {
+// 	try
+// 	{
+// 		std::string statusLine, rawHeader;
+// 		size_t maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
+// 		Response	response;
+// 		if (!errorStatus)
+// 			response = responseMaker->createResponse(request);
+// 		else
+// 		{
+// 			Request		req(request, errorStatus);
+// 			response = responseMaker->getErrorPage(req, errorStatus);
+// 		}
+// 		body = response.getBody();
+// 		statusLine = response.getStatusLine();
+// 		rawHeader = response.getRawHeader();
+// 		connectionType();
+// 		std::string connection;
+// 		if (keepAlive)
+// 			connection = "Connection: keep-alive\r\n";
+// 		else
+// 			connection = "Connection: close\r\n";
+// 		chunckBody(statusLine, rawHeader, connection, maxBodySize);
+// 		errorStatus = 0;
+// 		status = READYTOSEND;
+// 	}
+// 	catch(const std::exception& e)
+// 	{
+// 		std::string errorMessage = e.what();
+// 		logError("Creating non CGI response failed: " + errorMessage);
+// 		changeRequestToServerError();
+// 	}
+// }
+
+size_t nonCGI_helper_size(HttpHandler responseMaker, std::string request, int errorStatus)
+{
+    size_t maxBodySize;
+    maxBodySize = responseMaker.getMaxBodySize(request, errorStatus);
+    return maxBodySize;
+}
+
+Response nonCGI_helper_response(HttpHandler responseMaker, std::string request, int errorStatus)
+{
+    Response response;
+    if (!errorStatus)
+        response = responseMaker.createResponse(request);
+    else
+    {
+        Request		req(request, errorStatus);
+        response = responseMaker.getErrorPage(req, errorStatus);
+    }
+    return response;
+}
+
+
 void ClientConnection::createResponseParts_nonCGI()
 {
 	try
 	{
-		std::string statusLine, rawHeader;
-		size_t maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
-		Response	response;
-		if (!errorStatus)
-			response = responseMaker->createResponse(request);
-		else
-		{
-			Request		req(request, errorStatus);
-			response = responseMaker->getErrorPage(req, errorStatus);
-		}
+        std::future<size_t> future_size = std::async(std::launch::async, &nonCGI_helper_size, *responseMaker, request, errorStatus);
+        std::future<Response> future_response = std::async(std::launch::async, &nonCGI_helper_response, *responseMaker, request, errorStatus);
+        if (future_size.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout || future_response.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
+            return changeRequestToServerTimeout();
+        size_t maxBodySize = future_size.get();	
+		Response response = future_response.get();
+        std::string statusLine, rawHeader;
 		body = response.getBody();
 		statusLine = response.getStatusLine();
 		rawHeader = response.getRawHeader();
@@ -224,6 +283,10 @@ void ClientConnection::createResponseParts_nonCGI()
 		logError("Creating non CGI response failed: " + errorMessage);
 		changeRequestToServerError();
 	}
+    catch(...)
+    {
+        changeRequestToServerError();
+    }
 }
 
 void ClientConnection::CGI_child()
@@ -288,14 +351,6 @@ void ClientConnection::createResponseParts_CGI()
 	
 }
 
-void ClientConnection::futureThread_prepare_response()
-{
-	future = std::async(std::launch::async, &ClientConnection::createResponseParts_nonCGI, this);
-	if (future.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
-		changeRequestToRequestTimeout();
-	else
-		future.get();
-}
 
 void ClientConnection::createResponseParts()
 {
@@ -304,7 +359,7 @@ void ClientConnection::createResponseParts()
 	responseParts.clear();
 	status = PREPARINGRESPONSE;	
 	if (!isCGI)
-		futureThread_prepare_response();
+		createResponseParts_nonCGI();
 	else
 		createResponseParts_CGI();
 }
