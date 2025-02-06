@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 17:07:55 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 12:43:54 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ class Server
 		void							closeClientSockets();
 		void							handleTimeout(int index);
 		void							closeClientSocket(int index);
-		void							createClientConnections(ServerBlock & serverBlock);
+		void							assignResponseMakers();
 		void							receiveMessage(int index);
 		void							sendResponseParts(int index);
 

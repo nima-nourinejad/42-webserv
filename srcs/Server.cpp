@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/03 18:39:40 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 12:43:41 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ Server::Server(ServerBlock & serverBlock, int port, int max_fd)
 	eventData.index = max_connections;
 	eventData.fd = -1;
 	
-	createClientConnections(serverBlock);
+	assignResponseMakers();
 };
 
 void Server::connectToSocket()
@@ -857,13 +857,10 @@ void Server::makeSocketReusable()
 		throw SocketException("Failed to make socket reusable");
 }
 
-void Server::createClientConnections(ServerBlock & serverBlock)
+void Server::assignResponseMakers()
 {
-	(void)serverBlock;
 	for (int i = 0; i < max_connections; ++i)
-	{
 		_clients[i].responseMaker = &_responseMaker;
-	}
 	
 }
 
