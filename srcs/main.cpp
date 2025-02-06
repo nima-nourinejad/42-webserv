@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/04 19:52:45 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 19:01:05 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,17 +95,13 @@ int main(int argc, char **argv)
 				{
 					servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i), config.getServerBlocks().at(i).getListen().at(j), max_fd));
 				}
-				catch(SocketException const & e)
-				{
-					e.log();
-				}
 				catch(std::exception const & e)
 				{
-					Server::logError(e.what());
+					std::cerr << "Error: " << e.what() << ": config block " << std::to_string(i + 1) << " and port " + std::to_string(config.getServerBlocks().at(i).getListen().at(j)) << std::endl;
 				}
 				catch(...)
 				{
-					Server::logError("Unknown exception during server creation for config block " + std::to_string(i + 1) + " and port " + std::to_string(config.getServerBlocks().at(i).getListen().at(j)));
+					std::cerr << "Error: " << "Unknown exception during server creation for config block " << std::to_string(i + 1) << " and port " << std::to_string(config.getServerBlocks().at(i).getListen().at(j)) << std::endl;
 				}				
 			}
 		}

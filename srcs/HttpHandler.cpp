@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 18:11:39 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:45:16 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -876,5 +876,8 @@ size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)
 
 	if (matchedLocation && matchedLocation->getClientMaxBodySize() > 0)
 		return matchedLocation->getClientMaxBodySize();
-	return _serverBlock.getClientMaxBodySize();
+	if (_serverBlock.getClientMaxBodySize() > 0)
+		return _serverBlock.getClientMaxBodySize();
+		
+	return DEF_MAX_BODY_SIZE;
 }
