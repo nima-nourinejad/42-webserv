@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   LocationBlock.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2025/01/30 15:07:26 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:09:19 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "LocationBlock.hpp"
 
-LocationBlock::LocationBlock(/* args */)
+LocationBlock::LocationBlock()
 {
 	_autoindex = false;
 	_client_max_body_size = 0;
@@ -66,11 +66,6 @@ std::string LocationBlock::getUploadPath() const
 	return _upload_path;
 }
 
-std::string LocationBlock::getProxyPass() const
-{
-	return _proxy_pass;
-}
-
 std::map<int, std::string> LocationBlock::getErrorPages() const
 {
 	return _error_pages;
@@ -115,11 +110,8 @@ void LocationBlock::setClientMaxBodySize(const std::string& client_max_body_size
 
 void LocationBlock::setAlias(const std::string& alias)
 {
-	// std::cout << "Alias: " << alias << std::endl;
 	if (alias.empty())
 		throw std::invalid_argument("Alias is empty");
-	// if (alias[0] != '/')
-	// 	throw std::invalid_argument("Incorrect alias format"); // maybe delete
 	if (!std::filesystem::exists(alias))
 		throw std::invalid_argument("Alias path does not exist");
 	_alias = alias;
@@ -140,7 +132,7 @@ void LocationBlock::setReturn(std::string return_val, const std::string& url)
 	_return = std::make_pair(code, url);
 }
 
-void LocationBlock::setLocation(const std::string& location) // may not be needed
+void LocationBlock::setLocation(const std::string& location)
 {
 	_location = location;
 }
@@ -203,16 +195,6 @@ void LocationBlock::setUploadPath(const std::string& upload_path)
 		throw std::invalid_argument("Upload path is not a valid directory");
 	_upload_path = upload_path;
 }
-
-void LocationBlock::setProxyPass(const std::string& proxy_pass)
-{
-	if (proxy_pass.empty())
-		throw std::invalid_argument("Proxy pass is empty");
-	std::regex url_pattern("^(http|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(/.*)?$");
-	if (!std::regex_match(proxy_pass, url_pattern))
-		throw std::invalid_argument("Invalid proxy pass URL format");
-	_proxy_pass = proxy_pass;
-}
 	
 void LocationBlock::setErrorPage(int code, const std::string& page)
 {
@@ -268,9 +250,6 @@ void LocationBlock::printLocationBlock()
 	std::cout << "Cgi path: " << _cgi_path << std::endl;
 	if (!_upload_path.empty())
 	std::cout << "Upload path: " << _upload_path << std::endl;
-
-	if (!_proxy_pass.empty())
-	std::cout << "Proxy pass: " << _proxy_pass << std::endl;
 	if (_return.first)
 	std::cout << "Return: " << _return.first << " " << _return.second << std::endl;
 	if (!_alias.empty())

@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:46:15 by akovalev          #+#    #+#             */
-/*   Updated: 2024/12/09 18:46:46 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:08:44 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,19 +30,19 @@ class LocationBlock
 		bool						_autoindex; // on | off
 		std::vector<std::string>	_cgi_extension;	// .php, .py, .pl, .rb
 		std::string					_cgi_path; // /usr/bin/php-cgi
-		std::string					_upload_path; // /var/www/html/uploads
-		std::string					_proxy_pass; // http:// may actually not be needed as per subject
+		std::string					_upload_path; // path to upload files
 		std::pair<int, std::string>	_return;	// defines a return code and a URL to redirect to
 		std::string					_alias;
-		size_t						_client_max_body_size; // size in bytes, needs to be converted if in human-readable format
+		size_t						_client_max_body_size; // size in bytes
 		std::map<int, std::string>	_error_pages;
 		std::vector<std::string>	_limit_except;
 
 	public:
-		LocationBlock(/* args */);
+		LocationBlock();
 		~LocationBlock();
 		LocationBlock(std::string location);
-		LocationBlock(const LocationBlock& original){
+		LocationBlock(const LocationBlock& original)
+		{
 			_location = original._location;
 			_root = original._root;
 			_index = original._index;
@@ -50,13 +50,11 @@ class LocationBlock
 			_cgi_extension = original._cgi_extension;
 			_cgi_path = original._cgi_path;
 			_upload_path = original._upload_path;
-			_proxy_pass = original._proxy_pass;
 			_return = original._return;
 			_alias = original._alias;
 			_client_max_body_size = original._client_max_body_size;
 			_error_pages = original._error_pages;
 			_limit_except = original._limit_except;
-			std::cout << "Location block copied, " << this << std::endl;
 		}
 		LocationBlock& operator=(const LocationBlock& original) = default;
 
@@ -67,7 +65,6 @@ class LocationBlock
 		std::vector<std::string>	getCgiExtension() const;
 		std::string					getCgiPath() const;
 		std::string					getUploadPath() const;
-		std::string					getProxyPass() const;
 		std::pair<int, std::string>	getReturn() const;
 		std::string					getAlias() const;
 		size_t						getClientMaxBodySize() const;
@@ -80,7 +77,6 @@ class LocationBlock
 		void						setCgiExtension(const std::vector<std::string>& cgi_extension);
 		void						setCgiPath(const std::string& cgi_path);
 		void						setUploadPath(const std::string& upload_path);
-		void						setProxyPass(const std::string& proxy_pass);
 		void						setErrorPage(int code, const std::string& page);
 		void						setReturn(std::string return_val, const std::string& url);
 		void						setAlias(const std::string& alias);

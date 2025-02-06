@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/21 19:39:10 by akovalev          #+#    #+#             */
-/*   Updated: 2024/11/18 15:19:32 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:06:48 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,15 +39,12 @@ struct Token
 	std::string					key;
 	std::vector<std::string>	values;  
 
-	// Constructor for KEY_VALUE tokens(single value)
 	Token(TokenType t, const std::string& k, const std::string& v) 
 		: type(t), key(k), values{v} {}
 
-	// Constructor for KEY_MULTI_VALUE tokens(multiple values)
 	Token(TokenType t, const std::string& k, const std::vector<std::string>& vals)
 		: type(t), key(k), values(vals) {}
 
-	// Constructor for other token types
 	Token(TokenType t, const std::string& val) 
 		: type(t), key(""), values{val} {}
 };
@@ -58,7 +55,7 @@ class ConfigParser
 		std::vector<ServerBlock>	_server_blocks;
 		std::vector<Token>			_tokens;
 	public:
-		ConfigParser(/* args */);
+		ConfigParser();
 		~ConfigParser();
 
 		std::vector<ServerBlock>	parseConfig(std::ifstream& filepath);

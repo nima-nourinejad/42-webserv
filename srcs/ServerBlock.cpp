@@ -6,13 +6,13 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:45:23 by akovalev          #+#    #+#             */
-/*   Updated: 2025/01/31 16:07:05 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:05:28 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerBlock.hpp"
 
-ServerBlock::ServerBlock(/* args */)
+ServerBlock::ServerBlock()
 {;
 	_client_max_body_size = 0;
 }
@@ -56,7 +56,7 @@ std::vector<uint16_t> ServerBlock::getListen() const
 }
 
 std::vector<std::shared_ptr<LocationBlock>>& ServerBlock::getLocations() {
-    return _locations;
+	return _locations;
 }
 
 std::map<int, std::string> ServerBlock::getErrorPages() const
@@ -111,7 +111,7 @@ void ServerBlock::setErrorPage(int code, const std::string& page)
 {
 	if (page.empty())
 		throw std::invalid_argument("Error page is empty");
-	if (code < 100 || code > 599) // 100 or 400?
+	if (code < 100 || code > 599)
 		throw std::invalid_argument("Error code is out of range");
 	_error_pages[code] = page;
 }
@@ -123,7 +123,8 @@ void ServerBlock::setHost(const std::string& host)
 	if (!std::regex_match(host, ip_pattern))
 		throw std::invalid_argument("Incorrect host format");
 	size_t start = 0;
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 4; i++) 
+	{
 		size_t end = host.find('.', start);
 		std::string octet = host.substr(start, end - start);
 		int octet_int = std::stoi(octet);

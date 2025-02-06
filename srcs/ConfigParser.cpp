@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParser.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2025/01/30 15:07:10 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:10:03 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,6 @@ void printTokens(const std::vector<Token>& tokens)
 void ConfigParser::unexpectedToken(size_t i)
 {
 	std::cout << "Issue at token " << i	<< " " << tokenTypeToString(_tokens[i].type) << std::endl;
-	//printServerConfig();
 	throw std::runtime_error("Unexpected token");
 }
 
@@ -73,7 +72,6 @@ void ConfigParser::parseServerBlock(size_t& index)
 {
 	bool serverBlockOpened = false;
 	_server_blocks.push_back(ServerBlock());
-	// std::cout << "Parsing server block at index " << index << " with token type " << tokenTypeToString(_tokens[index].type) << std::endl;
 	index++;
 	if (_tokens[index].type != TokenType::OPEN)
 		unexpectedToken(index);
@@ -83,15 +81,12 @@ void ConfigParser::parseServerBlock(size_t& index)
 		{
 			if (serverBlockOpened)
 				unexpectedToken(index);
-			// std::cout << "Opening server block" << std::endl;
 			serverBlockOpened = true;
 		}
 		else if (_tokens[index].type == TokenType::CLOSE)
 		{
 			if (!serverBlockOpened)
 				unexpectedToken(index);
-			// std::cout << "Closing server block" << std::endl;
-			//printServerConfig();
 			break;
 		}
 		else if (_tokens[index].key == "server_name")
@@ -131,7 +126,6 @@ void ConfigParser::parseServerBlock(size_t& index)
 		}
 		else if (_tokens[index].key == "location")
 		{
-			// std::cout << "Parsing location block" << std::endl;
 			parseLocationBlock(index);
 		}
 		else if (_tokens[index].type == TokenType::SEMICOLON)
@@ -145,6 +139,8 @@ void ConfigParser::parseServerBlock(size_t& index)
 		}
 		index++;
 	}
+	if (_server_blocks.back().getListen().empty())
+		_server_blocks.back().setListen({8080});
 }
 
 void ConfigParser::parseLocationBlock(size_t& index)
@@ -156,62 +152,54 @@ void ConfigParser::parseLocationBlock(size_t& index)
 		std::cout << "Location block is empty" << std::endl;
 		unexpectedToken(index);
 	}
-	// else if (_tokens[index].values[0].back() != '/')
-	// {
-	// 	std::cout << "Location block does not end with /" << std::endl;
-	// 	unexpectedToken(index);
-	// }
 
 	index++;
 	if (_tokens[index].type != TokenType::OPEN)
 		unexpectedToken(index);
 	std::shared_ptr<LocationBlock>	location_block = std::make_shared<LocationBlock>(_tokens[index - 1].values[0]);
-    _server_blocks.back().getLocations().push_back(location_block);
+	_server_blocks.back().getLocations().push_back(location_block);
 	LocationBlock& current_location = *_server_blocks.back().getLocations().back();
 	
-    while (index < _tokens.size()) {
+	while (index < _tokens.size()) {
 		const Token& token = _tokens[index];
 
-        if (token.type == TokenType::OPEN) {
-            if (locationBlockOpened)
-                unexpectedToken(index);
-            locationBlockOpened = true;
-        } else if (token.type == TokenType::CLOSE) {
-            if (!locationBlockOpened)
-                unexpectedToken(index);
-            // std::cout << "Closing location block" << std::endl;
-            return;
-        } else if (token.key == "root") {
-            current_location.setRoot(token.values[0]);
-        } else if (token.key == "index") {
-            current_location.setIndex(token.values[0]);
-        } else if (token.key == "autoindex") {
-            current_location.setAutoindex(token.values[0]);
-        } else if (token.key == "cgi_pass") {
-            current_location.setCgiPath(token.values[0]);
-        } else if (token.key == "upload_path") {
-            current_location.setUploadPath(token.values[0]);
-        } else if (token.key == "proxy_pass") {
-            current_location.setProxyPass(token.values[0]);
-        } else if (token.key == "error_page") {
-            current_location.setErrorPage(std::stoi(token.values[0]), token.values[1]);
-        } else if (token.key == "cgi_ext") {
-            current_location.setCgiExtension(token.values);
-        } else if (token.key == "return") {
-            current_location.setReturn(token.values[0], token.values[1]);
-        } else if (token.key == "alias") {
-            current_location.setAlias(token.values[0]);
-        } else if (token.key == "limit_except") {
-            current_location.setLimitExcept(token.values);
-        } else if (token.key == "client_max_body_size") {
-            current_location.setClientMaxBodySize(token.values[0]);
-        } else if (token.type == TokenType::SEMICOLON) {
-            if (_tokens[index - 1].type != TokenType::KEY_VALUE && 
-                _tokens[index - 1].type != TokenType::KEY_MULTI_VALUE)
-                unexpectedToken(index);
-        } else if (token.type != TokenType::COMMENT) {
-            unexpectedToken(index);
-        }
+		if (token.type == TokenType::OPEN) {
+			if (locationBlockOpened)
+				unexpectedToken(index);
+			locationBlockOpened = true;
+		} else if (token.type == TokenType::CLOSE) {
+			if (!locationBlockOpened)
+				unexpectedToken(index);
+			return;
+		} else if (token.key == "root") {
+			current_location.setRoot(token.values[0]);
+		} else if (token.key == "index") {
+			current_location.setIndex(token.values[0]);
+		} else if (token.key == "autoindex") {
+			current_location.setAutoindex(token.values[0]);
+		} else if (token.key == "cgi_pass") {
+			current_location.setCgiPath(token.values[0]);
+		} else if (token.key == "upload_path") {
+			current_location.setUploadPath(token.values[0]);
+		} else if (token.key == "error_page") {
+			current_location.setErrorPage(std::stoi(token.values[0]), token.values[1]);
+		} else if (token.key == "cgi_ext") {
+			current_location.setCgiExtension(token.values);
+		} else if (token.key == "return") {
+			current_location.setReturn(token.values[0], token.values[1]);
+		} else if (token.key == "alias") {
+			current_location.setAlias(token.values[0]);
+		} else if (token.key == "limit_except") {
+			current_location.setLimitExcept(token.values);
+		} else if (token.key == "client_max_body_size") {
+			current_location.setClientMaxBodySize(token.values[0]);
+		} else if (token.type == TokenType::SEMICOLON) {
+			if (_tokens[index - 1].type != TokenType::KEY_VALUE && 
+				_tokens[index - 1].type != TokenType::KEY_MULTI_VALUE)
+				unexpectedToken(index);
+		} else if (token.type != TokenType::COMMENT) {
+			unexpectedToken(index);
+		}
 		index++;
 	}
 }
@@ -219,7 +207,7 @@ void ConfigParser::parseLocationBlock(size_t& index)
 void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 {
 	std::vector<std::string> singleValueKeys = {
-		"server_name", "location", "client_max_body_size", "proxy_pass", 
+		"server_name", "location", "client_max_body_size", 
 		"root", "index", "autoindex", "cgi_pass", "upload_path", 
 		"upload_store", "upload_max_file_size", "server", "host", "alias", "root"
 	};
@@ -231,7 +219,6 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 	std::string word;
 	while (filepath >> word)
 	{
-		//std::cout << word << std::endl;
 		if (word  == "{")
 		{
 			tokens.push_back(Token(TokenType::OPEN, word));
@@ -308,20 +295,18 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 		else
 		{
 			tokens.push_back(Token(TokenType::UNKNOWN, word));
-			// printTokens(tokens);
 			throw std::runtime_error("Unknown token");
 		}
 		
 	}
 	if (filepath.eof()) {
- 	  tokens.push_back(Token(TokenType::END_OF_FILE, ""));
+	tokens.push_back(Token(TokenType::END_OF_FILE, ""));
 }
 }
 
 std::vector<ServerBlock>	ConfigParser::parseConfig(std::ifstream& filepath)
 {
 	tokenize(_tokens, filepath);
-	// printTokens(_tokens);
 
 	for (size_t i = 0; i < _tokens.size(); i++)
 	{
@@ -371,26 +356,3 @@ void ConfigParser::printServerConfig()
 		}
 	}
 }
-
-// int main()
-// {
-// 	ConfigParser config;
-// 	std::ifstream file("config/webserv.conf");;
-// 	if (!file.is_open())
-// 	{
-// 		std::cerr << "Error: could not open file" << std::endl;
-// 		return 1;
-// 	}
-// 	try
-// 	{
-// 		config.parseConfig(file);
-// 	}
-// 	catch(const std::exception& e)
-// 	{
-// 		std::cerr << e.what() << '\n';
-// 		return 1;
-// 	}
-// 	std::cout << "Successfully parsed config" << std::endl;
-// 	config.printServerConfig();
-// 	return 0;
-// }
