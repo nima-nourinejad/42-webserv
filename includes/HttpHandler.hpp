@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 13:37:37 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 17:28:53 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ class HttpHandler
 		std::filesystem::path			_uploadPath;
 		std::string						_serverName;
 		int								_port;
+		int								_locationFlag;
 
 		bool							_isMethodAllowed(const Request &req);
 		int								_validateRequest(const Request &req);
@@ -69,6 +70,7 @@ class HttpHandler
 		size_t							getMaxBodySize(const std::string &request, int errorStatus);
 		ServerBlock						getServerBlock() const { return _serverBlock; } // maybe not needed
 		std::shared_ptr<LocationBlock>	findMatchedLocation(const Request &req);
+		bool							isValidLines(const std::string &request);
 };
 
 #endif

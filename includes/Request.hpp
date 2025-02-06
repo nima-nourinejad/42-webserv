@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:09 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/03 13:31:28 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 15:47:20 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,8 @@ class Request
 	public:
 		Request();
 		Request(const std::string &rawRequest, int errorStatus);
+		Request(const Request &req);
+		Request &operator=(const Request &req);
 		~Request();
 
 		const std::string					&getMethod() const;

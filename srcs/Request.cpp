@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/30 15:01:27 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 15:47:50 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,25 @@ Request::Request() : _method(""), _path(""), _httpVersion(""), _headers(), _body
 // 		// throw;
 // 	}
 // }
+
+Request::Request(const Request &req)
+{
+	_method = req._method;
+	_path = req._path;
+	_httpVersion = req._httpVersion;
+	_headers = req._headers;
+	_body = req._body;
+}
+
+Request	&Request::operator=(const Request &req)
+{
+	_method = req._method;
+	_path = req._path;
+	_httpVersion = req._httpVersion;
+	_headers = req._headers;
+	_body = req._body;
+	return *this;
+}
 
 Request::Request(const std::string &rawRequest, int errorStatus)
 {
@@ -99,11 +118,12 @@ const std::string	&Request::getHeader(const std::string &key) const
 	std::map<std::string, std::string>::const_iterator	it = _headers.find(key);
 	
 	static const std::string empty_str = "";
+
 	return (it != _headers.end() ? it->second : empty_str);
 }
+
 const std::string	&Request::getBody() const { return _body; }
 
-// Might need to use Andrey's parsing method
 void	Request::parse(const std::string &rawRequest)
 {
 	std::istringstream	stream(rawRequest);
@@ -125,7 +145,7 @@ void	Request::parse(const std::string &rawRequest)
 		if (colon != std::string::npos)
 		{
 			std::string	headerKey = line.substr(0, colon);
-			std::string	headerValue = line.substr(colon + 2);  // Skip colon and space
+			std::string	headerValue = line.substr(colon + 2, line.substr(colon + 2).size() - 1);  // Skip colon and space
 			_headers[headerKey] = headerValue;
 		}
 	}
