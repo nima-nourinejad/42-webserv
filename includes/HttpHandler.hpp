@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/30 13:51:45 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 13:37:37 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include "SystemCallError.hpp"
 #include "CGIHandler.hpp"
 #include "ServerBlock.hpp"
+#include "Configuration.hpp" //
 
 #include <string>
 #include <fstream>
@@ -36,14 +37,16 @@ class HttpHandler
 		size_t							_maxBodySize;
 		std::string						_filePath;
 		std::filesystem::path			_uploadPath;
+		std::string						_serverName;
+		int								_port;
 
-		bool							_isMethodAllowed(const std::string &method, const std::string &path);
-		std::string						_validateRequest(const Request &req);
+		bool							_isMethodAllowed(const Request &req);
+		int								_validateRequest(const Request &req);
 		std::string						_getFileName(const Request &req);
 		bool							_isDownload(const Request &req);
 
 	public:
-		HttpHandler(ServerBlock &serverConfig);
+		HttpHandler(ServerBlock &serverConfig, int port);
 		~HttpHandler();
 
 		Response						createResponse(const std::string &request);
@@ -58,7 +61,8 @@ class HttpHandler
 
 		CGIHandler						getCGIHandler() const { return _cgiHandler; } // maybe not needed
 		Response						getErrorPage(const Request &req, int statusCode);
-		std::string						extractFilename(const std::string &disposition);
+		std::string						getCurrentTime();
+		std::string						extractFileName(const std::string &disposition);
 		void							saveFile(const std::string &filename, const std::string &fileData);
 		std::string						readFileError(std::string const& path);
 		std::string						getStatusMessage(int statusCode);

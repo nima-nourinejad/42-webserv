@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/30 13:47:19 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 14:15:57 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,20 +25,32 @@ Response	CGIHandler::execute(const Request &req)
 {
 	try
 	{
-		HttpHandler						httpHandlerInstance(_serverBlock);
+		HttpHandler						httpHandlerInstance(_serverBlock, 0);
 		std::shared_ptr<LocationBlock>	matchedLocation = httpHandlerInstance.findMatchedLocation(req);
 
-		std::string		filePath = matchedLocation->getCgiPath();
+		if (!matchedLocation)
+			return httpHandlerInstance.getErrorPage(req, 404);
 
-		// if (std::find(matchedLocation->getCgiExtension().begin(), matchedLocation->getCgiExtension().end(), extension)
-		// 		== matchedLocation->getCgiExtension().end())
-		// 	throw std::runtime_error("Unsupported CGI extension");
+		std::string						filePath = matchedLocation->getCgiPath();
+		std::string						extension = filePath.substr(filePath.find_last_of("."));
+		std::vector<std::string>		validExtensions = matchedLocation->getCgiExtension();
+
+		if (validExtensions.empty())
+			return httpHandlerInstance.getErrorPage(req, 500);
+
+		std::vector<std::string>::iterator	it = std::find(validExtensions.begin(), validExtensions.end(), extension);
+
+		if (it == validExtensions.end())
+		{
+			std::cout << "Extension not found" << std::endl;
+			return httpHandlerInstance.getErrorPage(req, 500);
+		}
 
 		if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath))
-			throw std::runtime_error("CGI file does not exist or is not a regular file");
+			return httpHandlerInstance.getErrorPage(req, 500);
 
 		if (access(filePath.c_str(), X_OK) != 0)
-			throw std::runtime_error("CGI file is not executable");
+			return httpHandlerInstance.getErrorPage(req, 500);
 		
 		int	pipefd[2];
 

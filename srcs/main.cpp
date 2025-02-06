@@ -6,19 +6,17 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 15:17:17 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/04 19:52:45 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// if node script run with pdf after stucking in the middle of the pdf,
-// if close the script the server will shutdown
 
 // For example, check how does server_name work.
 // We’ve shared with you a small tester. It’s not mandatory to pass it
 // if everything works fine with your browser and tests, but it can help
 // you hunt some bugs.
 
-//if we do not cobine two forks get rid of kill
+// check the host from the request and compare it with the server_name in the config file
 
 #include "Server.hpp"
 
@@ -79,8 +77,11 @@ int main(int argc, char **argv)
 	static constexpr int TOTAL_FD = 1000;
 	
 	int max_fd = TOTAL_FD / server_count;
-	int max_connections = (max_fd - 1) / 2;
-	int total_events = max_fd;
+	if (max_fd < 5)
+	{
+		Server::logError("Too many servers for the number of file descriptors");
+		return 1;
+	}
 
 	std::vector<std::unique_ptr<Server>>	servers;
 
@@ -92,7 +93,7 @@ int main(int argc, char **argv)
 			{
 				try
 				{
-					servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i), config.getServerBlocks().at(i).getListen().at(j), max_fd, max_connections, total_events));
+					servers.push_back(std::make_unique<Server>(config.getServerBlocks().at(i), config.getServerBlocks().at(i).getListen().at(j), max_fd));
 				}
 				catch(SocketException const & e)
 				{

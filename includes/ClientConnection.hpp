@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/30 15:57:30 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 14:32:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <future>
+#include <thread>
+#include <chrono>
 
 #include "Request.hpp"
 #include "Response.hpp"
@@ -49,8 +52,9 @@ class ClientConnection
 	private:
 
 	// Constants
-	const size_t				MAX_HEADER_SIZE = 3200768;
-	const size_t				MAX_REQUEST_SIZE = 100048576;
+	const size_t				MAX_HEADER_SIZE = 32768;
+	const std::chrono::seconds NON_CGI_TIMEOUT = std::chrono::seconds(5);
+
 	
     public:
 
@@ -62,7 +66,6 @@ class ClientConnection
 	time_t						connectTime;
 	std::string					request;
 	std::vector<std::string>	responseParts;
-	size_t						maxBodySize;
 	struct eventData			eventData;
 	HttpHandler					*responseMaker;
 	int							pipe[2];
@@ -76,6 +79,8 @@ class ClientConnection
 	ClientConnection();
 
 	void						changeRequestToBadRequest();
+	void						changeRequestToRequestTimeout();
+    void						changeRequestToServerTimeout();
 	void						changeRequestToServerError();
 	bool						finishedReceivingNonChunked();
 	bool						finishedReceivingChunked();
@@ -87,17 +92,18 @@ class ClientConnection
 	void						grabChunkedData(std::string & unProcessed, size_t chunkedSize);
 	void						grabChunkedHeader(std::string & unProcessed, std::string & header);
 	void						handleChunkedEncoding();
+	void						createResponseParts_nonCGI();
+	void						createResponseParts_CGI();
 	void						createResponseParts();
-	void						accumulateResponseParts();
+	void						readResponseFromPipe();
 	time_t						getPassedTime() const;
 	void						setCurrentTime();
 	void						chunckBody(std::string statusLine, std::string rawHeader, std::string connection, size_t maxBodySize);
 	void 						processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, std::string &connection, size_t &maxBodySize);
-	void						setPlain500Response();
 	void 						logError(std::string const & message);
-	void						checkRequestSize();
 	void						readFromPipe();
 	void						setCGI();
+	void						CGI_child();
 };
 
 #endif

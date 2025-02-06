@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:59 by nnourine          #+#    #+#             */
-/*   Updated: 2025/01/31 14:41:56 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 12:43:54 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,11 +29,8 @@ class Server
     private:
 
 		// Constants
-		// static constexpr int			MAX_CONNECTIONS = 510;
-		
 		int			TIMEOUT = 30;
-		int			MAX_RETRY = 5;
-		// int			total_events = 2 * max_connections + 1;
+		int			MAX_RETRY = 3;
 
 		// Private Attributes
 		int								_socket_fd;
@@ -41,7 +38,7 @@ class Server
 		struct sockaddr_in				_address;
 		Configuration					_config;
 		int								_num_clients;
-		std::vector<ClientConnection>	_clients;
+		
 		
 		int								_retry;
 		Response						_response;
@@ -54,7 +51,7 @@ class Server
 		void							closeClientSockets();
 		void							handleTimeout(int index);
 		void							closeClientSocket(int index);
-		void							createClientConnections(ServerBlock & serverBlock);
+		void							assignResponseMakers();
 		void							receiveMessage(int index);
 		void							sendResponseParts(int index);
 
@@ -76,7 +73,6 @@ class Server
 		void							handleListeningEvents(struct epoll_event const & event);
 		void							handlePipeEvents(struct epoll_event const & event);
 		int								eventType(struct epoll_event const & event) const;
-		void							check_fd_num();
 		
 		// Signal Methods
 		void							applyCustomSignal();
@@ -93,15 +89,13 @@ class Server
 		
 		// Utility Methods
 		void							printMessage(std::string const & message) const;
-		void							sendServiceUnavailable(int socket_fd);
 		void							sendServerError(int fd);
 
 		
 	
     public:
 		// Main Methods
-		// Server(ServerBlock & serverBlock);
-		Server(ServerBlock & serverBlock, int port, int max_fd, int max_connections, int total_events);
+		Server(ServerBlock & serverBlock, int port, int max_fd);
 		void							handleEvents();
 		~Server();
 
@@ -116,6 +110,7 @@ class Server
 		std::vector<struct epoll_event> _events;
     	std::vector<struct epoll_event> _ready;
 		int								backlog =(2 * max_connections);
+		std::vector<ClientConnection>	_clients;
 };
 
 #endif

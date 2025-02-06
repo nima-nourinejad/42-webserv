@@ -3,18 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/01/30 14:58:16 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 14:13:31 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpHandler.hpp"
 
-HttpHandler::HttpHandler(ServerBlock &serverConfig)
+HttpHandler::HttpHandler(ServerBlock &serverConfig, int port)
 	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0]->getRoot())
-	, _serverBlock(serverConfig), _maxBodySize(serverConfig.getClientMaxBodySize())
+	, _serverBlock(serverConfig), _maxBodySize(0), _serverName(serverConfig.getServerName()), _port(port)
 {
 	_errorPages[400] = "html/default_400.html";
 	_errorPages[401] = "html/default_401.html";
@@ -53,7 +53,7 @@ HttpHandler::~HttpHandler() {}
 std::shared_ptr<LocationBlock>	HttpHandler::findMatchedLocation(const Request &req)
 {
 	std::string						path;
-	std::shared_ptr<LocationBlock>	matchedLocation;
+	std::shared_ptr<LocationBlock>	matchedLocation = nullptr;
 	
 	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
 	{
@@ -108,21 +108,15 @@ bool HttpHandler::_isDownload(const Request &req)
 	return false;
 }
 
-bool	HttpHandler::_isMethodAllowed(const std::string &method, const std::string &path)
+bool	HttpHandler::_isMethodAllowed(const Request &req)
 {
-	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
-	{
-		if (path == location->getLocation())
-		{
-			const std::vector<std::string>	&allowedMethods = location->getLimitExcept();
-			bool							isMethodAllowed = std::find(allowedMethods.begin(),
-																allowedMethods.end(), method)
-																!= allowedMethods.end();
-			
-			return isMethodAllowed;
-		}
-	}
-	return false;
+	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
+
+	const std::vector<std::string>	&allowedMethods = matchedLocation->getLimitExcept();
+	bool							isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), req.getMethod())
+															!= allowedMethods.end();
+		
+		return isMethodAllowed;
 }
 
 Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
@@ -164,31 +158,68 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 	return response;
 }
 
-std::string	HttpHandler::_validateRequest(const Request &req)
+int	HttpHandler::_validateRequest(const Request &req)
 {
 	std::string	method = req.getMethod();
-	std::string	path = req.getPath();
 
-	if (!_isMethodAllowed(method, path))
-		return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed\n";
+	if (!_isMethodAllowed(req))
+	{
+		std::cout << "Method: " << method << " Path: " << req.getPath() << std::endl;
+		return 405;
+	}
+
+	if (req.getHeader("Host").empty()
+	|| (req.getHeader("Host") != _serverName + ":" + std::to_string(_port)
+	&& req.getHeader("Host") != _serverBlock.getHost() + ":" + std::to_string(_port)))
+		return 400; // need to get actual port from configuration class
+
+	if (method == "POST" && req.getHeader("Content-Length").empty())
+		return 411;
+
+	size_t	contentLength;
+
+	if (req.getHeader("Content-Length").empty())
+		contentLength = 0;
+	else
+	{
+		try
+		{
+			contentLength = (std::stoul)(req.getHeader("Content-Length"));
+		}
+		catch(...)
+		{
+			return 400;
+		}
+	}
+
+	if (req.getHeader("Transfer-Encoding") != "chunked" && contentLength != req.getBody().size())
+		return 400;
+
+	if(req.getHeader("Transfer-Encoding") == "chunked" && !req.getHeader("Content-Length").empty())
+		return 400;
+
+	if (req.getBody().size() > _maxBodySize)
+		return 413;
 
 	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
 	{
 		if (req.getPath() == location->getLocation())
 		{
 			if (!location->getCgiPath().empty() && !std::filesystem::exists(location->getCgiPath()))
-				return "Invalid CGI Path"; // should be like a http response
+				return 500;
 
-			if (!location->getRoot().empty() && !std::filesystem::exists(location->getRoot()))
-				return "Invalid root path"; // should be like a http response
+			if (!(location->getRoot().empty()) && !std::filesystem::exists(location->getRoot()))
+				return 500;
 		}
 	}
-	return "Ok";
+	return 200;
 }
 
 Response	HttpHandler::createResponse(const std::string &request)
 {
 	Request	req(request, 0);
+
+	_maxBodySize = getMaxBodySize(request, 0);
 
 	return handleRequest(req);
 }
@@ -197,9 +228,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 {
 	try
 	{
-		// std::string validation = _validateRequest(req);
-		// if (validation != "Ok")
-		// 	return validation;
+		// int validation = _validateRequest(req);
+		// if (validation != 200)
+		// 	return getErrorPage(req, validation);
 		
 		std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
@@ -291,10 +322,8 @@ std::string HttpHandler::readFileError(std::string const &path)
 	std::ifstream	file(path.c_str());
 
 	if (!file.is_open())
-	{
-		std::cout << "Path: " << path << std::endl;
 		throw SystemCallError("Failed to open file");
-	}
+
 	std::stringstream	read;
 
 	read << file.rdbuf();
@@ -302,71 +331,71 @@ std::string HttpHandler::readFileError(std::string const &path)
 	return read.str();
 }
 
-std::string getFileextention(std::string const &filename)
+std::string getFileExtension(std::string const &filename)
 {
-	std::string extention = filename.substr(filename.find_last_of(".") + 1);
-	return extention;
+	std::string extension = filename.substr(filename.find_last_of(".") + 1);
+	return extension;
 }
 
 std::string getContentType(const std::string& extension)
 {
-    if (extension == "html" || extension == "htm")
-        return "text/html";
-    else if (extension == "jpg" || extension == "jpeg")
-        return "image/jpeg";
-    else if (extension == "png")
-        return "image/png";
-    else if (extension == "gif")
-        return "image/gif";
-    else if (extension == "bmp")
-        return "image/bmp";
-    else if (extension == "svg")
-        return "image/svg+xml";
-    else if (extension == "ico")
-        return "image/vnd.microsoft.icon";
-    else if (extension == "pdf")
-        return "application/pdf";
-    else if (extension == "zip")
-        return "application/zip";
-    else if (extension == "txt")
-        return "text/plain";
-    else if (extension == "css")
-        return "text/css";
-    else if (extension == "js")
-        return "application/javascript";
-    else if (extension == "json")
-        return "application/json";
-    else if (extension == "xml")
-        return "application/xml";
-    else if (extension == "csv")
-        return "text/csv";
-    else if (extension == "mp3")
-        return "audio/mpeg";
-    else if (extension == "wav")
-        return "audio/wav";
-    else if (extension == "mp4")
-        return "video/mp4";
-    else if (extension == "webm")
-        return "video/webm";
-    else if (extension == "ogg")
-        return "application/ogg";
-    else if (extension == "woff" || extension == "woff2")
-        return "font/woff";
-    else if (extension == "ttf")
-        return "font/ttf";
-    else if (extension == "otf")
-        return "font/otf";
+	if (extension == "html" || extension == "htm")
+		return "text/html";
+	else if (extension == "jpg" || extension == "jpeg")
+		return "image/jpeg";
+	else if (extension == "png")
+		return "image/png";
+	else if (extension == "gif")
+		return "image/gif";
+	else if (extension == "bmp")
+		return "image/bmp";
+	else if (extension == "svg")
+		return "image/svg+xml";
+	else if (extension == "ico")
+		return "image/vnd.microsoft.icon";
+	else if (extension == "pdf")
+		return "application/pdf";
+	else if (extension == "zip")
+		return "application/zip";
+	else if (extension == "txt")
+		return "text/plain";
+	else if (extension == "css")
+		return "text/css";
+	else if (extension == "js")
+		return "application/javascript";
+	else if (extension == "json")
+		return "application/json";
+	else if (extension == "xml")
+		return "application/xml";
+	else if (extension == "csv")
+		return "text/csv";
+	else if (extension == "mp3")
+		return "audio/mpeg";
+	else if (extension == "wav")
+		return "audio/wav";
+	else if (extension == "mp4")
+		return "video/mp4";
+	else if (extension == "webm")
+		return "video/webm";
+	else if (extension == "ogg")
+		return "application/ogg";
+	else if (extension == "woff" || extension == "woff2")
+		return "font/woff";
+	else if (extension == "ttf")
+		return "font/ttf";
+	else if (extension == "otf")
+		return "font/otf";
 	else if (extension == "c" || extension == "h" || extension == "cpp" || extension == "hpp")
 		return "text/plain";
-    else
-        return "application/octet-stream";
+	else
+		return "application/octet-stream";
 }
 
 Response	HttpHandler::handleDownload(const Request &req)
 {
 	std::string						fileName = _getFileName(req);
 	std::string						finalFile = "/" + _getFileName(req);
-	std::string						extention = getFileextention(fileName);
+	std::string						extention = getFileExtension(fileName);
 	std::string						contentType = getContentType(extention);
 	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 	std::string						filePath = matchedLocation->getUploadPath() + finalFile;
@@ -490,77 +519,147 @@ Response	HttpHandler::handleFileRequest(const Request &req, const std::string &f
 	}
 }
 
-Response	HttpHandler::handlePOST(const Request &req)
+void ensureUploadPathExists(const std::string& uploadPath)
 {
-	std::string	contentType = req.getHeader("Content-Type");
-	Response	response;
+    std::filesystem::path directory(uploadPath);
+
+    if (std::filesystem::exists(directory)) 
+		return;
+	if (std::filesystem::create_directories(directory))
+		return;
+	throw SystemCallError("Failed to create upload directory");
+}
+
+Response HttpHandler::handlePOST(const Request &req)
+{
+	std::string contentType = req.getHeader("Content-Type");
+	Response response;
 
 	std::shared_ptr<LocationBlock> matchedLocation = findMatchedLocation(req);
 
 	if (!matchedLocation)
 		return getErrorPage(req, 404);
-
-	if (contentType.find("multipart/form-data") != std::string::npos)
+	
+	try
 	{
-		std::string			boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
-		std::istringstream	bodyStream(req.getBody());
-		std::string			line;
+		ensureUploadPathExists(_uploadPath);
+	}
+	catch(...)
+	{
+		return getErrorPage(req, 500);
+	}
+	
+
+	bool		isMultiPart = contentType.find("multipart/form-data") != std::string::npos;
+	std::string boundary;
+	std::string data;
+	// bool		isFileUpload = false;
+	std::string disposition;
+	std::string fileName;
+
+	if (isMultiPart)
+	{
+		size_t pos = contentType.find("boundary=");
+
+		if (pos == std::string::npos)
+			return getErrorPage(req, 400);
+		
+		boundary = "--" + contentType.substr(contentType.find("boundary=") + 9);
+		std::istringstream bodyStream(req.getBody());
+		std::string line;
 
 		while (std::getline(bodyStream, line))
 		{
 			if (line == boundary)
 			{
-				std::string	disposition, partContentType;
-
+				std::string partContentType;
 				std::getline(bodyStream, disposition);
+				
+				fileName = extractFileName(disposition);
+				
+				if (std::filesystem::exists((std::string)(_uploadPath) + "/" + fileName))
+					return getErrorPage(req, 409);
+				
 				std::getline(bodyStream, partContentType);
 				std::getline(bodyStream, line);
 
-				bool	isFileUpload = disposition.find("filename=") != std::string::npos;
-				
-				std::ostringstream	partData;
+				// isFileUpload = disposition.find("filename=") != std::string::npos;
+				std::ostringstream partData;
 
 				while (std::getline(bodyStream, line) && line != boundary)
 					partData << line << "\n";
-				
-				std::string data = partData.str();
-				boundary = boundary.substr(0, boundary.length() - 1);
+
+				data = partData.str();
+
 				if (data.find(boundary) != std::string::npos)
 					data = data.substr(0, data.find(boundary));
-
-				if (isFileUpload)
-				{
-					std::string	filename = extractFilename(disposition);
-					filename = matchedLocation->getUploadPath() + "/" + filename;
-					saveFile(filename, data);
-				}
-				else
-					response.setBody(data);
 			}
 		}
-					
-		std::cout << "File uploaded successfully" << std::endl;
-		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
-		response.setHeader("Content-Type", "multipart/form-data");
+		if (isMultiPart)
+		{
+			boundary = boundary.substr(0, boundary.length() - 1);
+			if (data.find(boundary) != std::string::npos)
+				data = data.substr(0, data.find(boundary));
+		}
+		// if (isFileUpload)
+		// {
+			// std::string filename = extractFileName(disposition);
+			std::string	filePath = matchedLocation->getUploadPath() + "/" + fileName;
+			saveFile(filePath, data);
+
+			response.setStatusLine("HTTP/1.1 201 " + getStatusMessage(201) +"\r\n");
+			response.setHeader("Content-Type", "text/plain");
+			response.setBody("File uploaded successfully. File Name: " + fileName);
+			return response;
+		// }
+		// else
+		// {
+		// 	response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
+		// 	response.setHeader("Content-Type", "text/plain");
+		// 	response.setBody("Non-file data processed successfully.");
+		// 	return response;
+		// }
+		return response;
 	}
+
 	else if (!req.getBody().empty())
 	{
-		std::cout << "second state" << std::endl;
-		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
-		response.setBody(req.getBody());
-		response.setHeader("Content-Length", std::to_string(req.getBody().size()) + "\r\n");
-		response.setHeader("Content-Type", "text/plain");
+		std::string fileName = getCurrentTime(); // timestamp function
+		saveFile(matchedLocation->getUploadPath() + "/" + fileName, req.getBody()); //maybe without "/"
+
+		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
+		response.setHeader("Content-Type", req.getHeader("Content-Type"));
+		// response.setBody(req.getBody()); 
+		response.setBody("File uploaded successfully. File Name: " + fileName); //
+		response.setHeader("Content-Length", std::to_string(req.getBody().size())); ///maybe this should be deleted because Nima adds it
+		return response;
 	}
 	else
 	{
-		std::cout << "Empty body in POST request" << std::endl;
-		response.setStatusLine("HTTP/1.1 400 " + getStatusMessage(400) + "\r\n");
-		response.setBody("Empty body in POST request\n");
+		response.setStatusLine("HTTP/1.1 400 " + getStatusMessage(400) +"\r\n");
+		response.setHeader("Content-Type", "text/plain");
+		response.setBody("Empty body in POST request.");
+		return response;
 	}
-	return response;
 }
 
-std::string	HttpHandler::extractFilename(const std::string& disposition)
+std::string	HttpHandler::getCurrentTime()
+{
+	// time_t	current_time = time(nullptr);
+
+	// if (current_time == -1)
+	// 	throw SystemCallError("Failed to get current time");
+
+	// return current_time;
+	std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now();
+	std::time_t timeInSeconds = std::chrono::system_clock::to_time_t(timePoint);
+	std::stringstream name;
+	name << std::put_time(std::localtime(&timeInSeconds), "%Y-%m-%d-%H:%M:%S");
+	return name.str();
+	
+}
+
+std::string	HttpHandler::extractFileName(const std::string& disposition)
 {
 	size_t	pos = disposition.find("filename=");
 
@@ -571,12 +670,15 @@ std::string	HttpHandler::extractFilename(const std::string& disposition)
 
 		return filename.substr(0, endPos);
 	}
-	return "uploaded_file";
+	return (getCurrentTime());
 }
 
 void	HttpHandler::saveFile(const std::string &filename, const std::string &fileData)
 {
 	std::ofstream	file(filename, std::ios::binary);
+
+	if (!file.is_open())
+		throw SystemCallError("Failed to open file");
 
 	file.write(fileData.c_str(), fileData.size());
 	file.close();
@@ -596,26 +698,31 @@ Response	HttpHandler::handleOPTIONS(const Request &req)
 Response	HttpHandler::handleDELETE(const Request &req)
 {
 	std::string fileName = "/" + _getFileName(req);
+
 	if (fileName.empty())
 		return getErrorPage(req, 404);
+
 	std::string				filePath = _uploadPath.c_str() + fileName;
 	std::filesystem::path	path(filePath);
 	Response				response;
 	
-	if (std::filesystem::remove(path) == 0)
+	if (std::filesystem::remove(path))
 	{
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) + "\r\n");
-		response.setBody("File deleted successfully\n");
+		// response.setHeader("Content-Type", "text/plain"); Nima adds this but because he is not sure commented it
+		response.setBody("File deleted successfully. File URL: /uploads/" + fileName);
 	}
 	else if (errno == EACCES)
 	{
-		response.setStatusLine("HTTP/1.1 403 " + getStatusMessage(403) + "\r\n");
-		response.setBody("Permission denied\n");
+		return getErrorPage(req, 403);
+		// response.setStatusLine("HTTP/1.1 403 " + getStatusMessage(403) + "\r\n");
+		// response.setBody("Permission denied\n");
 	}
 	else if (errno == ENOENT)
 	{
-		response.setStatusLine("HTTP/1.1 404 " + getStatusMessage(404) + "\r\n");
-		response.setBody("File not found\n");
+		return getErrorPage(req, 404);
+		// response.setStatusLine("HTTP/1.1 404 " + getStatusMessage(404) + "\r\n");
+		// response.setBody("File not found\n");
 	}
 	return response;
 }
@@ -687,14 +794,14 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 		{503, "Service Unavailable"},
 		{504, "Gateway Timeout"},
 		{505, "HTTP Version Not Supported"}
-    };
+	};
 
 	std::unordered_map<int, std::string>::const_iterator	it = statusMessages.find(statusCode);
 
-    if (it != statusMessages.end())
-        return it->second;
+	if (it != statusMessages.end())
+		return it->second;
 
-    return "Unknown Status Code";
+	return "Unknown Status Code";
 }
 
 size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)
@@ -702,9 +809,7 @@ size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)
 	Request							req(request, errorStatus);
 	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
-	if (!matchedLocation)
-	{
-		return _serverBlock.getClientMaxBodySize();
-	}
-	return _maxBodySize;
+	if (matchedLocation && matchedLocation->getClientMaxBodySize() > 0)
+		return matchedLocation->getClientMaxBodySize();
+	return _serverBlock.getClientMaxBodySize();
 }
