@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 21:14:31 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 22:52:56 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,6 +208,9 @@ void Server::closeClientSocket(int index)
 			_clients[index].pipeEventData.index = -1;
 			_clients[index].errorStatus = 0;
 			_clients[index].serverFailureRetry = 0;
+			_clients[index].foundStatusLine = false;
+			_clients[index].foundHeader = false;
+			_clients[index].limitSize = 0;
 			--_num_clients;
 		}
 	}
@@ -294,6 +297,13 @@ void Server::sendResponseParts(int index)
 	}
 }
 
+size_t size_helper(HttpHandler responseMaker, std::string request, int errorStatus)
+{
+    size_t maxBodySize;
+    maxBodySize = responseMaker.getMaxBodySize(request, errorStatus);
+    return maxBodySize;
+}
+
 void Server::receiveMessage(int index)
 {
 	try 
@@ -315,8 +325,42 @@ void Server::receiveMessage(int index)
 			if (_clients[index].status == WAITFORREQUEST)
 				_clients[index].status = RECEIVINGUNKOWNTYPE;
 			_clients[index].request.append(buffer, bytes_received);
+			if (_clients[index].foundStatusLine == false)
+			{
+				if (_clients[index].request.find("\r\n") != std::string::npos)
+				{
+					_clients[index].foundStatusLine = true;
+					std::future<size_t> future_size = std::async(std::launch::async, &size_helper, _responseMaker, _clients[index].request, 0);
+					if (future_size.wait_for(_clients[index].NON_CGI_TIMEOUT) == std::future_status::timeout)
+						return _clients[index].changeRequestToServerTimeout();
+					try
+					{
+						_clients[index].limitSize = future_size.get();
+					}
+					catch(...)
+					{
+						_clients[index].changeRequestToServerError();
+					}
+					
+				}
+			}
 			if (_clients[index].status == RECEIVINGUNKOWNTYPE)
 				_clients[index].findRequestType();
+			if (_clients[index].foundStatusLine && _clients[index].foundHeader)
+			{
+				size_t currenRequestSize = _clients[index].request.size();
+				size_t headerSize = _clients[index].request.find("\r\n\r\n") + 4;
+				std::string header = _clients[index].request.substr(0, headerSize);
+				std::cout << header << std::endl;
+				size_t currentBodySize = currenRequestSize - headerSize;
+				
+				if (currentBodySize >= _clients[index].limitSize)
+				{
+					_clients[index].changeRequestToOverload();
+					return;
+				}
+				
+			}
 			if (_clients[index].finishedReceiving())
 			{
 				if (_clients[index].status == RECEIVINGCHUNKED)

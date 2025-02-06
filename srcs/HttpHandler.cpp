@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 20:36:22 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 23:00:32 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,6 +202,19 @@ int	HttpHandler::_validateRequest(const Request &req)
 
 	if (!_isMethodAllowed(req))
 		return 405;
+
+	// for (int i = 0; i < req.s.size(); i++)
+	// {
+	// 	if (req.getPath()[i] == '\0')
+	// 		return 400;
+	// }
+
+
+	//(echo -ne "GET / HTTP/1.1\r\nHost: 127.1.0.0:4242\r\nContent-Length: 100000\r\n\r\n"; head -c 100000 </dev/random) | nc 127.1.0.0 4242
+
+	std::cout << req.getHeader("Host") << std::endl;
+	std::cout << _serverName + ":" + std::to_string(_port) << std::endl;
+	std::cout << _serverBlock.getHost() + ":" + std::to_string(_port) << std::endl;
 
 	if (req.getHeader("Host").empty()
 	|| ((req.getHeader("Host") != (_serverName + ":" + std::to_string(_port)))

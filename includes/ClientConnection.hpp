@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 21:21:01 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 21:46:04 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ class ClientConnection
 
 	// Constants
 	const size_t				MAX_HEADER_SIZE = 32768;
-	const std::chrono::seconds	NON_CGI_TIMEOUT = std::chrono::seconds(5);
+	
 	const int					MAX_RETRY = 3;
 
 	
@@ -78,6 +78,7 @@ class ClientConnection
 	int							serverFailureRetry;
 	std::string					serverName;
 	bool 						foundStatusLine;
+	bool						foundHeader;
 	size_t						limitSize;
 
 	// Public Methods
@@ -85,6 +86,7 @@ class ClientConnection
 
 	void						changeRequestToBadRequest();
 	void						changeRequestToRequestTimeout();
+	void						changeRequestToOverload();
 	void						changeRequestToBigHeader();
     void						changeRequestToServerTimeout();
 	void						changeRequestToServerError();
@@ -111,6 +113,7 @@ class ClientConnection
 	void						setCGI();
 	void						CGI_child();
 	void 						printMessage(std::string const & message) const;
+	const std::chrono::seconds	NON_CGI_TIMEOUT = std::chrono::seconds(5);
 };
 
 #endif

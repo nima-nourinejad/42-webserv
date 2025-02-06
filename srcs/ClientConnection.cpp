@@ -6,14 +6,15 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 21:01:57 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 22:27:27 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ClientConnection.hpp"
 
 ClientConnection::ClientConnection()
-    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true),responseMaker(nullptr), pipe{ -1, -1 }, pid(-1), errorStatus(0), isCGI(false), serverFailureRetry(0), serverName("")
+    : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true),responseMaker(nullptr), pipe{ -1, -1 }, pid(-1), errorStatus(0), isCGI(false), serverFailureRetry(0)
+	, serverName(""), foundStatusLine(false), foundHeader(false) ,limitSize(false)
 	{
 		eventData.type = CLIENT;
 		eventData.fd = -1;
@@ -32,6 +33,12 @@ void ClientConnection::changeRequestToBadRequest()
 void ClientConnection::changeRequestToRequestTimeout()
 {
 	errorStatus = 408;
+	status = RECEIVED;
+}
+
+void ClientConnection::changeRequestToOverload()
+{
+	errorStatus = 413;
 	status = RECEIVED;
 }
 
@@ -62,7 +69,6 @@ bool ClientConnection::finishedReceivingNonChunked()
 	std::string contentLengthString;
 	if (request.find("Content-Length: ") == std::string::npos)
 	{
-		std::cout << "No content length" << std::endl;
 		return true;
 	}
 	contentLengthString = request.substr(request.find("Content-Length: ") + 16);
@@ -136,6 +142,7 @@ void ClientConnection::findRequestType()
 	}
 	else
 	{
+		foundHeader = true;
 		if (request.find("Transfer-Encoding: chunked") != std::string::npos)
 			status = RECEIVINGCHUNKED;
 		else
@@ -145,7 +152,7 @@ void ClientConnection::findRequestType()
 
 void ClientConnection::connectionType()
 {
-	if (request.find("Connection: close") != std::string::npos || errorStatus == 431)
+	if (request.find("Connection: close") != std::string::npos || errorStatus == 431 || errorStatus == 413)
 		keepAlive = false;
 }
 
@@ -292,6 +299,9 @@ void ClientConnection::createResponseParts_nonCGI()
 		chunckBody(statusLine, rawHeader, connection, maxBodySize);
 		errorStatus = 0;
 		serverFailureRetry = 0;
+		foundStatusLine = false;
+		foundHeader = false;
+		limitSize = 0;
 		status = READYTOSEND;
 	}
 	catch(const std::exception& e)
@@ -485,6 +495,9 @@ void ClientConnection::readResponseFromPipe()
 	
 	errorStatus = 0;
 	serverFailureRetry = 0;
+	foundStatusLine = false;
+	foundHeader = false;
+	limitSize = 0;
 	status = READYTOSEND;
 }
 
