@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 22:00:38 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 22:52:56 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -325,49 +325,49 @@ void Server::receiveMessage(int index)
 			if (_clients[index].status == WAITFORREQUEST)
 				_clients[index].status = RECEIVINGUNKOWNTYPE;
 			_clients[index].request.append(buffer, bytes_received);
-			// if (_clients[index].foundStatusLine == false)
-			// {
-			// 	if (_clients[index].request.find("\r\n") != std::string::npos)
-			// 	{
-			// 		_clients[index].foundStatusLine = true;
-			// 		std::future<size_t> future_size = std::async(std::launch::async, &size_helper, _responseMaker, _clients[index].request, 0);
-			// 		if (future_size.wait_for(_clients[index].NON_CGI_TIMEOUT) == std::future_status::timeout)
-			// 			return _clients[index].changeRequestToServerTimeout();
-			// 		try
-			// 		{
-			// 			_clients[index].limitSize = future_size.get();
-			// 		}
-			// 		catch(...)
-			// 		{
-			// 			_clients[index].changeRequestToServerError();
-			// 		}
+			if (_clients[index].foundStatusLine == false)
+			{
+				if (_clients[index].request.find("\r\n") != std::string::npos)
+				{
+					_clients[index].foundStatusLine = true;
+					std::future<size_t> future_size = std::async(std::launch::async, &size_helper, _responseMaker, _clients[index].request, 0);
+					if (future_size.wait_for(_clients[index].NON_CGI_TIMEOUT) == std::future_status::timeout)
+						return _clients[index].changeRequestToServerTimeout();
+					try
+					{
+						_clients[index].limitSize = future_size.get();
+					}
+					catch(...)
+					{
+						_clients[index].changeRequestToServerError();
+					}
 					
-			// 	}
-			// }
+				}
+			}
 			if (_clients[index].status == RECEIVINGUNKOWNTYPE)
 				_clients[index].findRequestType();
-			// if (_clients[index].foundStatusLine && _clients[index].foundHeader)
-			// {
-			// 	size_t currenRequestSize = _clients[index].request.size();
-			// 	std::cout << "current request size: " << currenRequestSize << std::endl;
-			// 	size_t headerSize = _clients[index].request.find("\r\n\r\n") + 4;
-			// 	size_t currentBodySize = currenRequestSize - headerSize;
-			// 	std::cout << "header size: " << headerSize << std::endl;
-			// 	std::cout << "current body size: " << currentBodySize << std::endl;
+			if (_clients[index].foundStatusLine && _clients[index].foundHeader)
+			{
+				size_t currenRequestSize = _clients[index].request.size();
+				size_t headerSize = _clients[index].request.find("\r\n\r\n") + 4;
+				std::string header = _clients[index].request.substr(0, headerSize);
+				std::cout << header << std::endl;
+				size_t currentBodySize = currenRequestSize - headerSize;
 				
-			// 	if (currentBodySize >= _clients[index].limitSize)
-			// 	{
-			// 		_clients[index].changeRequestToOverload();
-			// 		return;
-			// 	}
+				if (currentBodySize >= _clients[index].limitSize)
+				{
+					_clients[index].changeRequestToOverload();
+					return;
+				}
 				
-			// }
+			}
 			if (_clients[index].finishedReceiving())
 			{
 				if (_clients[index].status == RECEIVINGCHUNKED)
 					_clients[index].handleChunkedEncoding();
 				_clients[index].status = RECEIVED;
 				printMessage("Request fully received from client " + std::to_string(index + 1));
+				// std::cout << _clients[index].request << std::endl;
 			}
 		}
 	}
