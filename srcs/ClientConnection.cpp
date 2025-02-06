@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/05 12:17:40 by nima             ###   ########.fr       */
+/*   Updated: 2025/02/06 12:34:47 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -196,41 +196,6 @@ void ClientConnection::handleChunkedEncoding()
 			grabChunkedData(unProcessed, chunkedSize);
 	}
 }
-
-// void ClientConnection::createResponseParts_nonCGI()
-// {
-// 	try
-// 	{
-// 		std::string statusLine, rawHeader;
-// 		size_t maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
-// 		Response	response;
-// 		if (!errorStatus)
-// 			response = responseMaker->createResponse(request);
-// 		else
-// 		{
-// 			Request		req(request, errorStatus);
-// 			response = responseMaker->getErrorPage(req, errorStatus);
-// 		}
-// 		body = response.getBody();
-// 		statusLine = response.getStatusLine();
-// 		rawHeader = response.getRawHeader();
-// 		connectionType();
-// 		std::string connection;
-// 		if (keepAlive)
-// 			connection = "Connection: keep-alive\r\n";
-// 		else
-// 			connection = "Connection: close\r\n";
-// 		chunckBody(statusLine, rawHeader, connection, maxBodySize);
-// 		errorStatus = 0;
-// 		status = READYTOSEND;
-// 	}
-// 	catch(const std::exception& e)
-// 	{
-// 		std::string errorMessage = e.what();
-// 		logError("Creating non CGI response failed: " + errorMessage);
-// 		changeRequestToServerError();
-// 	}
-// }
 
 size_t nonCGI_helper_size(HttpHandler responseMaker, std::string request, int errorStatus)
 {
