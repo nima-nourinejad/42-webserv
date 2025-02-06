@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 14:32:16 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:01:17 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,8 @@ class ClientConnection
 
 	// Constants
 	const size_t				MAX_HEADER_SIZE = 32768;
-	const std::chrono::seconds NON_CGI_TIMEOUT = std::chrono::seconds(5);
+	const std::chrono::seconds	NON_CGI_TIMEOUT = std::chrono::seconds(5);
+	const int					MAX_RETRY = 3;
 
 	
     public:
@@ -74,6 +75,7 @@ class ClientConnection
 	int							errorStatus;
 	struct eventData			pipeEventData;
 	bool						isCGI;
+	int							serverFailureRetry;
 
 	// Public Methods
 	ClientConnection();

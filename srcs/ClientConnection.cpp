@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 14:32:07 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:16:22 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ void ClientConnection::changeRequestToServerTimeout()
 void ClientConnection::changeRequestToServerError()
 {
 	errorStatus = 500;
+	serverFailureRetry++;
 	status = RECEIVED;
 }
 
@@ -222,24 +223,57 @@ void ClientConnection::createResponseParts_nonCGI()
 {
 	try
 	{
-        std::future<size_t> future_size = std::async(std::launch::async, &nonCGI_helper_size, *responseMaker, request, errorStatus);
-        std::future<Response> future_response = std::async(std::launch::async, &nonCGI_helper_response, *responseMaker, request, errorStatus);
-        if (future_size.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout || future_response.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
-            return changeRequestToServerTimeout();
-        size_t maxBodySize = future_size.get();	
-		Response response = future_response.get();
-        std::string statusLine, rawHeader;
-		body = response.getBody();
-		statusLine = response.getStatusLine();
-		rawHeader = response.getRawHeader();
+		std::string statusLine, rawHeader;
+		size_t maxBodySize;
+		Response response;
+		if (serverFailureRetry < MAX_RETRY)
+		{
+			std::future<size_t> future_size = std::async(std::launch::async, &nonCGI_helper_size, *responseMaker, request, errorStatus);
+			std::future<Response> future_response = std::async(std::launch::async, &nonCGI_helper_response, *responseMaker, request, errorStatus);
+			if (future_size.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout || future_response.wait_for(NON_CGI_TIMEOUT) == std::future_status::timeout)
+				return changeRequestToServerTimeout();
+			try
+			{
+				maxBodySize = future_size.get();	
+			}
+			catch(...)
+			{
+				logError("Size thread failed");
+				return changeRequestToServerError();
+			}
+			try
+			{	
+				response = future_response.get();
+			}
+			catch(...)
+			{
+				logError("Response thread failed");
+				return changeRequestToServerError();
+			}
+			
+			body = response.getBody();
+			statusLine = response.getStatusLine();
+			rawHeader = response.getRawHeader();
+			
+		}
+		else
+		{
+			statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
+			rawHeader = "Content-Type: text/plain\r\n";
+			body = "Internal Server Error";
+			maxBodySize = body.size();
+		}
 		connectionType();
 		std::string connection;
 		if (keepAlive)
 			connection = "Connection: keep-alive\r\n";
 		else
 			connection = "Connection: close\r\n";
+
+		std::cout << "chunking body" << std::endl;
 		chunckBody(statusLine, rawHeader, connection, maxBodySize);
 		errorStatus = 0;
+		serverFailureRetry = 0;
 		status = READYTOSEND;
 	}
 	catch(const std::exception& e)
@@ -429,6 +463,7 @@ void ClientConnection::readResponseFromPipe()
 	chunckBody(statusLine, rawHeader, connection, maxBodySize);
 	
 	errorStatus = 0;
+	serverFailureRetry = 0;
 	status = READYTOSEND;
 }
 

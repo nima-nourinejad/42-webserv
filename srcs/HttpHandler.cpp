@@ -3,19 +3,28 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 14:13:31 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:11:39 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpHandler.hpp"
 
 HttpHandler::HttpHandler(ServerBlock &serverConfig, int port)
-	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0]->getRoot())
-	, _serverBlock(serverConfig), _maxBodySize(0), _serverName(serverConfig.getServerName()), _port(port)
+	: _cgiHandler(serverConfig), _serverBlock(serverConfig), _maxBodySize(0)
+	, _serverName(serverConfig.getServerName()), _port(port), _locationFlag(0)
 {
+	if (!serverConfig.getLocations().empty())
+		_rootDir = serverConfig.getLocations()[0]->getRoot();
+	else
+	{
+		_rootDir = serverConfig.getRoot();
+		_locationFlag = 1;
+	}
+
+	
 	_errorPages[400] = "html/default_400.html";
 	_errorPages[401] = "html/default_401.html";
 	_errorPages[402] = "html/default_402.html";
@@ -112,6 +121,9 @@ bool	HttpHandler::_isMethodAllowed(const Request &req)
 {
 	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
+	if (!matchedLocation)
+		return false;
+
 	const std::vector<std::string>	&allowedMethods = matchedLocation->getLimitExcept();
 	bool							isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), req.getMethod())
 															!= allowedMethods.end();
@@ -160,18 +172,28 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 
 int	HttpHandler::_validateRequest(const Request &req)
 {
+	if (req.getHttpVersion() != "HTTP/1.1")
+	{
+		if (req.getHttpVersion() == "HTTP/0.9" || req.getHttpVersion() == "HTTP/1.0" || req.getHttpVersion() == "HTTP/2" || req.getHttpVersion() == "HTTP/3")
+			return 505;
+		return 400;
+	}
 	std::string	method = req.getMethod();
+	if (method != "GET" && method != "POST" && method != "OPTIONS" && method != "DELETE" && method != "PUT" && method != "HEAD" && method != "TRACE" && method != "CONNECT" && method != "PATCH")
+		return 400;
+
+	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
+
+	if (!matchedLocation)
+		return 404;
 
 	if (!_isMethodAllowed(req))
-	{
-		std::cout << "Method: " << method << " Path: " << req.getPath() << std::endl;
 		return 405;
-	}
 
 	if (req.getHeader("Host").empty()
-	|| (req.getHeader("Host") != _serverName + ":" + std::to_string(_port)
-	&& req.getHeader("Host") != _serverBlock.getHost() + ":" + std::to_string(_port)))
-		return 400; // need to get actual port from configuration class
+	|| ((req.getHeader("Host") != (_serverName + ":" + std::to_string(_port)))
+	&& (req.getHeader("Host") != (_serverBlock.getHost() + ":" + std::to_string(_port)))))
+		return 400;
 
 	if (method == "POST" && req.getHeader("Content-Length").empty())
 		return 411;
@@ -215,9 +237,49 @@ int	HttpHandler::_validateRequest(const Request &req)
 	return 200;
 }
 
-Response	HttpHandler::createResponse(const std::string &request)
+bool	HttpHandler::isValidLines(const std::string &request)
 {
-	Request	req(request, 0);
+	std::istringstream	stream(request);
+	std::string			line;
+
+	if (!std::getline(stream, line))
+		return false;
+
+	std::istringstream	requestLine(line);
+	std::string			method;
+	std::string			path;
+	std::string			httpVersion;
+
+	if (!(requestLine >> method >> path >> httpVersion))
+		return false;
+
+	if (method.empty() || path.empty() || httpVersion.empty())
+		return false;
+
+	while (std::getline(stream, line) && line != "\r")
+	{
+		std::size_t	colon = line.find(':');
+
+		if (colon == std::string::npos)
+			return false;
+		
+		if (line.size() != 0 && line[line.size() - 1] != '\r')
+			return false;
+	}
+	if (line != "\r")
+		return false;
+
+	return true;
+}
+
+Response	HttpHandler::createResponse(const std::string &request)
+{	
+	Request	req;
+
+	// if (isValidLines(request))
+		req = Request(request, 0);
+	// else
+	// 	req = Request(request, 400);
 
 	_maxBodySize = getMaxBodySize(request, 0);
 
@@ -228,6 +290,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 {
 	try
 	{
+		if (_locationFlag == 1)
+			return getErrorPage(req, 404);
+
 		// int validation = _validateRequest(req);
 		// if (validation != 200)
 		// 	return getErrorPage(req, validation);

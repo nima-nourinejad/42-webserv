@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 14:32:30 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 17:59:30 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,6 +206,7 @@ void Server::closeClientSocket(int index)
 			_clients[index].pipeEventData.fd = -1;
 			_clients[index].pipeEventData.index = -1;
 			_clients[index].errorStatus = 0;
+			_clients[index].serverFailureRetry = 0;
 			--_num_clients;
 		}
 	}
