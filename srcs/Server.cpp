@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 13:35:41 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 14:32:30 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -312,7 +312,6 @@ void Server::receiveMessage(int index)
 			if (_clients[index].status == WAITFORREQUEST)
 				_clients[index].status = RECEIVINGUNKOWNTYPE;
 			_clients[index].request.append(buffer, bytes_received);
-			_clients[index].checkRequestSize();
 			if (_clients[index].status == RECEIVINGUNKOWNTYPE)
 				_clients[index].findRequestType();
 			if (_clients[index].finishedReceiving())

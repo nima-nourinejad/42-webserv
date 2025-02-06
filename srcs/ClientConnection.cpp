@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 12:34:47 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 14:32:07 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -471,12 +471,6 @@ void ClientConnection::logError(std::string const & message)
 		std::cerr << "Failed to log exception : " << e.what() << std::endl;
 		std::cerr << "Original exception : " << message << std::endl;
 	}
-}
-
-void ClientConnection::checkRequestSize()
-{
-	if (request.size() > MAX_REQUEST_SIZE)
-		changeRequestToBadRequest();
 }
 
 void ClientConnection::setCGI()

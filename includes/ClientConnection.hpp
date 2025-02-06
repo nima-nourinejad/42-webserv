@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/05 12:16:22 by nima             ###   ########.fr       */
+/*   Updated: 2025/02/06 14:32:16 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,8 +52,7 @@ class ClientConnection
 	private:
 
 	// Constants
-	const size_t				MAX_HEADER_SIZE = 3200768;
-	const size_t				MAX_REQUEST_SIZE = 100048576;
+	const size_t				MAX_HEADER_SIZE = 32768;
 	const std::chrono::seconds NON_CGI_TIMEOUT = std::chrono::seconds(5);
 
 	
@@ -102,7 +101,6 @@ class ClientConnection
 	void						chunckBody(std::string statusLine, std::string rawHeader, std::string connection, size_t maxBodySize);
 	void 						processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, std::string &connection, size_t &maxBodySize);
 	void 						logError(std::string const & message);
-	void						checkRequestSize();
 	void						readFromPipe();
 	void						setCGI();
 	void						CGI_child();
