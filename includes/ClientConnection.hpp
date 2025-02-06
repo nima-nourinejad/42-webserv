@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/04 13:23:44 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/05 12:16:22 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,14 +75,13 @@ class ClientConnection
 	int							errorStatus;
 	struct eventData			pipeEventData;
 	bool						isCGI;
-	std::future<void>			future;
-	std::thread					thread;
 
 	// Public Methods
 	ClientConnection();
 
 	void						changeRequestToBadRequest();
 	void						changeRequestToRequestTimeout();
+    void						changeRequestToServerTimeout();
 	void						changeRequestToServerError();
 	bool						finishedReceivingNonChunked();
 	bool						finishedReceivingChunked();
@@ -94,7 +93,6 @@ class ClientConnection
 	void						grabChunkedData(std::string & unProcessed, size_t chunkedSize);
 	void						grabChunkedHeader(std::string & unProcessed, std::string & header);
 	void						handleChunkedEncoding();
-	void						futureThread_prepare_response();
 	void						createResponseParts_nonCGI();
 	void						createResponseParts_CGI();
 	void						createResponseParts();
