@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 19:08:20 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 21:21:01 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,12 +77,15 @@ class ClientConnection
 	bool						isCGI;
 	int							serverFailureRetry;
 	std::string					serverName;
+	bool 						foundStatusLine;
+	size_t						limitSize;
 
 	// Public Methods
 	ClientConnection();
 
 	void						changeRequestToBadRequest();
 	void						changeRequestToRequestTimeout();
+	void						changeRequestToBigHeader();
     void						changeRequestToServerTimeout();
 	void						changeRequestToServerError();
 	bool						finishedReceivingNonChunked();

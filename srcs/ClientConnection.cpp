@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 19:09:31 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 21:01:57 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ ClientConnection::ClientConnection()
 
 void ClientConnection::changeRequestToBadRequest()
 {
-	errorStatus = 408;
+	errorStatus = 400;
 	status = RECEIVED;
 }
 
@@ -35,9 +35,9 @@ void ClientConnection::changeRequestToRequestTimeout()
 	status = RECEIVED;
 }
 
-void ClientConnection::changeRequestToServerTimeout()
+void ClientConnection::changeRequestToBigHeader()
 {
-	errorStatus = 504;
+	errorStatus = 431;
 	status = RECEIVED;
 }
 
@@ -48,35 +48,53 @@ void ClientConnection::changeRequestToServerError()
 	status = RECEIVED;
 }
 
+void ClientConnection::changeRequestToServerTimeout()
+{
+	errorStatus = 504;
+	status = RECEIVED;
+}
+
+
+
 bool ClientConnection::finishedReceivingNonChunked()
 {
 	size_t contentLength;
 	std::string contentLengthString;
 	if (request.find("Content-Length: ") == std::string::npos)
 	{
+		std::cout << "No content length" << std::endl;
 		return true;
 	}
 	contentLengthString = request.substr(request.find("Content-Length: ") + 16);
 	if (contentLengthString.find("\r\n") == std::string::npos)
 	{
-		std::cerr << "Failed to find end of content length" << std::endl;
 		changeRequestToBadRequest();
 		return true;
 	}
 	contentLengthString = contentLengthString.substr(0, contentLengthString.find("\r\n"));
+	if (contentLengthString.find_first_not_of("0123456789") != std::string::npos)
+	{
+		changeRequestToBadRequest();
+		return true;
+	}
 	try
 	{
 		contentLength = std::stoul(contentLengthString);
 	}
 	catch(...)
 	{
-		std::cerr << "Failed to convert content length to number" << std::endl;
+		changeRequestToBadRequest();
+		return true;
+	}
+	if (contentLength == 0)
+		return true;
+	if (contentLength < 0)
+	{
 		changeRequestToBadRequest();
 		return true;
 	}
 	if (receivedLength() > contentLength)
 	{
-		std::cerr << "Received more data than expected" << std::endl;
 		changeRequestToBadRequest();
 		return true;
 	}
@@ -114,10 +132,7 @@ void ClientConnection::findRequestType()
 	if (request.find("\r\n\r\n") == std::string::npos)
 	{
 		if (request.size() > MAX_HEADER_SIZE)
-		{
-			logError("Header size exceeded the limit");
-			changeRequestToBadRequest();
-		}
+			changeRequestToBigHeader();
 	}
 	else
 	{
@@ -130,7 +145,7 @@ void ClientConnection::findRequestType()
 
 void ClientConnection::connectionType()
 {
-	if (request.find("Connection: close") != std::string::npos)
+	if (request.find("Connection: close") != std::string::npos || errorStatus == 431)
 		keepAlive = false;
 }
 
@@ -258,9 +273,13 @@ void ClientConnection::createResponseParts_nonCGI()
 		}
 		else
 		{
-			statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-			rawHeader = "Content-Type: text/plain\r\n";
-			body = "Internal Server Error";
+			statusLine = "HTTP/1.1 508 Loop Detected\r\n";
+			rawHeader = "Content-Type: text/html\r\n";
+			body = R"(
+			<html><head><title>508 Loop Detected</title></head>
+			<body><h1>508 Loop Detected</h1><p>The server detected an infinite loop while processing the request.</p></body></html>
+			)";
+
 			maxBodySize = body.size();
 		}
 		connectionType();
@@ -323,8 +342,11 @@ void ClientConnection::CGI_child()
 			std::string errorMessage = e.what();
 			logError("Failed to create error response in child process: " + errorMessage);
 			statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-			rawHeader = "Content-Type: text/plain\r\n";
-			body = "500 Internal Server Error";
+			rawHeader = "Content-Type: text/html\r\n";
+			body = R"(
+			<html><head><title>500 Internal Server Error</title></head>
+			<body><h1>500 Internal Server Error</h1><p>Unexpected condition prevented fulfilling the request.</p></body></html>
+			)";
 			maxBodySizeString = std::to_string(body.size()) + "\r\n";
 		}
 	}

@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 15:47:50 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 20:07:53 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,7 +145,7 @@ void	Request::parse(const std::string &rawRequest)
 		if (colon != std::string::npos)
 		{
 			std::string	headerKey = line.substr(0, colon);
-			std::string	headerValue = line.substr(colon + 2, line.substr(colon + 2).size() - 1);  // Skip colon and space
+			std::string	headerValue = line.substr(colon + 1, line.substr(colon + 2).size() - 1);  // Skip colon and space
 			_headers[headerKey] = headerValue;
 		}
 	}

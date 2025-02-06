@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 18:45:16 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 20:36:22 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,14 +44,27 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig, int port)
 	_errorPages[416] = "html/default_416.html";
 	_errorPages[417] = "html/default_417.html";
 	_errorPages[418] = "html/default_418.html";
+	_errorPages[421] = "html/default_421.html";
 	_errorPages[422] = "html/default_422.html";
+	_errorPages[423] = "html/default_423.html";
+	_errorPages[424] = "html/default_424.html";
+	_errorPages[425] = "html/default_425.html";
 	_errorPages[426] = "html/default_426.html";
+	_errorPages[428] = "html/default_428.html";
+	_errorPages[429] = "html/default_429.html";
+	_errorPages[431] = "html/default_431.html";
+	_errorPages[451] = "html/default_451.html";
 	_errorPages[500] = "html/default_500.html";
 	_errorPages[501] = "html/default_501.html";
 	_errorPages[502] = "html/default_502.html";
 	_errorPages[503] = "html/default_503.html";
 	_errorPages[504] = "html/default_504.html";
 	_errorPages[505] = "html/default_505.html";
+	_errorPages[506] = "html/default_506.html";
+	_errorPages[507] = "html/default_507.html";
+	_errorPages[508] = "html/default_508.html";
+	_errorPages[510] = "html/default_510.html";
+	_errorPages[511] = "html/default_511.html";
 
 	for (const std::pair<const int, std::string> &errorPage : serverConfig.getErrorPages())
 		_errorPages[errorPage.first] = errorPage.second;
@@ -199,6 +212,7 @@ int	HttpHandler::_validateRequest(const Request &req)
 		return 411;
 
 	size_t	contentLength;
+	std::cout << req.getHeader("Content-Length") << std::endl;
 
 	if (req.getHeader("Content-Length").empty())
 		contentLength = 0;
@@ -250,6 +264,14 @@ bool	HttpHandler::isValidLines(const std::string &request)
 	std::string			path;
 	std::string			httpVersion;
 
+
+	if (request.find("\r\n\r\n") == std::string::npos)
+		return false;
+	if (request.find("\r\n") == std::string::npos)
+		return false;
+	if (request.find("\t") != std::string::npos)
+		return false;
+
 	if (!(requestLine >> method >> path >> httpVersion))
 		return false;
 
@@ -263,6 +285,9 @@ bool	HttpHandler::isValidLines(const std::string &request)
 		if (colon == std::string::npos)
 			return false;
 		
+		if (colon == line.size() - 1 || line[colon + 1] != ' ')
+			return false;
+					
 		if (line.size() != 0 && line[line.size() - 1] != '\r')
 			return false;
 	}
@@ -276,10 +301,10 @@ Response	HttpHandler::createResponse(const std::string &request)
 {	
 	Request	req;
 
-	// if (isValidLines(request))
+	if (isValidLines(request))
 		req = Request(request, 0);
-	// else
-	// 	req = Request(request, 400);
+	else
+		req = Request(request, 400);
 
 	_maxBodySize = getMaxBodySize(request, 0);
 
@@ -293,9 +318,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (_locationFlag == 1)
 			return getErrorPage(req, 404);
 
-		// int validation = _validateRequest(req);
-		// if (validation != 200)
-		// 	return getErrorPage(req, validation);
+		int validation = _validateRequest(req);
+		if (validation != 200)
+			return getErrorPage(req, validation);
 		
 		std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
@@ -816,6 +841,7 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 		{100, "Continue"},
 		{101, "Switching Protocols"},
 		{102, "Processing"},
+		{103, "Early Hints"},
 		{200, "OK"},
 		{201, "Created"},
 		{202, "Accepted"},
@@ -824,6 +850,8 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 		{205, "Reset Content"},
 		{206, "Partial Content"},
 		{207, "Multi-Status"},
+		{208, "Already Reported"},
+		{226, "IM Used"},
 		{300, "Multiple Choices"},
 		{301, "Moved Permanently"},
 		{302, "Found"},
@@ -851,14 +879,27 @@ std::string	HttpHandler::getStatusMessage(int statusCode)
 		{416, "Range Not Satisfiable"},
 		{417, "Expectation Failed"},
 		{418, "I'm a teapot"}, // Easter egg from RFC 2324
+		{421, "Misdirected Request"},
 		{422, "Unprocessable Entity"},
+		{423, "Locked"},
+		{424, "Failed Dependency"},
+		{425, "Too Early"},
 		{426, "Upgrade Required"},
+		{428, "Precondition Required"},
+		{429, "Too Many Requests"},
+		{431, "Request Header Fields Too Large"},
+		{451, "Unavailable For Legal Reasons"},
 		{500, "Internal Server Error"},
 		{501, "Not Implemented"},
 		{502, "Bad Gateway"},
 		{503, "Service Unavailable"},
 		{504, "Gateway Timeout"},
-		{505, "HTTP Version Not Supported"}
+		{505, "HTTP Version Not Supported"},
+		{506, "Variant Also Negotiates"},
+		{507, "Insufficient Storage"},
+		{508, "Loop Detected"},
+		{510, "Not Extended"},
+		{511, "Network Authentication Required"}
 	};
 
 	std::unordered_map<int, std::string>::const_iterator	it = statusMessages.find(statusCode);

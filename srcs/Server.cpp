@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 19:11:47 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 21:14:31 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -298,6 +298,7 @@ void Server::receiveMessage(int index)
 {
 	try 
 	{
+
 		if (_clients[index].fd == -1 || index >= max_connections || index < 0 || signal_status == SIGINT)
 			return;
 		char buffer[16384] = {};
@@ -322,7 +323,7 @@ void Server::receiveMessage(int index)
 					_clients[index].handleChunkedEncoding();
 				_clients[index].status = RECEIVED;
 				printMessage("Request fully received from client " + std::to_string(index + 1));
-				std::cout << _clients[index].request << std::endl;
+				// std::cout << _clients[index].request << std::endl;
 			}
 		}
 	}
