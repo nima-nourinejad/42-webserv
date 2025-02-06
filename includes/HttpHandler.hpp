@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 19:32:29 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 13:37:37 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,8 @@ class HttpHandler
 		size_t							_maxBodySize;
 		std::string						_filePath;
 		std::filesystem::path			_uploadPath;
+		std::string						_serverName;
+		int								_port;
 
 		bool							_isMethodAllowed(const Request &req);
 		int								_validateRequest(const Request &req);
@@ -44,7 +46,7 @@ class HttpHandler
 		bool							_isDownload(const Request &req);
 
 	public:
-		HttpHandler(ServerBlock &serverConfig);
+		HttpHandler(ServerBlock &serverConfig, int port);
 		~HttpHandler();
 
 		Response						createResponse(const std::string &request);

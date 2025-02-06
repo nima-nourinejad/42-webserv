@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Configuration.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:08 by nnourine          #+#    #+#             */
-/*   Updated: 2024/11/29 10:09:57 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 13:36:27 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Configuration.hpp"
 
-Configuration::Configuration(int port, std::string const & host, size_t maxBodySize, std::string const & name)
-    : port(port), host(host), maxBodySize(maxBodySize), name(name) {};
+Configuration::Configuration(int port, std::string const & host, std::string const & name)
+    : port(port), host(host), name(name) {};

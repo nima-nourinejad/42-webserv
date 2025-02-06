@@ -3,19 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 12:43:41 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 13:35:41 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
 Server::Server(ServerBlock & serverBlock, int port, int max_fd)
-    : _socket_fd(-1), _fd_epoll(-1), _config(port, serverBlock.getHost(),
-	serverBlock.getClientMaxBodySize(), serverBlock.getServerName()), _num_clients(0)
-	, _responseMaker(serverBlock), fd_num(0), max_fd(max_fd), max_connections((max_fd - 1) / 2), total_events(max_fd),
+    : _socket_fd(-1), _fd_epoll(-1), _config(port, serverBlock.getHost(), serverBlock.getServerName()), _num_clients(0)
+	, _responseMaker(serverBlock, port), fd_num(0), max_fd(max_fd), max_connections((max_fd - 1) / 2), total_events(max_fd),
 	_events(max_fd), _ready(max_fd), _clients(max_connections)
 {
 	

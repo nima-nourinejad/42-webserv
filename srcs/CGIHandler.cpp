@@ -6,7 +6,7 @@
 /*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 16:35:53 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/06 14:15:57 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ Response	CGIHandler::execute(const Request &req)
 {
 	try
 	{
-		HttpHandler						httpHandlerInstance(_serverBlock);
+		HttpHandler						httpHandlerInstance(_serverBlock, 0);
 		std::shared_ptr<LocationBlock>	matchedLocation = httpHandlerInstance.findMatchedLocation(req);
 
 		if (!matchedLocation)

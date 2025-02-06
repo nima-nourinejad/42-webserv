@@ -3,18 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/04 20:02:58 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/06 14:13:31 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpHandler.hpp"
 
-HttpHandler::HttpHandler(ServerBlock &serverConfig)
+HttpHandler::HttpHandler(ServerBlock &serverConfig, int port)
 	: _cgiHandler(serverConfig), _rootDir(serverConfig.getLocations()[0]->getRoot())
-	, _serverBlock(serverConfig), _maxBodySize(serverConfig.getClientMaxBodySize())
+	, _serverBlock(serverConfig), _maxBodySize(0), _serverName(serverConfig.getServerName()), _port(port)
 {
 	_errorPages[400] = "html/default_400.html";
 	_errorPages[401] = "html/default_401.html";
@@ -116,25 +116,8 @@ bool	HttpHandler::_isMethodAllowed(const Request &req)
 	bool							isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), req.getMethod())
 															!= allowedMethods.end();
 		
-		// std::cout << "Method: " << method << " Path: " << path << " Allowed: " << isMethodAllowed << std::endl;
-		
 		return isMethodAllowed;
 }
-	// for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
-	// {
-	// 	if (path == location->getLocation())
-	// 	{
-	// 		const std::vector<std::string>	&allowedMethods = location->getLimitExcept();
-	// 		bool	isMethodAllowed = std::find(allowedMethods.begin(), allowedMethods.end(), method)
-	// 															!= allowedMethods.end();
-			
-	// 		std::cout << "Method: " << method << " Path: " << path << " Allowed: " << isMethodAllowed << std::endl;
-			
-	// 		return isMethodAllowed;
-	// 	}
-	// }
-	// return false;
-// }
 
 Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 {
@@ -178,7 +161,6 @@ Response	HttpHandler::getErrorPage(const Request &req, int statusCode)
 int	HttpHandler::_validateRequest(const Request &req)
 {
 	std::string	method = req.getMethod();
-	// std::string	path = req.getPath();
 
 	if (!_isMethodAllowed(req))
 	{
@@ -186,15 +168,16 @@ int	HttpHandler::_validateRequest(const Request &req)
 		return 405;
 	}
 
-	// if (req.getHeader("Host").empty()
-	// || (req.getHeader("Host") != _serverBlock.getServerName() + ":" + std::to_string(_serverBlock.getPort())
-	// && req.getHeader("Host") != _serverBlock.getHost()) + ":" + std::to_string(_serverBlock.getPort()))
-	// 	return 400; // need to get actual port from configuration class
+	if (req.getHeader("Host").empty()
+	|| (req.getHeader("Host") != _serverName + ":" + std::to_string(_port)
+	&& req.getHeader("Host") != _serverBlock.getHost() + ":" + std::to_string(_port)))
+		return 400; // need to get actual port from configuration class
 
 	if (method == "POST" && req.getHeader("Content-Length").empty())
 		return 411;
 
-	size_t contentLength;
+	size_t	contentLength;
+
 	if (req.getHeader("Content-Length").empty())
 		contentLength = 0;
 	else
@@ -209,7 +192,13 @@ int	HttpHandler::_validateRequest(const Request &req)
 		}
 	}
 
-	if (contentLength > req.getBody().size()) //change it to sth else
+	if (req.getHeader("Transfer-Encoding") != "chunked" && contentLength != req.getBody().size())
+		return 400;
+
+	if(req.getHeader("Transfer-Encoding") == "chunked" && !req.getHeader("Content-Length").empty())
+		return 400;
+
+	if (req.getBody().size() > _maxBodySize)
 		return 413;
 
 	for (const std::shared_ptr<LocationBlock> &location : _serverBlock.getLocations())
@@ -229,6 +218,8 @@ int	HttpHandler::_validateRequest(const Request &req)
 Response	HttpHandler::createResponse(const std::string &request)
 {
 	Request	req(request, 0);
+
+	_maxBodySize = getMaxBodySize(request, 0);
 
 	return handleRequest(req);
 }
@@ -818,9 +809,7 @@ size_t	HttpHandler::getMaxBodySize(const std::string &request, int errorStatus)
 	Request							req(request, errorStatus);
 	std::shared_ptr<LocationBlock>	matchedLocation = findMatchedLocation(req);
 
-	if (!matchedLocation)
-	{
-		return _serverBlock.getClientMaxBodySize();
-	}
-	return _maxBodySize;
+	if (matchedLocation && matchedLocation->getClientMaxBodySize() > 0)
+		return matchedLocation->getClientMaxBodySize();
+	return _serverBlock.getClientMaxBodySize();
 }
