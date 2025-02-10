@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 17:53:25 by akovalev          #+#    #+#             */
-/*   Updated: 2025/02/06 18:11:35 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/10 18:41:04 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,8 @@ class ServerBlock
 	public:
 		ServerBlock();
 		~ServerBlock();
-		ServerBlock(const ServerBlock& original);
-		ServerBlock& operator=(const ServerBlock& copy);
+		// ServerBlock(const ServerBlock& original);
+		// ServerBlock& operator=(const ServerBlock& copy);
 		
 		std::string					getServerName() const;
 		std::vector<uint16_t>		getListen() const;

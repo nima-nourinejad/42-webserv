@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/10 15:31:52 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/10 18:35:27 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,14 +16,10 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig, int port)
 	: _cgiHandler(serverConfig), _serverBlock(serverConfig), _maxBodySize(0)
 	, _serverName(serverConfig.getServerName()), _port(port), _locationFlag(0)
 {
-	if (!serverConfig.getLocations().empty())
-		_rootDir = serverConfig.getLocations()[0]->getRoot();
-		// _rootDir = serverConfig.getRoot();
-	else
-	{
-		_rootDir = serverConfig.getRoot();
+	_rootDir = serverConfig.getRoot();
+
+	if (serverConfig.getLocations().empty())
 		_locationFlag = 1;
-	}
 
 	
 	_errorPages[400] = "html/default_400.html";
