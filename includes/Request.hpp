@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:09 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 15:47:20 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/10 13:06:29 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <map>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 class Request
 {

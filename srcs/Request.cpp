@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:31:01 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 22:57:40 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/10 15:11:33 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ Request::Request(const std::string &rawRequest, int errorStatus)
 				
 				if (!(requestLine >> _method >> _path >> _httpVersion))
 					handleError("Invalid request format");
-				_headers["Content-Length"] = "0";
+				_headers["content-length"] = "0";
 				_body = "";
 				////////
 			}
@@ -90,7 +90,7 @@ Request::Request(const std::string &rawRequest, int errorStatus)
 			
 			if (!(requestLine >> _method >> _path >> _httpVersion))
 				handleError("Invalid request format");
-			_headers["Content-Length"] = "0";
+			_headers["content-length"] = "0";
 			_body = "";
 		}
 	}
@@ -100,7 +100,7 @@ Request::Request(const std::string &rawRequest, int errorStatus)
 		_method = "UNKNOWN";
 		_path = "/";
 		_httpVersion = "HTTP/1.1";
-		_headers["Content-Length"] = "0";
+		_headers["content-length"] = "0";
 		_body = "";
 	}
 }
@@ -146,16 +146,27 @@ void	Request::parse(const std::string &rawRequest)
 		{
 			std::string	headerKey = line.substr(0, colon);
 			std::string	headerValue = line.substr(colon + 2, line.substr(colon + 2).size() - 1);  // Skip colon and space
+			if (headerKey.empty())  // Check for empty header key
+				handleError("Invalid header format");
+			std::transform(headerKey.begin(), headerKey.end(), headerKey.begin(), ::tolower);
+			if (headerKey == "content-length" || headerKey == "transfer-encoding" || headerKey == "host" || headerKey == "connection" || headerKey == "content-type")
+			{
+				if (_headers.find(headerKey) != _headers.end())
+				{
+					// std::cout << "Duplicate " << headerKey << " header" << std::endl;
+					handleError("Duplicate " + headerKey + " header");
+				}
+			}
 			_headers[headerKey] = headerValue;
-			std::cout << "Header: " << headerKey << " : " << headerValue << std::endl;
+			// std::cout << "Header: " << headerKey << " : " << headerValue << std::endl;
 		}
 	}
 	// Handle body
-	if (!_headers["Content-Length"].empty())
+	if (!_headers["content-length"].empty())
 	{
 		try
 		{
-			std::size_t	contentLength = std::stoi(_headers["Content-Length"]);
+			std::size_t	contentLength = std::stoi(_headers["content-length"]);
 
 			_body.resize(contentLength);
 			stream.read(&_body[0], contentLength);

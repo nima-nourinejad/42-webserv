@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/10 09:57:08 by nima             ###   ########.fr       */
+/*   Updated: 2025/02/10 15:07:51 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,11 +67,13 @@ bool ClientConnection::finishedReceivingNonChunked()
 {
 	size_t contentLength;
 	std::string contentLengthString;
-	if (request.find("Content-Length: ") == std::string::npos)
+	std::string lower_case_request = request;
+	std::transform(lower_case_request.begin(), lower_case_request.end(), lower_case_request.begin(), ::tolower);
+	if (lower_case_request.find("content-length: ") == std::string::npos)
 	{
 		return true;
 	}
-	contentLengthString = request.substr(request.find("Content-Length: ") + 16);
+	contentLengthString = lower_case_request.substr(lower_case_request.find("content-length: ") + 16);
 	if (contentLengthString.find("\r\n") == std::string::npos)
 	{
 		changeRequestToBadRequest();
@@ -105,7 +107,9 @@ bool ClientConnection::finishedReceivingNonChunked()
 		return true;
 	}
 	if (receivedLength() == contentLength)
+	{
 		return true;
+	}
 	return false;
 }
 
@@ -143,7 +147,9 @@ void ClientConnection::findRequestType()
 	else
 	{
 		foundHeader = true;
-		if (request.find("Transfer-Encoding: chunked") != std::string::npos)
+		std::string lower_case_request = request;
+		std::transform(lower_case_request.begin(), lower_case_request.end(), lower_case_request.begin(), ::tolower);
+		if (lower_case_request.find("transfer-encoding: chunked") != std::string::npos)
 			status = RECEIVINGCHUNKED;
 		else
 			status = RECEIVINGNONCHUNKED;
@@ -152,7 +158,9 @@ void ClientConnection::findRequestType()
 
 void ClientConnection::connectionType(std::string statusLine)
 {
-	if (request.find("Connection: close") != std::string::npos
+	std::string lower_case_request = request;
+	std::transform(lower_case_request.begin(), lower_case_request.end(), lower_case_request.begin(), ::tolower);
+	if (lower_case_request.find("connection: close") != std::string::npos
         || errorStatus == 431 || errorStatus == 413 || errorStatus == 400 || errorStatus == 403 
         || errorStatus == 405 || errorStatus == 414 || errorStatus == 421 || server_error_in_recv)
         {
@@ -210,8 +218,9 @@ void ClientConnection::grabChunkedHeader(std::string & unProcessed, std::string 
 void ClientConnection::handleChunkedEncoding()
 {
 	std::string unProcessed = request;
-	
-	if (unProcessed.find("Transfer-Encoding: chunked") == std::string::npos)
+	std::string lower_case_request = request;
+	std::transform(lower_case_request.begin(), lower_case_request.end(), lower_case_request.begin(), ::tolower);
+	if (lower_case_request.find("transfer-encoding: chunked") == std::string::npos)
 		return(changeRequestToServerError());
 	if (unProcessed.find("\r\n0\r\n\r\n") == std::string::npos)
 		return(changeRequestToBadRequest());
@@ -243,7 +252,10 @@ Response nonCGI_helper_response(HttpHandler responseMaker, std::string request, 
 {
     Response response;
     if (!errorStatus)
+	{
+		std::cout << "step 1" << std::endl;
         response = responseMaker.createResponse(request);
+	}
     else
     {
         Request		req(request, errorStatus);

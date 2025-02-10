@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/10 09:55:28 by nima             ###   ########.fr       */
+/*   Updated: 2025/02/10 13:11:44 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,8 @@
 #include "CGIHandler.hpp"
 #include "SocketException.hpp"
 #include "eventData.hpp"
+
+#include <algorithm>
 
 enum ClientStatus
 {

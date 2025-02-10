@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 23:00:32 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/10 15:31:52 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ HttpHandler::HttpHandler(ServerBlock &serverConfig, int port)
 {
 	if (!serverConfig.getLocations().empty())
 		_rootDir = serverConfig.getLocations()[0]->getRoot();
+		// _rootDir = serverConfig.getRoot();
 	else
 	{
 		_rootDir = serverConfig.getRoot();
@@ -203,37 +204,28 @@ int	HttpHandler::_validateRequest(const Request &req)
 	if (!_isMethodAllowed(req))
 		return 405;
 
-	// for (int i = 0; i < req.s.size(); i++)
-	// {
-	// 	if (req.getPath()[i] == '\0')
-	// 		return 400;
-	// }
+	// std::cout << req.getHeader("host") << std::endl;
+	// std::cout << _serverName + ":" + std::to_string(_port) << std::endl;
+	// std::cout << _serverBlock.getHost() + ":" + std::to_string(_port) << std::endl;
 
-
-	//(echo -ne "GET / HTTP/1.1\r\nHost: 127.1.0.0:4242\r\nContent-Length: 100000\r\n\r\n"; head -c 100000 </dev/random) | nc 127.1.0.0 4242
-
-	std::cout << req.getHeader("Host") << std::endl;
-	std::cout << _serverName + ":" + std::to_string(_port) << std::endl;
-	std::cout << _serverBlock.getHost() + ":" + std::to_string(_port) << std::endl;
-
-	if (req.getHeader("Host").empty()
-	|| ((req.getHeader("Host") != (_serverName + ":" + std::to_string(_port)))
-	&& (req.getHeader("Host") != (_serverBlock.getHost() + ":" + std::to_string(_port)))))
+	if (req.getHeader("host").empty()
+	|| ((req.getHeader("host") != (_serverName + ":" + std::to_string(_port)))
+	&& (req.getHeader("host") != (_serverBlock.getHost() + ":" + std::to_string(_port)))))
 		return 400;
 
-	if (method == "POST" && req.getHeader("Content-Length").empty())
+	if (method == "POST" && req.getHeader("content-length").empty())
 		return 411;
 
 	size_t	contentLength;
-	std::cout << req.getHeader("Content-Length") << std::endl;
+	std::cout << req.getHeader("content-length") << std::endl;
 
-	if (req.getHeader("Content-Length").empty())
+	if (req.getHeader("content-length").empty())
 		contentLength = 0;
 	else
 	{
 		try
 		{
-			contentLength = (std::stoul)(req.getHeader("Content-Length"));
+			contentLength = (std::stoul)(req.getHeader("content-length"));
 		}
 		catch(...)
 		{
@@ -241,10 +233,10 @@ int	HttpHandler::_validateRequest(const Request &req)
 		}
 	}
 
-	if (req.getHeader("Transfer-Encoding") != "chunked" && contentLength != req.getBody().size())
+	if (req.getHeader("transfer-encoding") != "chunked" && contentLength != req.getBody().size())
 		return 400;
 
-	if(req.getHeader("Transfer-Encoding") == "chunked" && !req.getHeader("Content-Length").empty())
+	if(req.getHeader("transfer-encoding") == "chunked" && !req.getHeader("content-length").empty())
 		return 400;
 
 	if (req.getBody().size() > _maxBodySize)
@@ -282,12 +274,14 @@ bool	HttpHandler::isValidLines(const std::string &request)
 		return false;
 	if (request.find("\r\n") == std::string::npos)
 		return false;
-	if (request.find("\t") != std::string::npos)
+
+	std::string	header_for_check = request.substr(0, request.find("\r\n\r\n"));
+	
+	if (header_for_check.find("\t") != std::string::npos)
 		return false;
 
 	if (!(requestLine >> method >> path >> httpVersion))
 		return false;
-
 	if (method.empty() || path.empty() || httpVersion.empty())
 		return false;
 
@@ -304,6 +298,7 @@ bool	HttpHandler::isValidLines(const std::string &request)
 		if (line.size() != 0 && line[line.size() - 1] != '\r')
 			return false;
 	}
+
 	if (line != "\r")
 		return false;
 
@@ -315,9 +310,15 @@ Response	HttpHandler::createResponse(const std::string &request)
 	Request	req;
 
 	if (isValidLines(request))
+	{
+		std::cout << "valid request" << std::endl;
 		req = Request(request, 0);
+	}
 	else
+	{
+		std::cout << "invalid request" << std::endl;
 		req = Request(request, 400);
+	}
 
 	_maxBodySize = getMaxBodySize(request, 0);
 
@@ -327,7 +328,7 @@ Response	HttpHandler::createResponse(const std::string &request)
 Response	HttpHandler::handleRequest(const Request &req)
 {
 	try
-	{
+	{	
 		if (_locationFlag == 1)
 			return getErrorPage(req, 404);
 
@@ -339,6 +340,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 
 		if (!matchedLocation)
 			return getErrorPage(req, 404);
+
+		// std::cout << "matched root: "<< matchedLocation->getRoot() << std::endl;
+		// std::cout << "server root : " << _serverBlock.getRoot() << std::endl;
 
 		// if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty())
 		// 	return getErrorPage(req, 404); // Not found
@@ -635,8 +639,9 @@ void ensureUploadPathExists(const std::string& uploadPath)
 
 Response HttpHandler::handlePOST(const Request &req)
 {
-	std::string contentType = req.getHeader("Content-Type");
+	std::string contentType = req.getHeader("content-type");
 	Response response;
+
 
 	std::shared_ptr<LocationBlock> matchedLocation = findMatchedLocation(req);
 
@@ -651,12 +656,10 @@ Response HttpHandler::handlePOST(const Request &req)
 	{
 		return getErrorPage(req, 500);
 	}
-	
 
 	bool		isMultiPart = contentType.find("multipart/form-data") != std::string::npos;
 	std::string boundary;
 	std::string data;
-	// bool		isFileUpload = false;
 	std::string disposition;
 	std::string fileName;
 
@@ -673,7 +676,7 @@ Response HttpHandler::handlePOST(const Request &req)
 
 		while (std::getline(bodyStream, line))
 		{
-			if (line == boundary)
+			if (line == (boundary + "\r"))
 			{
 				std::string partContentType;
 				std::getline(bodyStream, disposition);
@@ -686,7 +689,6 @@ Response HttpHandler::handlePOST(const Request &req)
 				std::getline(bodyStream, partContentType);
 				std::getline(bodyStream, line);
 
-				// isFileUpload = disposition.find("filename=") != std::string::npos;
 				std::ostringstream partData;
 
 				while (std::getline(bodyStream, line) && line != boundary)
@@ -703,25 +705,18 @@ Response HttpHandler::handlePOST(const Request &req)
 			boundary = boundary.substr(0, boundary.length() - 1);
 			if (data.find(boundary) != std::string::npos)
 				data = data.substr(0, data.find(boundary));
+			std::cout << "step 2" << std::endl;
 		}
-		// if (isFileUpload)
-		// {
-			// std::string filename = extractFileName(disposition);
-			std::string	filePath = matchedLocation->getUploadPath() + "/" + fileName;
-			saveFile(filePath, data);
-
-			response.setStatusLine("HTTP/1.1 201 " + getStatusMessage(201) +"\r\n");
-			response.setHeader("Content-Type", "text/plain");
-			response.setBody("File uploaded successfully. File Name: " + fileName);
-			return response;
-		// }
-		// else
-		// {
-		// 	response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
-		// 	response.setHeader("Content-Type", "text/plain");
-		// 	response.setBody("Non-file data processed successfully.");
-		// 	return response;
-		// }
+		std::cout << "step 3" << std::endl;
+		std::string	filePath = matchedLocation->getUploadPath() + "/" + fileName;
+		std::cout << "fileName : " << fileName << std::endl;
+		std::cout << "step 3.5" << std::endl;
+		saveFile(filePath, data);
+		std::cout << "step 4" << std::endl;
+		response.setStatusLine("HTTP/1.1 201 " + getStatusMessage(201) +"\r\n");
+		response.setHeader("Content-Type", "text/plain");
+		response.setBody("File uploaded successfully. File Name: " + fileName);
+		std::cout << "step 5" << std::endl;
 		return response;
 	}
 
@@ -731,10 +726,9 @@ Response HttpHandler::handlePOST(const Request &req)
 		saveFile(matchedLocation->getUploadPath() + "/" + fileName, req.getBody()); //maybe without "/"
 
 		response.setStatusLine("HTTP/1.1 200 " + getStatusMessage(200) +"\r\n");
-		response.setHeader("Content-Type", req.getHeader("Content-Type"));
-		// response.setBody(req.getBody()); 
+		response.setHeader("Content-Type", req.getHeader("content-type"));
 		response.setBody("File uploaded successfully. File Name: " + fileName); //
-		response.setHeader("Content-Length", std::to_string(req.getBody().size())); ///maybe this should be deleted because Nima adds it
+		response.setHeader("Content-Length", std::to_string(req.getBody().size()));
 		return response;
 	}
 	else
@@ -748,31 +742,28 @@ Response HttpHandler::handlePOST(const Request &req)
 
 std::string	HttpHandler::getCurrentTime()
 {
-	// time_t	current_time = time(nullptr);
+	std::chrono::time_point<std::chrono::system_clock>	timePoint = std::chrono::system_clock::now();
+	std::time_t											timeInSeconds = std::chrono::system_clock::to_time_t(timePoint);
+	std::stringstream									name;
 
-	// if (current_time == -1)
-	// 	throw SystemCallError("Failed to get current time");
-
-	// return current_time;
-	std::chrono::time_point<std::chrono::system_clock> timePoint = std::chrono::system_clock::now();
-	std::time_t timeInSeconds = std::chrono::system_clock::to_time_t(timePoint);
-	std::stringstream name;
 	name << std::put_time(std::localtime(&timeInSeconds), "%Y-%m-%d-%H:%M:%S");
 	return name.str();
-	
 }
 
 std::string	HttpHandler::extractFileName(const std::string& disposition)
 {
 	size_t	pos = disposition.find("filename=");
-
+	std::cout << "disposition : " << disposition << std::endl;
 	if (pos != std::string::npos)
 	{
 		std::string	filename = disposition.substr(pos + 10);
+		std::cout << "filename : " << filename << std::endl;
 		size_t		endPos = filename.find('"');
-
-		return filename.substr(0, endPos);
+		std::cout << "endPos : " << endPos << std::endl;
+		if (endPos != std::string::npos)
+			return filename.substr(0, endPos);
 	}
+	std::cout << "filename not found" << std::endl;
 	return (getCurrentTime());
 }
 
@@ -781,10 +772,16 @@ void	HttpHandler::saveFile(const std::string &filename, const std::string &fileD
 	std::ofstream	file(filename, std::ios::binary);
 
 	if (!file.is_open())
+	{
+		std::cout << "file not opened" << std::endl;
+		std::cout << filename << std::endl;
 		throw SystemCallError("Failed to open file");
-
+	}
+	std::cout << "file opened" << std::endl;
 	file.write(fileData.c_str(), fileData.size());
+	std::cout << "file written" << std::endl;
 	file.close();
+	std::cout << "file closed" << std::endl;
 }
 
 Response	HttpHandler::handleOPTIONS(const Request &req)

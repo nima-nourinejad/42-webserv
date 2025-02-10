@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/10 09:50:27 by nima             ###   ########.fr       */
+/*   Updated: 2025/02/10 15:25:49 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@ Server::Server(ServerBlock & serverBlock, int port, int max_fd)
 	
 	assignResponseMakers();
 	assignServerNames();
+
+	// std::cout << "server root : " << serverBlock.getRoot() << std::endl;
 };
 
 void Server::connectToSocket()
@@ -270,12 +272,12 @@ void Server::sendResponseParts(int index)
 				{
 					if (_clients[index].keepAlive == false)
 					{
-						printMessage("Client " + std::to_string(index + 1) + " requested to close connection");
+						printMessage("Closing connection with client " + std::to_string(index + 1));
 						closeClientSocket(index);
 					}
 					else
 					{
-						printMessage("Client " + std::to_string(index + 1) + " requested to keep connection alive. Waiting for a new request");
+						printMessage("Keeping connection alive with client " + std::to_string(index + 1) + ". Waiting for a new request");
 						_clients[index].request.clear();
 						_clients[index].isCGI = false;
 						_clients[index].status = WAITFORREQUEST;
@@ -355,8 +357,7 @@ void Server::receiveMessage(int index)
 			{
 				size_t currenRequestSize = _clients[index].request.size();
 				size_t headerSize = _clients[index].request.find("\r\n\r\n") + 4;
-				std::string header = _clients[index].request.substr(0, headerSize);
-				std::cout << header << std::endl;
+				// std::string header = _clients[index].request.substr(0, headerSize);
 				size_t currentBodySize = currenRequestSize - headerSize;
 				
 				if (currentBodySize >= _clients[index].limitSize)
