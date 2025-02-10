@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:51 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 21:46:04 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/10 09:55:28 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,7 @@ class ClientConnection
 	bool 						foundStatusLine;
 	bool						foundHeader;
 	size_t						limitSize;
+    bool						server_error_in_recv;
 
 	// Public Methods
 	ClientConnection();
@@ -95,7 +96,7 @@ class ClientConnection
 	bool						finishedReceiving();
 	size_t						receivedLength() const;
 	void						findRequestType();
-	void						connectionType();
+	void						connectionType(std::string statusLine);
 	size_t						getChunkedSize(std::string & unProcessed);
 	void						grabChunkedData(std::string & unProcessed, size_t chunkedSize);
 	void						grabChunkedHeader(std::string & unProcessed, std::string & header);
@@ -107,7 +108,7 @@ class ClientConnection
 	time_t						getPassedTime() const;
 	void						setCurrentTime();
 	void						chunckBody(std::string statusLine, std::string rawHeader, std::string connection, size_t maxBodySize);
-	void 						processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, std::string &connection, size_t &maxBodySize);
+	void 						processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, size_t &maxBodySize);
 	void 						logError(std::string const & message);
 	void						readFromPipe();
 	void						setCGI();

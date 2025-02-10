@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 22:52:56 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/10 09:50:27 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,6 +211,7 @@ void Server::closeClientSocket(int index)
 			_clients[index].foundStatusLine = false;
 			_clients[index].foundHeader = false;
 			_clients[index].limitSize = 0;
+            _clients[index].server_error_in_recv = false;
 			--_num_clients;
 		}
 	}
@@ -332,13 +333,17 @@ void Server::receiveMessage(int index)
 					_clients[index].foundStatusLine = true;
 					std::future<size_t> future_size = std::async(std::launch::async, &size_helper, _responseMaker, _clients[index].request, 0);
 					if (future_size.wait_for(_clients[index].NON_CGI_TIMEOUT) == std::future_status::timeout)
+                    {
+                        _clients[index].server_error_in_recv = true;
 						return _clients[index].changeRequestToServerTimeout();
+                    }
 					try
 					{
 						_clients[index].limitSize = future_size.get();
 					}
 					catch(...)
 					{
+                        _clients[index].server_error_in_recv = true;
 						_clients[index].changeRequestToServerError();
 					}
 					
@@ -619,7 +624,7 @@ void Server::handleListeningEvents(struct epoll_event const & event)
 
 void Server::handlePipeEvents(struct epoll_event const & event)
 {
-	if (event.events & (EPOLLHUP | EPOLLERR) & getClientStatus(event) == PREPARINGRESPONSE)
+	if (event.events & (EPOLLHUP | EPOLLERR) & (getClientStatus(event) == PREPARINGRESPONSE))
 		handleErr(event);
 	else if  (event.events & EPOLLIN)
 	{

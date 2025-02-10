@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: nima <nnourine@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/06 22:27:27 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/10 09:57:08 by nima             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,15 @@
 
 ClientConnection::ClientConnection()
     : index(-1), fd(-1), status(DISCONNECTED), keepAlive(true),responseMaker(nullptr), pipe{ -1, -1 }, pid(-1), errorStatus(0), isCGI(false), serverFailureRetry(0)
-	, serverName(""), foundStatusLine(false), foundHeader(false) ,limitSize(false)
-	{
-		eventData.type = CLIENT;
-		eventData.fd = -1;
-		eventData.index = -1;
-		pipeEventData.type = PIPE;
-		pipeEventData.fd = -1;
-		pipeEventData.index = -1;
-	};
+	, serverName(""), foundStatusLine(false), foundHeader(false) ,limitSize(0), server_error_in_recv(false)
+    {
+        eventData.type = CLIENT;
+        eventData.fd = -1;
+        eventData.index = -1;
+        pipeEventData.type = PIPE;
+        pipeEventData.fd = -1;
+        pipeEventData.index = -1;
+    };
 
 void ClientConnection::changeRequestToBadRequest()
 {
@@ -150,10 +150,22 @@ void ClientConnection::findRequestType()
 	}
 }
 
-void ClientConnection::connectionType()
+void ClientConnection::connectionType(std::string statusLine)
 {
-	if (request.find("Connection: close") != std::string::npos || errorStatus == 431 || errorStatus == 413)
-		keepAlive = false;
+	if (request.find("Connection: close") != std::string::npos
+        || errorStatus == 431 || errorStatus == 413 || errorStatus == 400 || errorStatus == 403 
+        || errorStatus == 405 || errorStatus == 414 || errorStatus == 421 || server_error_in_recv)
+        {
+            keepAlive = false;
+            return;
+        }
+    if (statusLine.size() < 12)
+        return;
+    std::string statusLineCode = statusLine.substr(9, 3);
+    int code = std::stoi(statusLineCode);
+    if (code == 431 || code == 413 || code == 400 || code == 403 
+        || code == 405 || code == 414 || code == 421)
+            keepAlive = false;
 }
 
 size_t ClientConnection::getChunkedSize(std::string & unProcessed)
@@ -289,7 +301,7 @@ void ClientConnection::createResponseParts_nonCGI()
 
 			maxBodySize = body.size();
 		}
-		connectionType();
+		connectionType(statusLine);
 		std::string connection;
 		if (keepAlive)
 			connection = "Connection: keep-alive\r\n";
@@ -302,6 +314,7 @@ void ClientConnection::createResponseParts_nonCGI()
 		foundStatusLine = false;
 		foundHeader = false;
 		limitSize = 0;
+        server_error_in_recv = false;
 		status = READYTOSEND;
 	}
 	catch(const std::exception& e)
@@ -451,15 +464,11 @@ void ClientConnection::chunckBody(std::string statusLine, std::string rawHeader,
 	}
 }
 
-void ClientConnection::processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, std::string &connection, size_t &maxBodySize)
+void ClientConnection::processInforamtionAfterFork(std::string &statusLine, std::string &rawHeader, size_t &maxBodySize)
 {
 	maxBodySize = grabMaxBodySize(body);
 	statusLine = grabStatusLine(body);
 	rawHeader = grabRawHeader(body);
-	if (keepAlive)
-		connection = "Connection: keep-alive\r\n";
-	else
-		connection = "Connection: close\r\n";
 }
 
 void ClientConnection::readFromPipe()
@@ -487,10 +496,14 @@ void ClientConnection::readResponseFromPipe()
 	if (pid != -1)
 		waitpid(pid, 0, 0);
 	pid = -1;
-	connectionType();
 	size_t		maxBodySize;
 	std::string statusLine, rawHeader, connection;
-	processInforamtionAfterFork(statusLine, rawHeader,connection, maxBodySize);
+	processInforamtionAfterFork(statusLine, rawHeader, maxBodySize);
+    connectionType(statusLine);
+    if (keepAlive)
+		connection = "Connection: keep-alive\r\n";
+	else
+		connection = "Connection: close\r\n";
 	chunckBody(statusLine, rawHeader, connection, maxBodySize);
 	
 	errorStatus = 0;
@@ -498,6 +511,7 @@ void ClientConnection::readResponseFromPipe()
 	foundStatusLine = false;
 	foundHeader = false;
 	limitSize = 0;
+    server_error_in_recv = false;
 	status = READYTOSEND;
 }
 
