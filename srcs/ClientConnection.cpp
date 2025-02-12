@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/10 15:07:51 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/12 16:17:14 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -354,6 +354,7 @@ void ClientConnection::CGI_child()
 		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
 		maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
 		response = responseMaker->createResponse(request);
+		std::cout << "step 1" << std::endl;
 		body = response.getBody();
 		statusLine = response.getStatusLine();
 		rawHeader = response.getRawHeader();
@@ -366,7 +367,7 @@ void ClientConnection::CGI_child()
 		{
 			maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
 			maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
-			Request		req(request, errorStatus);
+			Request		req(request, 500);
 			response = responseMaker->getErrorPage(req, errorStatus);
 			body = response.getBody();
 			statusLine = response.getStatusLine();
@@ -374,21 +375,31 @@ void ClientConnection::CGI_child()
 		}
 		catch(const std::exception& e)
 		{
-			std::string errorMessage = e.what();
-			logError("Failed to create error response in child process: " + errorMessage);
-			statusLine = "HTTP/1.1 500 Internal Server Error\r\n";
-			rawHeader = "Content-Type: text/html\r\n";
-			body = R"(
-			<html><head><title>500 Internal Server Error</title></head>
-			<body><h1>500 Internal Server Error</h1><p>Unexpected condition prevented fulfilling the request.</p></body></html>
-			)";
-			maxBodySizeString = std::to_string(body.size()) + "\r\n";
+			logError("Child process for creating error response failed: " + errorMessage);
+			close(pipe[1]);
+			std::exit(2);
 		}
 	}
 	std::string fullMessage = maxBodySizeString + statusLine + rawHeader + "\r\n" + body;
-	write(pipe[1], fullMessage.c_str(), fullMessage.size());
+	int bytes_sent = write(pipe[1], fullMessage.c_str(), fullMessage.size());
+	// write(pipe[1], fullMessage.c_str(), fullMessage.size());
 	close(pipe[1]);
-	exit(0);
+	if (bytes_sent == -1)
+	{
+		logError("Failed to write to pipe");
+		std::exit(1);
+	}
+	if (bytes_sent == 0)
+	{
+		logError("Failed to write any data to pipe");
+		std::exit(1);
+	}
+	if(bytes_sent != static_cast<int>(fullMessage.size()))
+	{
+		logError("Failed to write all data to pipe");
+		std::exit(1);
+	}
+	std::exit(0);
 }
 
 void ClientConnection::createResponseParts_CGI()
@@ -494,9 +505,17 @@ void ClientConnection::readFromPipe()
 		bytes_received = read(pipe[0], buffer, sizeof(buffer));
 		if (bytes_received > 0)
 			body.append(buffer, bytes_received);
+		if (bytes_received == -1)
+		{
+			logError("Failed to read from pipe");
+			changeRequestToServerError();
+			server_error_in_recv = true;
+			break;
+		}
 		else if (bytes_received == 0)
 			break;
 	}
+	std::cout << "body: " << body << std::endl;
 }
 
 void ClientConnection::readResponseFromPipe()
@@ -505,8 +524,38 @@ void ClientConnection::readResponseFromPipe()
 		close(pipe[1]);
 	pipe[1] = -1;
 	readFromPipe();
+	int status = 0;
 	if (pid != -1)
-		waitpid(pid, 0, 0);
+		waitpid(pid, &status, 0);
+	std::cout  << "1" << std::endl;
+	if ((WIFEXITED(status) && WEXITSTATUS(status) != 0))
+	{
+		changeRequestToServerError();
+		if (WEXITSTATUS(status) == 1)
+		{
+			server_error_in_recv = true;
+			logError("Write in child process failed");
+		}
+		else if (WEXITSTATUS(status) == 2)
+			logError("Creating CGI response failed");
+		return;
+	}
+	std::cout  << "2" << std::endl;
+	if (WIFSIGNALED(status))
+	{
+		changeRequestToServerError();
+		logError("Child process was terminated by a signal");
+		return;
+	}
+	std::cout  << "3" << std::endl;
+	if (body.empty())
+	{
+		changeRequestToServerError();
+		server_error_in_recv = true;
+		logError("Failed to read from pipe");
+		return;
+	}
+	std::cout  << "4" << std::endl;
 	pid = -1;
 	size_t		maxBodySize;
 	std::string statusLine, rawHeader, connection;
@@ -524,7 +573,10 @@ void ClientConnection::readResponseFromPipe()
 	foundHeader = false;
 	limitSize = 0;
     server_error_in_recv = false;
+	std::cout  << status << std::endl;
 	status = READYTOSEND;
+	std::cout  << status << std::endl;
+	std::cout << "5" << std::endl;
 }
 
 time_t getCurrentTime()

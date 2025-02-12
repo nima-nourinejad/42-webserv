@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:53:02 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 14:15:57 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/12 15:43:34 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,7 @@ Response	CGIHandler::execute(const Request &req)
 
 			if (execve(filePath.c_str(), argv, envp) == -1)
 				handleError("execve");
-			_exit(1);
+			std::exit(1);
 		}
 		else
 		{

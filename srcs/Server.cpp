@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/10 15:25:49 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/12 16:18:52 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -250,15 +250,21 @@ void Server::sendResponseParts(int index)
 		if (_clients[index].fd == -1 || index >= max_connections || index < 0 || signal_status == SIGINT)
 			return;
 		ssize_t bytes_sent;
-		bytes_sent = send(_clients[index].fd, _clients[index].responseParts[0].c_str(), _clients[index].responseParts[0].size(), MSG_DONTWAIT);
-		if (bytes_sent == 0)
+		bytes_sent = send(_clients[index].fd, _clients[index].responseParts[0].c_str(), _clients[index].responseParts[0].size(), 0);
+		if (bytes_sent == -1)
+		{
+			logError("Failed to send response to client " + std::to_string(index + 1));
+			closeClientSocket(index);
+		}
+		else if (bytes_sent == 0)
 		{
 			printMessage("Client " + std::to_string(index + 1) + " disconnected");
 			closeClientSocket(index);
 			return;
 		}
-		else if (bytes_sent > 0)
+		else
 		{
+			std::cout << "bytes sent: " << bytes_sent << std::endl;
 			if (bytes_sent < static_cast<ssize_t>(_clients[index].responseParts[0].size()))
 			{
 				std::string remainPart = _clients[index].responseParts[0].substr(bytes_sent);
@@ -316,13 +322,18 @@ void Server::receiveMessage(int index)
 			return;
 		char buffer[16384] = {};
 		ssize_t bytes_received;
-		bytes_received = recv(_clients[index].fd, buffer, sizeof(buffer), MSG_DONTWAIT);
-		if (bytes_received == 0)
+		bytes_received = recv(_clients[index].fd, buffer, sizeof(buffer), 0);
+		if (bytes_received == -1)
+		{
+			logError("Failed to receive message from client " + std::to_string(index + 1));
+			closeClientSocket(index);
+		}
+		else if (bytes_received == 0)
 		{
 			printMessage("Client " + std::to_string(index + 1) + " disconnected");
 			closeClientSocket(index);
 		}
-		else if (bytes_received > 0)
+		else
 		{
 			_clients[index].setCurrentTime();
 			if (_clients[index].status == WAITFORREQUEST)
@@ -460,7 +471,7 @@ void Server::prepareResponses()
 			}
 			else
 			{
-				if ((fd_num + 2) > max_fd)
+				if ((fd_num + 4) > max_fd) //changed to 4 from 2
 					return;
 				int result = pipe(_clients[i].pipe);
 				if (result == -1)
@@ -571,13 +582,21 @@ void Server::handleErr(struct epoll_event const & event)
 void Server::handleClientEvents(struct epoll_event const & event)
 {
 	if (event.events &(EPOLLHUP | EPOLLERR))
+	{
+		std::cout << "got error" << std::endl;
 		handleErr(event);
+	}
 	else
 	{
+		std::cout << getClientStatus(event) << std::endl;
 		if (getClientStatus(event) < RECEIVED &&(event.events & EPOLLIN))
+		{
+			std::cout << "got for receiving" << std::endl;
 			receiveMessage(getClientIndex(event));
+		}
 		else if (getClientStatus(event) == READYTOSEND &&(event.events & EPOLLOUT))
 		{
+			std::cout << "got for sending" << std::endl;
 			int index = getClientIndex(event);
 			int pipe_read_fd = _clients[index].pipe[0];
 			if (pipe_read_fd != -1)
@@ -608,6 +627,7 @@ void Server::handleClientEvents(struct epoll_event const & event)
 				
 				_clients[index].pipe[0] = -1;
 			}
+			std::cout << "calling send response parts" << std::endl;
 			sendResponseParts(getClientIndex(event));
 		}
 		else if (getClientStatus(event) == FAILSENDING && (event.events & EPOLLOUT))
@@ -1052,9 +1072,15 @@ void Server::sendServerError(int fd)
 	while (responseParts.size() > 0)
 	{
 		ssize_t bytes_sent;
-		bytes_sent = send(fd, responseParts[0].c_str(), responseParts[0].size(), MSG_DONTWAIT);
-		if (bytes_sent <= 0)
+		bytes_sent = send(fd, responseParts[0].c_str(), responseParts[0].size(), 0);
+		if (bytes_sent == 0 || bytes_sent == -1)
+		{
+			if (bytes_sent == 0)
+				printMessage("Client disconnected");
+			else if(bytes_sent == -1)
+				logError("Failed to send error response");
 			break;
+		}
 		if (bytes_sent < static_cast<ssize_t>(responseParts[0].size()))
 		{
 			std::string remainPart = responseParts[0].substr(bytes_sent);
