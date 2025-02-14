@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:07 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/06 18:45:53 by asohrabi         ###   ########.fr       */
+/*   Updated: 2025/02/14 16:00:30 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,8 @@ class HttpHandler
 		ServerBlock						getServerBlock() const { return _serverBlock; } // maybe not needed
 		std::shared_ptr<LocationBlock>	findMatchedLocation(const Request &req);
 		bool							isValidLines(const std::string &request);
+		std::string						getFileExtension(std::string const &filename);
+		std::string						getContentType(std::string const &extention);
 };
 
 #endif

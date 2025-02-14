@@ -21,7 +21,7 @@
     <h2>Available Files for Download</h2>
     <ul id="fileList">
         <li>Loading...</li>
-    </ul>
+	</ul>
 
     <script>
         const uploadForm = document.getElementById('uploadForm');
@@ -35,32 +35,30 @@
                     const text = await response.text();
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(text, 'text/html');
-                    const links = doc.querySelectorAll('a[href]');
+                    const files = doc.querySelectorAll('.file-name');
 
                     fileList.innerHTML = ''; // Clear the existing list
-                    links.forEach(link => {
-                        const href = link.getAttribute('href');
-                        if (href !== '../') { // Skip parent directory link
-                            const listItem = document.createElement('li');
-                            const anchor = document.createElement('a');
-                            anchor.href = `http://127.1.0.0:4242/uploads/${href}`;
-                            anchor.textContent = href;
-                            anchor.target = '_blank';
+                    files.forEach(file => {
+                        const fileName = file.textContent.trim();
+                        const fileItem = document.createElement('li');
+                        const anchor = document.createElement('a');
+                        anchor.href = `http://127.1.0.0:4242/uploads/${fileName}`;
+                        anchor.textContent = fileName;
+                        anchor.target = '_blank';
 
-                            // Delete button
-                            const deleteButton = document.createElement('button');
-                            deleteButton.textContent = 'Delete';
-                            deleteButton.style.marginLeft = '10px';
-                            deleteButton.onclick = async () => {
-                                if (confirm(`Are you sure you want to delete ${href}?`)) {
-                                    await deleteFile(href);
-                                }
-                            };
+                        // Delete button
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.style.marginLeft = '10px';
+                        deleteButton.onclick = async () => {
+                            if (confirm(`Are you sure you want to delete ${fileName}?`)) {
+                                await deleteFile(fileName);
+                            }
+                        };
 
-                            listItem.appendChild(anchor);
-                            listItem.appendChild(deleteButton);
-                            fileList.appendChild(listItem);
-                        }
+                        fileItem.appendChild(anchor);
+                        fileItem.appendChild(deleteButton);
+                        fileList.appendChild(fileItem);
                     });
                 } else {
                     fileList.innerHTML = '<li>Error loading files</li>';

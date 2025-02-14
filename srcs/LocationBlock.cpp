@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationBlock.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2025/02/14 14:02:52 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/14 16:18:35 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,10 +129,10 @@ void LocationBlock::setReturn(std::string return_val, const std::string& url)
 	}
 	if (url.empty())
 		throw std::invalid_argument("Configuration error: Return URL is empty");
-	std::regex url_pattern("^(http|https)://[a-zA-Z0-9.-]+(/.*)?$");
-	if (!std::regex_match(url, url_pattern))
-		throw std::invalid_argument("Configuration error: Invalid return URL format");
-	if (code < 300 || code > 599)
+	// std::regex url_pattern("^(http|https)://[a-zA-Z0-9.-]+(/.*)?$");
+	// if (!std::regex_match(url, url_pattern))
+	// 	throw std::invalid_argument("Configuration error: Invalid return URL format");
+	if (code < 200 || code > 599) //
 		throw std::invalid_argument("Configuration error: Return code is out of range");
 	_return = std::make_pair(code, url);
 }

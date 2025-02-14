@@ -6,7 +6,7 @@
 /*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/14 13:58:38 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/14 16:47:41 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -332,8 +332,9 @@ Response	HttpHandler::handleRequest(const Request &req)
 			return getErrorPage(req, 404);
 
 
-		// if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty())
-		// 	return getErrorPage(req, 404); // Not found
+		if (_serverBlock.getRoot().empty() && matchedLocation->getRoot().empty()
+		&& matchedLocation->getAlias().empty() && matchedLocation->getReturn().first == 0)
+			return getErrorPage(req, 404);
 		
 		if (!matchedLocation->getAlias().empty())
 			_filePath = matchedLocation->getAlias();
@@ -354,17 +355,92 @@ Response	HttpHandler::handleRequest(const Request &req)
 		if (matchedLocation->getClientMaxBodySize() > 0)
 			_maxBodySize = matchedLocation->getClientMaxBodySize();
 
-		if (!matchedLocation->getReturn().second.empty())
+		if (matchedLocation->getReturn().first != 0)
 		{
-			Response							response;
-			const std::pair<int, std::string>	&redirectInfo = matchedLocation->getReturn();
-			int									statusCode = redirectInfo.first;
-			const std::string					&redirectPath = redirectInfo.second;
+			int			first = matchedLocation->getReturn().first;
+			std::string	second = matchedLocation->getReturn().second;
+			
+			if (first < 200 || first > 599)
+				return getErrorPage(req, 500);
+			else if (first >= 200 && first < 300)
+			{
+				if (first == 204 || first == 205)
+				{
+					if (!second.empty())
+						return getErrorPage(req, 500);
+					
+					Response	response;
+					response.setStatusLine("HTTP/1.1 " + std::to_string(first) + " " + getStatusMessage(first) + "\r\n");
+					// response.setHeader("Content-Type", "text/plain\r\n");
+					// response.setHeader("Content-Length", "0\r\n");
+					return response;
+				}
+				else
+				{
+					Response	response;
+					
+					response.setStatusLine("HTTP/1.1 " + std::to_string(first) + " " + getStatusMessage(first) + "\r\n");
+					response.setHeader("Content-Type", "text/plain\r\n");
+					response.setBody(second);
+					return response;
+				}
+			}
+			else if (first >= 300 && first < 400)
+			{
+				if (!second.empty())
+				{
+					std::regex url_pattern("^(http|https)://[a-zA-Z0-9.-]+(/.*)?$");
+					if (std::regex_match(second, url_pattern))
+					{
+						Response							response;
 
-			response.setStatusLine("HTTP/1.1 " + std::to_string(statusCode) + " Redirect" + "\r\n");
-			response.setHeader("Location", redirectPath + "\r\n");
-			response.setBody("Redirecting to " + redirectPath);
-			return response;
+
+						response.setStatusLine("HTTP/1.1 " + std::to_string(first) + " Redirect" + "\r\n");
+						response.setHeader("Location", second + "\r\n");
+						response.setBody("Redirecting to " + second);
+						
+						return response;
+					}
+					else
+					{
+						std::string server_root = _serverBlock.getRoot();
+						std::string location_root = matchedLocation->getRoot();
+						std::string alias = matchedLocation->getAlias();
+						std::string path_part1;
+
+						if(!alias.empty())
+							path_part1 = alias;
+						else if (!location_root.empty())
+							path_part1 = location_root;
+						else
+							path_part1 = server_root;
+						
+						std::string path_part2;
+						if (second[0] == '/')
+							path_part2 = second;
+						else
+							path_part2 = "/" + second;
+						std::string final_path = path_part1 + path_part2;
+						std::string content = readFileError(final_path);
+						Response	response;
+						response.setStatusLine("HTTP/1.1 " + std::to_string(200) + " " + getStatusMessage(200) + "\r\n");
+						response.setBody(content);
+						std::string	extention = getFileExtension(second);
+						std::string	contentType = getContentType(extention);
+						response.setHeader("Content-Type", contentType);
+						return response;
+					}
+				}
+				else
+					return getErrorPage(req, 500);
+			}
+			else
+			{
+				if (!second.empty())
+					return getErrorPage(req, 500);
+				
+				return getErrorPage(req, first);
+			}
 		}	
 
 		if (!matchedLocation->getUploadPath().empty())
@@ -426,13 +502,13 @@ std::string HttpHandler::readFileError(std::string const &path)
 	return read.str();
 }
 
-std::string getFileExtension(std::string const &filename)
+std::string HttpHandler::getFileExtension(std::string const &filename)
 {
 	std::string extension = filename.substr(filename.find_last_of(".") + 1);
 	return extension;
 }
 
-std::string getContentType(const std::string& extension)
+std::string HttpHandler::getContentType(const std::string& extension)
 {
 	if (extension == "html" || extension == "htm")
 		return "text/html";
@@ -557,8 +633,10 @@ Response	HttpHandler::handleGET(const Request &req)
 			directoryListing << "<html><body><h1>Index of " << req.getPath() << "</h1><ul>";
 			for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(_filePath))
 			{
-				directoryListing << "<li><a href=\"" << entry.path().filename().string() << "\">";
-				directoryListing << entry.path().filename().string() << "</a></li>";
+				// directoryListing << "<li><a href=\"" << entry.path().filename().string() << "\">";
+				// directoryListing << entry.path().filename().string() << "</a></li>";
+				// directoryListing << "<li><a href=\"" << entry.path().filename().string() << "\">";
+				directoryListing << "<li><p class=\"file-name\" > " << entry.path().filename().string() << "</p></li>";
 			}
 			directoryListing << "</ul></body></html>";
 
