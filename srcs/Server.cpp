@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/12 16:18:52 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/14 13:49:01 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,9 +28,7 @@ Server::Server(ServerBlock & serverBlock, int port, int max_fd)
 	
 	assignResponseMakers();
 	assignServerNames();
-
-	// std::cout << "server root : " << serverBlock.getRoot() << std::endl;
-};
+}
 
 void Server::connectToSocket()
 {
@@ -264,7 +262,6 @@ void Server::sendResponseParts(int index)
 		}
 		else
 		{
-			std::cout << "bytes sent: " << bytes_sent << std::endl;
 			if (bytes_sent < static_cast<ssize_t>(_clients[index].responseParts[0].size()))
 			{
 				std::string remainPart = _clients[index].responseParts[0].substr(bytes_sent);
@@ -384,7 +381,6 @@ void Server::receiveMessage(int index)
 					_clients[index].handleChunkedEncoding();
 				_clients[index].status = RECEIVED;
 				printMessage("Request fully received from client " + std::to_string(index + 1));
-				// std::cout << _clients[index].request << std::endl;
 			}
 		}
 	}
@@ -583,20 +579,16 @@ void Server::handleClientEvents(struct epoll_event const & event)
 {
 	if (event.events &(EPOLLHUP | EPOLLERR))
 	{
-		std::cout << "got error" << std::endl;
 		handleErr(event);
 	}
 	else
 	{
-		std::cout << getClientStatus(event) << std::endl;
 		if (getClientStatus(event) < RECEIVED &&(event.events & EPOLLIN))
 		{
-			std::cout << "got for receiving" << std::endl;
 			receiveMessage(getClientIndex(event));
 		}
 		else if (getClientStatus(event) == READYTOSEND &&(event.events & EPOLLOUT))
 		{
-			std::cout << "got for sending" << std::endl;
 			int index = getClientIndex(event);
 			int pipe_read_fd = _clients[index].pipe[0];
 			if (pipe_read_fd != -1)
@@ -627,7 +619,6 @@ void Server::handleClientEvents(struct epoll_event const & event)
 				
 				_clients[index].pipe[0] = -1;
 			}
-			std::cout << "calling send response parts" << std::endl;
 			sendResponseParts(getClientIndex(event));
 		}
 		else if (getClientStatus(event) == FAILSENDING && (event.events & EPOLLOUT))
@@ -792,7 +783,6 @@ void Server::handleEvents()
 	{
 		logError("Failed to prepare responses");
 	}
-	
 	try
 	{
 		handleSocketEvents();

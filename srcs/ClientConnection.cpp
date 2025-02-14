@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientConnection.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:33:24 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/12 16:17:14 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/14 13:55:06 by nnourine         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,6 +158,10 @@ void ClientConnection::findRequestType()
 
 void ClientConnection::connectionType(std::string statusLine)
 {
+	if (statusLine.size() < 12)
+        return;
+    std::string statusLineCode = statusLine.substr(9, 3);
+	std::cout << "Status Code of Response: " << statusLineCode << std::endl;
 	std::string lower_case_request = request;
 	std::transform(lower_case_request.begin(), lower_case_request.end(), lower_case_request.begin(), ::tolower);
 	if (lower_case_request.find("connection: close") != std::string::npos
@@ -167,9 +171,6 @@ void ClientConnection::connectionType(std::string statusLine)
             keepAlive = false;
             return;
         }
-    if (statusLine.size() < 12)
-        return;
-    std::string statusLineCode = statusLine.substr(9, 3);
     int code = std::stoi(statusLineCode);
     if (code == 431 || code == 413 || code == 400 || code == 403 
         || code == 405 || code == 414 || code == 421)
@@ -253,7 +254,6 @@ Response nonCGI_helper_response(HttpHandler responseMaker, std::string request, 
     Response response;
     if (!errorStatus)
 	{
-		std::cout << "step 1" << std::endl;
         response = responseMaker.createResponse(request);
 	}
     else
@@ -354,7 +354,6 @@ void ClientConnection::CGI_child()
 		maxBodySize = responseMaker->getMaxBodySize(request, errorStatus);
 		maxBodySizeString = std::to_string(maxBodySize) + "\r\n";
 		response = responseMaker->createResponse(request);
-		std::cout << "step 1" << std::endl;
 		body = response.getBody();
 		statusLine = response.getStatusLine();
 		rawHeader = response.getRawHeader();
@@ -515,7 +514,6 @@ void ClientConnection::readFromPipe()
 		else if (bytes_received == 0)
 			break;
 	}
-	std::cout << "body: " << body << std::endl;
 }
 
 void ClientConnection::readResponseFromPipe()
@@ -524,10 +522,9 @@ void ClientConnection::readResponseFromPipe()
 		close(pipe[1]);
 	pipe[1] = -1;
 	readFromPipe();
-	int status = 0;
+	int pipe_status = 0;
 	if (pid != -1)
-		waitpid(pid, &status, 0);
-	std::cout  << "1" << std::endl;
+		waitpid(pid, &pipe_status, 0);
 	if ((WIFEXITED(status) && WEXITSTATUS(status) != 0))
 	{
 		changeRequestToServerError();
@@ -540,14 +537,6 @@ void ClientConnection::readResponseFromPipe()
 			logError("Creating CGI response failed");
 		return;
 	}
-	std::cout  << "2" << std::endl;
-	if (WIFSIGNALED(status))
-	{
-		changeRequestToServerError();
-		logError("Child process was terminated by a signal");
-		return;
-	}
-	std::cout  << "3" << std::endl;
 	if (body.empty())
 	{
 		changeRequestToServerError();
@@ -555,7 +544,6 @@ void ClientConnection::readResponseFromPipe()
 		logError("Failed to read from pipe");
 		return;
 	}
-	std::cout  << "4" << std::endl;
 	pid = -1;
 	size_t		maxBodySize;
 	std::string statusLine, rawHeader, connection;
@@ -573,10 +561,7 @@ void ClientConnection::readResponseFromPipe()
 	foundHeader = false;
 	limitSize = 0;
     server_error_in_recv = false;
-	std::cout  << status << std::endl;
 	status = READYTOSEND;
-	std::cout  << status << std::endl;
-	std::cout << "5" << std::endl;
 }
 
 time_t getCurrentTime()
