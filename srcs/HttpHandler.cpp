@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/22 16:39:26 by asohrabi          #+#    #+#             */
-/*   Updated: 2025/02/14 16:47:41 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/14 17:50:22 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -579,6 +579,7 @@ Response	HttpHandler::handleDownload(const Request &req)
 		std::string	errorPage = _errorPages.at(statusCode);
 
 		fd = open((_rootDir + "/" + errorPage).c_str(), O_RDONLY);
+		contentType = "text/html";
 	}
 
 	try

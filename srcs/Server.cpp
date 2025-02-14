@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:28 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/14 13:49:01 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/14 17:54:15 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ int Server::findAvailableSlot() const
 
 void Server::occupyClientSlot(int availableSlot, int fd)
 {
-	printMessage("Accepted client " + std::to_string(availableSlot + 1) + ". Waiting for the request");
+	printMessage("Accepted client " + std::to_string(availableSlot + 1) + ". Waiting for the request\n");
 	_clients[availableSlot].fd = fd;
 	_clients[availableSlot].index = availableSlot;
 	_clients[availableSlot].status = WAITFORREQUEST;
@@ -280,7 +280,7 @@ void Server::sendResponseParts(int index)
 					}
 					else
 					{
-						printMessage("Keeping connection alive with client " + std::to_string(index + 1) + ". Waiting for a new request");
+						printMessage("Keeping connection alive with client " + std::to_string(index + 1) + ". Waiting for a new request\n");
 						_clients[index].request.clear();
 						_clients[index].isCGI = false;
 						_clients[index].status = WAITFORREQUEST;
@@ -1082,5 +1082,3 @@ void Server::sendServerError(int fd)
 	close(fd);
 	fd_num--;
 }
-
-

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asohrabi <asohrabi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/12 13:46:08 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/14 17:35:01 by asohrabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,8 +69,6 @@ int main(int argc, char **argv)
 	{
 		server_count += config.getServerBlocks().at(i).getListen().size();
 	}
-
-	std::cout << "server root : " << config.getServerBlocks().at(0).getRoot() << std::endl;
 
 	if (server_count == 0)
 		return 0;
