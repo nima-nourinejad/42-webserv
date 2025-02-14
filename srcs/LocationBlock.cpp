@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 19:33:46 by akovalev          #+#    #+#             */
-/*   Updated: 2025/02/06 18:09:19 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/14 14:02:52 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,16 +94,15 @@ std::vector<std::string> LocationBlock::getLimitExcept() const
 void LocationBlock::setClientMaxBodySize(const std::string& client_max_body_size)
 {
 	if (client_max_body_size.empty() || !std::all_of(client_max_body_size.begin(), client_max_body_size.end(), ::isdigit))
-		throw std::invalid_argument("Incorrect client_max_body_size format");
-
+		throw std::invalid_argument("Configuration error: Incorrect client_max_body_size format");
 	try {
 		int size = std::stoi(client_max_body_size);
 		if (size < 0 || size > 1000000000)
-			throw std::invalid_argument("client_max_body_size is out of range (0-1000000000)");
+			throw std::invalid_argument("Configuration error: client_max_body_size is out of range (0-1000000000)");
 		_client_max_body_size = size;
 	}
 	catch (const std::exception&) {
-		throw std::invalid_argument("Incorrect client_max_body_size format");
+		throw std::invalid_argument("Configuration error: Incorrect client_max_body_size format");
 	}
 }
 
@@ -111,24 +110,30 @@ void LocationBlock::setClientMaxBodySize(const std::string& client_max_body_size
 void LocationBlock::setAlias(const std::string& alias)
 {
 	if (alias.empty())
-		throw std::invalid_argument("Alias is empty");
+		throw std::invalid_argument("Configuration error: Alias is empty");
 	if (!std::filesystem::exists(alias))
-		throw std::invalid_argument("Alias path does not exist");
+		throw std::invalid_argument("Configuration error: Alias path does not exist");
 	_alias = alias;
 }
 
 void LocationBlock::setReturn(std::string return_val, const std::string& url)
 {
 	if (!std::all_of(return_val.begin(), return_val.end(), ::isdigit))
-		throw std::invalid_argument("Incorrect return code format");
-	int code = std::stoi(return_val);
+		throw std::invalid_argument("Configuration error: Incorrect return code format");
+	int code;
+	try {
+		code = std::stoi(return_val);
+	}
+	catch (const std::exception&) {
+		throw std::invalid_argument("Configuration error: Incorrect return code format");
+	}
 	if (url.empty())
-		throw std::invalid_argument("Return URL is empty");
+		throw std::invalid_argument("Configuration error: Return URL is empty");
 	std::regex url_pattern("^(http|https)://[a-zA-Z0-9.-]+(/.*)?$");
 	if (!std::regex_match(url, url_pattern))
-		throw std::invalid_argument("Invalid return URL format");
+		throw std::invalid_argument("Configuration error: Invalid return URL format");
 	if (code < 300 || code > 599)
-		throw std::invalid_argument("Return code is out of range");
+		throw std::invalid_argument("Configuration error: Return code is out of range");
 	_return = std::make_pair(code, url);
 }
 
@@ -140,16 +145,16 @@ void LocationBlock::setLocation(const std::string& location)
 void LocationBlock::setRoot(const std::string& root)
 {
 	if (root.empty())
-		throw std::invalid_argument("Root is empty");
+		throw std::invalid_argument("Configuration error: Root is empty");
 	if (!std::filesystem::exists(root) || !std::filesystem::is_directory(root))
-		throw std::invalid_argument("Root is not a valid directory");
+		throw std::invalid_argument("Configuration error: Root is not a valid directory");
 	_root = root;
 }
 
 void LocationBlock::setIndex(const std::string& index)
 {
 	if (index.empty())
-		throw std::invalid_argument("Index is empty");
+		throw std::invalid_argument("Configuration error: Index is empty");
 	_index = index;
 }
 
@@ -160,20 +165,20 @@ void LocationBlock::setAutoindex(const std::string& autoindex)
 	else if (autoindex == "off")
 		_autoindex = false;
 	else
-		throw std::invalid_argument("Incorrect autoindex format");
+		throw std::invalid_argument("Configuration error: Incorrect autoindex format");
 }
 
 void LocationBlock::setCgiExtension(const std:: vector<std::string>& cgi_extension)
 {
 	std::set<std::string> valid_extensions = {".sh", ".py", ".cgi", ".rb"};
 	if (cgi_extension.empty())
-		throw std::invalid_argument("CGI extension is empty");
+		throw std::invalid_argument("Configuration error: CGI extension is empty");
 	for (size_t i = 0; i < cgi_extension.size(); i++)
 	{
 		if (cgi_extension[i][0] != '.')
-			throw std::invalid_argument("Incorrect cgi_extension format");
+			throw std::invalid_argument("Configuration error: Incorrect cgi_extension format");
 		else if (valid_extensions.find(cgi_extension[i]) == valid_extensions.end())
-			throw std::invalid_argument("Invalid cgi_extension");
+			throw std::invalid_argument("Configuration error: Invalid cgi_extension");
 		_cgi_extension.push_back(cgi_extension[i]);
 	}
 }
@@ -181,39 +186,39 @@ void LocationBlock::setCgiExtension(const std:: vector<std::string>& cgi_extensi
 void LocationBlock::setCgiPath(const std::string& cgi_path)
 {
 	if (cgi_path.empty())
-		throw std::invalid_argument("Cgi path is empty");
+		throw std::invalid_argument("Configuration error: Cgi path is empty");
 	if (!std::filesystem::exists(cgi_path) || !std::filesystem::is_regular_file(cgi_path))
-		throw std::invalid_argument("CGI path is not a valid file");
+		throw std::invalid_argument("Configuration error: CGI path is not a valid file");
 	_cgi_path = cgi_path;
 }
 
 void LocationBlock::setUploadPath(const std::string& upload_path)
 {
 	if (upload_path.empty())
-		throw std::invalid_argument("Upload path is empty");
+		throw std::invalid_argument("Configuration error: Upload path is empty");
 	if (!std::filesystem::exists(upload_path) || !std::filesystem::is_directory(upload_path))
-		throw std::invalid_argument("Upload path is not a valid directory");
+		throw std::invalid_argument("Configuration error: Upload path is not a valid directory");
 	_upload_path = upload_path;
 }
 	
 void LocationBlock::setErrorPage(int code, const std::string& page)
 {
 	if (page.empty())
-		throw std::invalid_argument("Error page is empty");
+		throw std::invalid_argument("Configuration error: Error page is empty");
 	if (code < 100 || code > 599)
-		throw std::invalid_argument("Error code is out of range");
+		throw std::invalid_argument("Configuration error: Error code is out of range");
 	_error_pages[code] = page;
 }
 
 void LocationBlock::setLimitExcept(const std::vector<std::string>& values)
 {
 	if (values.empty())
-		throw std::invalid_argument("Limit except is empty");
+		throw std::invalid_argument("Configuration error: Limit except is empty");
 	std::set<std::string> valid_methods = {"GET", "POST", "DELETE", "PUT", "HEAD", "OPTIONS"};
 	for (size_t i = 0; i < values.size(); i++)
 	{
 		if (valid_methods.find(values[i]) == valid_methods.end())
-			throw std::invalid_argument("Invalid limit except method");
+			throw std::invalid_argument("Configuration error: Invalid limit except method");
 	}
 	for (size_t i = 0; i < values.size(); i++)
 	{

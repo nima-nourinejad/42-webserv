@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:46:15 by akovalev          #+#    #+#             */
-/*   Updated: 2025/02/06 18:08:44 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/14 14:09:46 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,16 +24,16 @@
 class LocationBlock
 {
 	private:
-		std::string					_location; // /path/to/resource
-		std::string					_root; // /var/www/html
-		std::string					_index; // index.html
-		bool						_autoindex; // on | off
-		std::vector<std::string>	_cgi_extension;	// .php, .py, .pl, .rb
-		std::string					_cgi_path; // /usr/bin/php-cgi
-		std::string					_upload_path; // path to upload files
-		std::pair<int, std::string>	_return;	// defines a return code and a URL to redirect to
+		std::string					_location;
+		std::string					_root;
+		std::string					_index;
+		bool						_autoindex;
+		std::vector<std::string>	_cgi_extension;
+		std::string					_cgi_path;
+		std::string					_upload_path;
+		std::pair<int, std::string>	_return;
 		std::string					_alias;
-		size_t						_client_max_body_size; // size in bytes
+		size_t						_client_max_body_size;
 		std::map<int, std::string>	_error_pages;
 		std::vector<std::string>	_limit_except;
 

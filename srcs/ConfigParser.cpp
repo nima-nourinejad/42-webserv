@@ -6,7 +6,7 @@
 /*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 18:51:19 by akovalev          #+#    #+#             */
-/*   Updated: 2025/02/06 18:10:03 by akovalev         ###   ########.fr       */
+/*   Updated: 2025/02/14 14:08:39 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ void printTokens(const std::vector<Token>& tokens)
 
 void ConfigParser::unexpectedToken(size_t i)
 {
-	std::cout << "Issue at token " << i	<< " " << tokenTypeToString(_tokens[i].type) << std::endl;
+	std::cout << "Error in configuration file parsing at token " << i << ": ";
 	throw std::runtime_error("Unexpected token");
 }
 
@@ -108,8 +108,15 @@ void ConfigParser::parseServerBlock(size_t& index)
 		else if (_tokens[index].key == "error_page")
 		{
 			if (_tokens[index].values[0].empty() || !std::all_of(_tokens[index].values[0].begin(), _tokens[index].values[0].end(), ::isdigit))
-				throw std::invalid_argument("Error code is not a number");
-			_server_blocks[_server_blocks.size() - 1].setErrorPage(std::stoi(_tokens[index].values[0]), _tokens[index].values[1]);
+				throw std::invalid_argument("Configuration Error: Error code is not a number");
+			try 
+			{
+				_server_blocks[_server_blocks.size() - 1].setErrorPage(std::stoi(_tokens[index].values[0]), _tokens[index].values[1]);
+			}
+			catch (const std::exception& e)
+			{
+				throw std::invalid_argument("Configuration Error: Error code is out of range");
+			}
 		}
 		else if (_tokens[index].key == "listen")
 		{
@@ -117,10 +124,17 @@ void ConfigParser::parseServerBlock(size_t& index)
 			for (const std::string& port : _tokens[index].values)
 			{
 				if (port.empty() || !std::all_of(port.begin(), port.end(), ::isdigit))
-					throw std::invalid_argument("Port is not a number");
+					throw std::invalid_argument("Configuration Error: Port is not a number");
 				if (*port.begin() == '0')
-					throw std::invalid_argument("Port starts with 0");
-				ports.push_back(std::stoi(port));
+					throw std::invalid_argument("Configuration Error: Port starts with 0");
+				try
+				{
+					ports.push_back(std::stoi(port));
+				}
+				catch (const std::exception& e)
+				{
+					throw std::invalid_argument("Configuration Error: Port is out of range");
+				}
 			}
 			_server_blocks[_server_blocks.size() - 1].setListen(ports);
 		}
@@ -149,7 +163,7 @@ void ConfigParser::parseLocationBlock(size_t& index)
 
 	if ((_tokens[index].values[0] == ""))
 	{
-		std::cout << "Location block is empty" << std::endl;
+		std::cout << "Error in configuration file parsing: Location block is empty" << std::endl;
 		unexpectedToken(index);
 	}
 
@@ -182,7 +196,15 @@ void ConfigParser::parseLocationBlock(size_t& index)
 		} else if (token.key == "upload_path") {
 			current_location.setUploadPath(token.values[0]);
 		} else if (token.key == "error_page") {
-			current_location.setErrorPage(std::stoi(token.values[0]), token.values[1]);
+			{
+				try 
+				{
+					current_location.setErrorPage(std::stoi(token.values[0]), token.values[1]);
+				}
+				catch (const std::exception& e) {
+					throw std::invalid_argument("Configuration Error: Error code is out of range");
+				}
+			}
 		} else if (token.key == "cgi_ext") {
 			current_location.setCgiExtension(token.values);
 		} else if (token.key == "return") {
@@ -293,10 +315,7 @@ void ConfigParser::tokenize(std::vector<Token>& tokens, std::ifstream& filepath)
 			}
 		}		
 		else
-		{
-			tokens.push_back(Token(TokenType::UNKNOWN, word));
-			throw std::runtime_error("Unknown token");
-		}
+			unexpectedToken(tokens.size());
 		
 	}
 	if (filepath.eof()) {
@@ -316,10 +335,7 @@ std::vector<ServerBlock>	ConfigParser::parseConfig(std::ifstream& filepath)
 			break;
 		else
 		if (_tokens[i].key != "server")
-		{
-			std::cout << "Issue at token " << i	<< " " << tokenTypeToString(_tokens[i].type) << std::endl;
-			throw std::runtime_error("Expected 'server' block");
-		}
+			throw std::runtime_error("Error parsing configuration file: Expected 'server' block");
 		else
 			parseServerBlock(i);
 	}
