@@ -3,20 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nnourine <nnourine@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: akovalev <akovalev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 09:37:19 by nnourine          #+#    #+#             */
-/*   Updated: 2025/02/10 14:05:34 by nnourine         ###   ########.fr       */
+/*   Updated: 2025/02/12 13:46:08 by akovalev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
-// For example, check how does server_name work.
-// We’ve shared with you a small tester. It’s not mandatory to pass it
-// if everything works fine with your browser and tests, but it can help
-// you hunt some bugs.
 
-// check the host from the request and compare it with the server_name in the config file
+
+//For all calls of read/write/recv/send, you must check if the return value is -1 or 0 and have separate handling
+// if read/write/recv/send calls return an error, client should be removed
 
 #include "Server.hpp"
 
@@ -79,7 +77,7 @@ int main(int argc, char **argv)
 	static constexpr int TOTAL_FD = 1000;
 	
 	int max_fd = TOTAL_FD / server_count;
-	if (max_fd < 5)
+	if (max_fd < 7) //changed to 7 from 5
 	{
 		Server::logError("Too many servers for the number of file descriptors");
 		return 1;
